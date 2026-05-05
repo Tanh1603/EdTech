@@ -87,3 +87,10 @@
 - Endpoints return standardized envelope.
 - RBAC + validation covered by tests.
 - Basic observability logs include requestId + latency.
+
+## Mandatory Rule Compliance (apply to BE-1..BE-9)
+- API responses must follow `.agents/prompts/rules/api-response.md` (`success/data/meta/error`, `meta.requestId` required, `meta.pagination` only for list APIs).
+- Error mapping must follow `.agents/prompts/rules/error-codes.md`; never expose stacktrace in client response.
+- Validation must follow `.agents/prompts/rules/validation.md` (`whitelist=true`, `forbidNonWhitelisted=true`, `transform=true`, UUID/enum/email validation, pagination bounds).
+- Logging must follow `.agents/prompts/rules/logging.md` (required fields, PII masking, no raw authorization header, required audit events).
+- Module/file layout must follow `.agents/prompts/rules/folder-structure.md` (`controllers/services/repositories/dto/mappers/spec`, naming suffixes, repository-only DB access).

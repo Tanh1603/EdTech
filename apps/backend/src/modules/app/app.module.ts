@@ -1,0 +1,63 @@
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import Joi from 'joi';
+import { GlobalExceptionFilter } from '../../common/filters/global-exception.filter';
+import { ResponseEnvelopeInterceptor } from '../../common/interceptors/response-envelope.interceptor';
+import { RequestIdMiddleware } from '../../common/middlewares/request-id.middleware';
+import { RequestLoggingMiddleware } from '../../common/middlewares/request-logging.middleware';
+import { PrismaModule } from '../../common/prisma/prisma.module';
+import { ClerkClientProvider } from '../../common/providers/clerk-client.provider';
+import { AssessmentModule } from '../assessment/assessment.module';
+import { AuthModule } from '../auth/auth.module';
+import { ChatModule } from '../chat/chat.module';
+import { HealthModule } from '../health/health.module';
+import { LearningModule } from '../learning/learning.module';
+import { OpsModule } from '../ops/ops.module';
+import { UsersModule } from '../users/users.module';
+import { ClerkAuthGuard } from '../auth/guards/clerk-auth.guard';
+
+@Module({
+  imports: [
+    PrismaModule,
+    HealthModule,
+    AuthModule,
+    UsersModule,
+    LearningModule,
+    ChatModule,
+    AssessmentModule,
+    OpsModule,
+    ConfigModule.forRoot({
+      envFilePath: 'apps/backend/.env',
+      validationSchema: Joi.object({
+        DATABASE_URL: Joi.string().required(),
+        CLERK_PUBLISHABLE_KEY: Joi.string().required(),
+        CLERK_SECRET_KEY: Joi.string().required(),
+      }),
+      isGlobal: true,
+    }),
+  ],
+  providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResponseEnvelopeInterceptor,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: GlobalExceptionFilter,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ClerkAuthGuard,
+    },
+    ClerkClientProvider
+  ],
+})
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer
+      .apply(RequestIdMiddleware, RequestLoggingMiddleware)
+      .forRoutes('*');
+  }
+}
+

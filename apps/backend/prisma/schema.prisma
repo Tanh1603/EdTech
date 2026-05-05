@@ -1,0 +1,378 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserStatus {
+  pending
+  active
+  inactive
+}
+
+enum ClassRole {
+  teacher
+  student
+}
+
+enum MaterialStatus {
+  uploaded
+  indexing
+  ready
+  failed
+}
+
+enum ExamStatus {
+  draft
+  published
+  archived
+}
+
+enum QuestionType {
+  mcq
+  true_false
+  short_answer
+  essay
+}
+
+enum DifficultyLevel {
+  easy
+  medium
+  hard
+}
+
+enum SubmissionStatus {
+  in_progress
+  submitted
+  graded
+}
+
+enum GradedStatus {
+  pending
+  partial
+  completed
+  failed
+}
+
+enum NotifyStatus {
+  queued
+  sent
+  failed
+  read
+}
+
+enum JobStatus {
+  queued
+  running
+  succeeded
+  failed
+  dead_letter
+}
+
+enum JobType {
+  ai_grade
+  ai_analyze
+  ai_generate_exam
+  analytics_aggregate
+  analytics_export
+  notification_dispatch
+  material_ingest
+  rag_index
+}
+
+model User {
+  id                String             @id @default(uuid()) @db.Uuid
+  externalUserId    String             @unique @map("external_user_id")
+  email             String             @unique
+  fullName          String?            @map("full_name")
+  avatarUrl         String?            @map("avatar_url")
+  status            UserStatus         @default(active)
+  preferredLanguage String?            @default("vi") @map("preferred_language")
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt         DateTime?          @map("deleted_at") @db.Timestamptz(6)
+  classes           ClassMembership[]
+  courses           Course[]
+  learningProfile   LearningProfile?
+  chatSessions      ChatSession[]
+  submissions       Submission[]
+  notifications     NotificationRecipient[]
+  auditLogs         AuditLog[]
+
+  @@index([status, createdAt])
+  @@map("users")
+}
+
+model Course {
+  id          String     @id @default(uuid()) @db.Uuid
+  teacherId   String     @map("teacher_id") @db.Uuid
+  name        String
+  description String?
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime?  @map("updated_at") @db.Timestamptz(6)
+  teacher     User       @relation(fields: [teacherId], references: [id])
+  classes     Classroom[]
+  materials   Material[]
+
+  @@map("courses")
+}
+
+model Classroom {
+  id           String            @id @default(uuid()) @db.Uuid
+  courseId     String            @map("course_id") @db.Uuid
+  name         String
+  inviteCode   String?           @unique @map("invite_code")
+  startsAt     DateTime?         @map("starts_at") @db.Timestamptz(6)
+  endsAt       DateTime?         @map("ends_at") @db.Timestamptz(6)
+  createdAt    DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  course       Course            @relation(fields: [courseId], references: [id])
+  memberships  ClassMembership[]
+  chatSessions ChatSession[]
+  exams        Exam[]
+
+  @@map("classes")
+}
+
+model ClassMembership {
+  id          String    @id @default(uuid()) @db.Uuid
+  classId     String    @map("class_id") @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  roleInClass ClassRole @default(student) @map("role_in_class")
+  joinedAt    DateTime  @default(now()) @map("joined_at") @db.Timestamptz(6)
+  classroom   Classroom @relation(fields: [classId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
+
+  @@unique([classId, userId])
+  @@map("class_memberships")
+}
+
+model LearningProfile {
+  userId            String    @id @map("user_id") @db.Uuid
+  currentLevel      String?   @map("current_level")
+  targetGoal        String?   @map("target_goal")
+  weeklyHours       Int?      @map("weekly_hours")
+  preferredLanguage String?   @map("preferred_language")
+  weakTopics        String[]  @default([])
+  goals             String[]  @default([])
+  updatedAt         DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  user              User      @relation(fields: [userId], references: [id])
+
+  @@map("learning_profiles")
+}
+
+model Material {
+  id         String         @id @default(uuid()) @db.Uuid
+  courseId   String?        @map("course_id") @db.Uuid
+  uploadedBy String?        @map("uploaded_by") @db.Uuid
+  title      String
+  storageUrl String?        @map("storage_url")
+  mimeType   String?        @map("mime_type")
+  status     MaterialStatus @default(uploaded)
+  createdAt  DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  course     Course?        @relation(fields: [courseId], references: [id])
+  chunks     MaterialChunk[]
+
+  @@index([courseId, status])
+  @@map("materials")
+}
+
+model MaterialChunk {
+  id         String    @id @default(uuid()) @db.Uuid
+  materialId String    @map("material_id") @db.Uuid
+  orderNo    Int?      @map("order_no")
+  vectorDocId String?  @map("vector_doc_id")
+  tokenCount Int?      @map("token_count")
+  checksum   String?
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  material   Material  @relation(fields: [materialId], references: [id])
+
+  @@map("material_chunks")
+}
+
+model ChatSession {
+  id            String        @id @default(uuid()) @db.Uuid
+  userId        String        @map("user_id") @db.Uuid
+  classId       String?       @map("class_id") @db.Uuid
+  title         String?
+  language      String?
+  startedAt     DateTime      @default(now()) @map("started_at") @db.Timestamptz(6)
+  lastMessageAt DateTime?     @map("last_message_at") @db.Timestamptz(6)
+  user          User          @relation(fields: [userId], references: [id])
+  classroom     Classroom?    @relation(fields: [classId], references: [id])
+  messages      ChatMessage[]
+
+  @@map("chat_sessions")
+}
+
+model ChatMessage {
+  id           String    @id @default(uuid()) @db.Uuid
+  sessionId    String    @map("session_id") @db.Uuid
+  role         String
+  content      String
+  intent       String?
+  inputImageUrl String?  @map("input_image_url")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  session      ChatSession @relation(fields: [sessionId], references: [id])
+
+  @@map("chat_messages")
+}
+
+model Exam {
+  id            String      @id @default(uuid()) @db.Uuid
+  classId       String      @map("class_id") @db.Uuid
+  createdBy     String      @map("created_by") @db.Uuid
+  title         String
+  status        ExamStatus  @default(draft)
+  personalized  Boolean     @default(false)
+  duration      Int
+  publishedAt   DateTime?   @map("published_at") @db.Timestamptz(6)
+  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  classroom     Classroom   @relation(fields: [classId], references: [id])
+  versions      ExamVersion[]
+  submissions   Submission[]
+
+  @@map("exams")
+}
+
+model ExamVersion {
+  id        String   @id @default(uuid()) @db.Uuid
+  examId     String   @map("exam_id") @db.Uuid
+  version    Int
+  blueprint  Json?
+  exam       Exam     @relation(fields: [examId], references: [id])
+  questions  ExamQuestion[]
+
+  @@map("exam_versions")
+}
+
+model Question {
+  id          String          @id @default(uuid()) @db.Uuid
+  type        QuestionType
+  difficulty  DifficultyLevel
+  prompt      String
+  options     Json?
+  answerKey   Json?           @map("answer_key")
+  explanation String?
+  examLinks   ExamQuestion[]
+
+  @@map("questions")
+}
+
+model ExamQuestion {
+  id            String      @id @default(uuid()) @db.Uuid
+  examVersionId String?     @map("exam_version_id") @db.Uuid
+  questionId    String?     @map("question_id") @db.Uuid
+  points        Decimal?    @db.Decimal
+  orderNo       Int?        @map("order_no")
+  examVersion   ExamVersion? @relation(fields: [examVersionId], references: [id])
+  question      Question?   @relation(fields: [questionId], references: [id])
+
+  @@map("exam_questions")
+}
+
+model Submission {
+  id           String           @id @default(uuid()) @db.Uuid
+  examId       String           @map("exam_id") @db.Uuid
+  studentId    String           @map("student_id") @db.Uuid
+  status       SubmissionStatus @default(in_progress)
+  startedAt    DateTime?        @map("started_at") @db.Timestamptz(6)
+  submittedAt  DateTime?        @map("submitted_at") @db.Timestamptz(6)
+  timerExpired Boolean?         @default(false) @map("timer_expired")
+  exam         Exam             @relation(fields: [examId], references: [id])
+  student      User             @relation(fields: [studentId], references: [id])
+  result       Result?
+
+  @@map("submissions")
+}
+
+model Result {
+  id             String       @id @default(uuid()) @db.Uuid
+  submissionId   String       @unique @map("submission_id") @db.Uuid
+  objectiveScore Decimal?     @map("objective_score") @db.Decimal
+  essayScore     Decimal?     @map("essay_score") @db.Decimal
+  totalScore     Decimal?     @map("total_score") @db.Decimal
+  gradedStatus   GradedStatus @default(pending) @map("graded_status")
+  feedback       Json?
+  gradedAt       DateTime?    @map("graded_at") @db.Timestamptz(6)
+  submission     Submission   @relation(fields: [submissionId], references: [id])
+
+  @@map("results")
+}
+
+model Notification {
+  id          String                  @id @default(uuid()) @db.Uuid
+  createdBy   String?                 @map("created_by") @db.Uuid
+  type        String?
+  title       String
+  body        String
+  channel     String?
+  scheduledAt DateTime?               @map("scheduled_at") @db.Timestamptz(6)
+  createdAt   DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  recipients  NotificationRecipient[]
+
+  @@map("notifications")
+}
+
+model NotificationRecipient {
+  id             String        @id @default(uuid()) @db.Uuid
+  notificationId String?       @map("notification_id") @db.Uuid
+  userId         String?       @map("user_id") @db.Uuid
+  status         NotifyStatus  @default(queued)
+  sentAt         DateTime?     @map("sent_at") @db.Timestamptz(6)
+  readAt         DateTime?     @map("read_at") @db.Timestamptz(6)
+  notification   Notification? @relation(fields: [notificationId], references: [id])
+  user           User?         @relation(fields: [userId], references: [id])
+
+  @@map("notification_recipients")
+}
+
+model Job {
+  id          String    @id @default(uuid()) @db.Uuid
+  type        JobType
+  status      JobStatus @default(queued)
+  priority    Int?      @default(0)
+  payload     Json?
+  result      Json?
+  attempts    Int?      @default(0)
+  maxAttempts Int?      @default(3) @map("max_attempts")
+  availableAt DateTime? @map("available_at") @db.Timestamptz(6)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("jobs")
+}
+
+model AnalyticsSnapshot {
+  id      String  @id @default(uuid()) @db.Uuid
+  scope   String?
+  scopeId String? @map("scope_id") @db.Uuid
+  metrics Json?
+
+  @@map("analytics_snapshots")
+}
+
+model StudentTopicMastery {
+  id           String   @id @default(uuid()) @db.Uuid
+  studentId    String?  @map("student_id") @db.Uuid
+  classId      String?  @map("class_id") @db.Uuid
+  topic        String?
+  masteryScore Decimal? @map("mastery_score") @db.Decimal
+
+  @@map("student_topic_mastery")
+}
+
+model AuditLog {
+  id          String    @id @default(uuid()) @db.Uuid
+  actorUserId String?   @map("actor_user_id") @db.Uuid
+  action      String
+  entityType  String    @map("entity_type")
+  entityId    String?   @map("entity_id") @db.Uuid
+  metadata    Json?
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  actor       User?     @relation(fields: [actorUserId], references: [id])
+
+  @@map("audit_logs")
+}
+

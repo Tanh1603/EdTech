@@ -1,0 +1,122 @@
+@startuml System_Architecture
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+
+skinparam component {
+  BackgroundColor #EBF3FB
+  BorderColor #2E75B6
+  FontColor #1F4E79
+}
+skinparam package {
+  BackgroundColor #F5F5F5
+  BorderColor #AAAAAA
+  FontColor #333333
+}
+skinparam database {
+  BackgroundColor #E2EFDA
+  BorderColor #375623
+  FontColor #375623
+}
+skinparam cloud {
+  BackgroundColor #FFF2CC
+  BorderColor #D6A800
+}
+skinparam arrow {
+  Color #555555
+  FontColor #555555
+  FontSize 11
+}
+
+' ─── CLIENT LAYER ───
+package "Client Layer" {
+  [Web App\n(React)] as WEB
+  [Mobile App\n(React Native)] as MOB
+  [Teacher Portal\n(React)] as TCH
+  [Parent Portal\n(React)] as PAR
+}
+
+' ─── API GATEWAY ───
+package "API Gateway" {
+  [API Gateway\nAuth · Rate limit · Route · WebSocket] as GW
+}
+
+' ─── BACKEND MONOLITH ───
+package "Backend Monolith (Node.js / Spring Boot)" {
+  [User Module\nUS-001–005] as USER
+  [Course Module\nUS-004, 022–024] as COURSE
+  [Learning Module\nUS-011–021] as LEARN
+  [Assessment Module\nUS-025–037] as ASSESS
+  [Analytics Module\nUS-038–049] as ANALYTICS
+  [Notification Module\nUS-050–052] as NOTIF
+  [AI Gateway Module\nUS-006–010] as AIMOD
+}
+
+' ─── AI SERVICE ───
+package "AI Service (Python / FastAPI)" {
+  [Orchestrator Agent\nIntent classify · Route] as ORCH
+  [Tutor Agent\nExplain · RAG · Socratic] as TUTOR
+  [Planning Agent\nRoadmap · Schedule] as PLAN
+  [Assessment Agent\nGen exam · Grade] as ASSESS_AI
+  [Analytics Agent\nInsights · Alerts] as ANALYTICS_AI
+}
+
+' ─── DATA LAYER ───
+database "PostgreSQL" as PG
+database "Vector DB\n(ChromaDB)" as VDB
+database "Redis\nSession · Cache" as REDIS
+database "S3 / MinIO\nFiles" as S3
+
+' ─── EXTERNAL ───
+cloud "LLM API\n(OpenAI / Claude)" as LLM
+cloud "FCM / SMTP\nNotification" as PUSH
+cloud "BullMQ\nJob Queue" as QUEUE
+
+' ─── CONNECTIONS ───
+WEB   --> GW
+MOB   --> GW
+TCH   --> GW
+PAR   --> GW
+
+GW --> USER
+GW --> COURSE
+GW --> LEARN
+GW --> ASSESS
+GW --> ANALYTICS
+GW --> NOTIF
+GW --> AIMOD
+GW <--> AIMOD : WebSocket\n(US-009)
+
+AIMOD --> ORCH : forward request\n+ context
+
+ORCH --> TUTOR      : tutor_*
+ORCH --> PLAN       : plan_*
+ORCH --> ASSESS_AI  : assess_*
+ORCH --> ANALYTICS_AI : analytics_*
+TUTOR      --> ORCH : response
+PLAN       --> ORCH : response
+ASSESS_AI  --> ORCH : response
+ANALYTICS_AI --> ORCH : response
+
+TUTOR      --> VDB  : RAG lookup\n(US-022–024)
+ASSESS_AI  --> LLM  : gen questions\n(US-025–029)
+TUTOR      --> LLM  : explain\n(US-011–013)
+ANALYTICS_AI --> PG : read events
+
+USER     --> PG
+COURSE   --> PG
+COURSE   --> S3
+COURSE   --> VDB
+LEARN    --> PG
+LEARN    --> REDIS  : session ctx\n(US-009)
+ASSESS   --> PG
+ASSESS   --> S3     : submissions
+ANALYTICS --> PG
+NOTIF    --> PUSH
+NOTIF    --> QUEUE  : schedule jobs
+
+QUEUE --> ASSESS    : grading job\n(US-032)
+QUEUE --> NOTIF     : push job\n(US-050–052)
+QUEUE --> ANALYTICS : event job\n(US-038)
+
+@enduml

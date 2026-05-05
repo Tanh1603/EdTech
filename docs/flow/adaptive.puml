@@ -1,0 +1,37 @@
+@startuml AdaptiveLearningFlow
+actor Student
+participant UI
+participant "API Gateway" as APIGW
+participant "Backend (Monolith)" as BE
+participant "AI Service" as AIS
+participant "Orchestrator Agent" as ORCH
+participant "Analytics Agent" as ANALYTICS
+participant "Tutor Agent" as TUTOR
+database "PostgreSQL" as PG
+collections "Vector DB" as VDB
+collections "Cache" as CACHE
+queue "Queue" as Q
+
+Student -> UI: Request learning plan / next lesson
+UI -> APIGW: /learning/plan or /recommendations
+APIGW -> BE: request
+BE -> PG: read profile, results, progress
+BE -> AIS: adaptive request
+AIS -> ORCH: intent=planner/adaptive
+ORCH -> ANALYTICS: compute gaps (top 3)
+ANALYTICS -> PG: aggregate performance
+ANALYTICS --> ORCH: gap analysis
+ORCH -> TUTOR: generate roadmap content
+TUTOR -> VDB: optional retrieve references
+TUTOR --> ORCH: plan + timeline
+ORCH --> AIS
+AIS --> BE
+BE -> PG: save plan/recommendations
+BE -> CACHE: cache dashboard snippets
+BE --> UI: personalized plan
+
+... after new exam/chat ...
+BE -> Q: enqueue re-evaluation (async)
+Q -> ANALYTICS: recompute progress + drift
+ANALYTICS -> PG: update mastery/progress
+@enduml

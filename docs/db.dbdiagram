@@ -1,0 +1,786 @@
+{
+  "version": "1.0.0",
+  "darkMode": true,
+  "gridEnabling": true,
+  "detailLevel": "Tables",
+  "tablePositions": [
+    {
+      "name": "users",
+      "schemaName": "public",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "name": "courses",
+      "schemaName": "public",
+      "x": 232,
+      "y": 0
+    },
+    {
+      "name": "classes",
+      "schemaName": "public",
+      "x": 496,
+      "y": 0
+    },
+    {
+      "name": "class_memberships",
+      "schemaName": "public",
+      "x": 744,
+      "y": 0
+    },
+    {
+      "name": "course_lessons",
+      "schemaName": "public",
+      "x": 1016,
+      "y": 0
+    },
+    {
+      "name": "learning_profiles",
+      "schemaName": "public",
+      "x": 0,
+      "y": 112
+    },
+    {
+      "name": "learning_plans",
+      "schemaName": "public",
+      "x": 232,
+      "y": 112
+    },
+    {
+      "name": "learning_plan_items",
+      "schemaName": "public",
+      "x": 496,
+      "y": 112
+    },
+    {
+      "name": "recommendations",
+      "schemaName": "public",
+      "x": 744,
+      "y": 112
+    },
+    {
+      "name": "materials",
+      "schemaName": "public",
+      "x": 1016,
+      "y": 112
+    },
+    {
+      "name": "material_chunks",
+      "schemaName": "public",
+      "x": 0,
+      "y": 232
+    },
+    {
+      "name": "chat_sessions",
+      "schemaName": "public",
+      "x": 232,
+      "y": 232
+    },
+    {
+      "name": "chat_messages",
+      "schemaName": "public",
+      "x": 496,
+      "y": 232
+    },
+    {
+      "name": "chat_citations",
+      "schemaName": "public",
+      "x": 744,
+      "y": 232
+    },
+    {
+      "name": "agent_runs",
+      "schemaName": "public",
+      "x": 1016,
+      "y": 232
+    },
+    {
+      "name": "exams",
+      "schemaName": "public",
+      "x": 0,
+      "y": 344
+    },
+    {
+      "name": "exam_versions",
+      "schemaName": "public",
+      "x": 232,
+      "y": 344
+    },
+    {
+      "name": "questions",
+      "schemaName": "public",
+      "x": 496,
+      "y": 344
+    },
+    {
+      "name": "exam_questions",
+      "schemaName": "public",
+      "x": 744,
+      "y": 344
+    },
+    {
+      "name": "personalized_exam_sets",
+      "schemaName": "public",
+      "x": 1016,
+      "y": 344
+    },
+    {
+      "name": "submissions",
+      "schemaName": "public",
+      "x": 0,
+      "y": 464
+    },
+    {
+      "name": "submission_answers",
+      "schemaName": "public",
+      "x": 232,
+      "y": 464
+    },
+    {
+      "name": "results",
+      "schemaName": "public",
+      "x": 496,
+      "y": 464
+    },
+    {
+      "name": "student_topic_mastery",
+      "schemaName": "public",
+      "x": 744,
+      "y": 464
+    },
+    {
+      "name": "analytics_snapshots",
+      "schemaName": "public",
+      "x": 1016,
+      "y": 464
+    },
+    {
+      "name": "notifications",
+      "schemaName": "public",
+      "x": 0,
+      "y": 576
+    },
+    {
+      "name": "notification_recipients",
+      "schemaName": "public",
+      "x": 232,
+      "y": 576
+    },
+    {
+      "name": "jobs",
+      "schemaName": "public",
+      "x": 496,
+      "y": 576
+    },
+    {
+      "name": "audit_logs",
+      "schemaName": "public",
+      "x": 744,
+      "y": 576
+    }
+  ],
+  "tableGroupCollapseStates": [],
+  "stickyNoteLayouts": [],
+  "referencePaths": [
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "users",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "courses",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "courses",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "classes",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "classes",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "class_memberships",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "users",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "class_memberships",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "courses",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "course_lessons",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "users",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "learning_profiles",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "users",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "learning_plans",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "agent_runs",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "learning_plans",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "learning_plans",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "learning_plan_items",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "course_lessons",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "learning_plan_items",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "users",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "recommendations",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "agent_runs",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "recommendations",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "courses",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "materials",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "users",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "materials",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "materials",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "material_chunks",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "users",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "chat_sessions",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "classes",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "chat_sessions",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "chat_sessions",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "chat_messages",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "chat_messages",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "chat_citations",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "materials",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "chat_citations",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "chat_sessions",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "agent_runs",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "classes",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "exams",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "users",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "exams",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "exams",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "exam_versions",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "exam_versions",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "exam_questions",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "questions",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "exam_questions",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "exams",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "personalized_exam_sets",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "users",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "personalized_exam_sets",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "agent_runs",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "personalized_exam_sets",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "personalized_exam_sets",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "submissions",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "users",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "submissions",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "submissions",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "submission_answers",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "questions",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "submission_answers",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "submissions",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "results",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "users",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "student_topic_mastery",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "classes",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "student_topic_mastery",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "users",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "notifications",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "notifications",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "notification_recipients",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "users",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "notification_recipients",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "users",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "audit_logs",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    }
+  ]
+}

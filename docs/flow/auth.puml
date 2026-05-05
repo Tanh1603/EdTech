@@ -1,0 +1,46 @@
+@startuml AuthenticationFlow
+actor Student
+actor Teacher
+actor Admin
+participant UI
+participant "API Gateway" as APIGW
+participant "Backend (Monolith)" as BE
+participant "AI Service" as AIS
+participant "Orchestrator Agent" as ORCH
+participant "Assessment Agent" as ASSESS
+database "PostgreSQL" as PG
+queue "Queue" as Q
+participant "Email Worker" as EW
+
+Student -> UI: Register/Login
+UI -> APIGW: auth request
+APIGW -> BE: /auth/*
+BE -> PG: create/find user, issue token
+BE -> Q: enqueue verification email (async)
+Q -> EW: deliver job
+EW -> Student: verification email
+
+Student -> UI: Start placement test
+UI -> APIGW: submit answers
+APIGW -> BE: /placement/submit
+BE -> AIS: classify level request
+AIS -> ORCH: route intent=placement
+ORCH -> ASSESS: evaluate level
+ASSESS --> ORCH: level result
+ORCH --> AIS: result
+AIS --> BE: level + confidence
+BE -> PG: save level/profile
+BE --> UI: placement result
+
+Teacher -> UI: Create class + invite
+UI -> APIGW: /classes
+APIGW -> BE: create class
+BE -> PG: insert class, enrollments
+BE -> Q: enqueue invitations
+
+Admin -> UI: User management
+UI -> APIGW: /admin/users/*
+APIGW -> BE: RBAC checks + CRUD
+BE -> PG: update users/roles
+@enduml
+

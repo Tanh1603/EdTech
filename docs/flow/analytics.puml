@@ -1,0 +1,50 @@
+@startuml AnalyticsFlow
+actor Student
+actor Teacher
+actor Admin
+participant UI
+participant "API Gateway" as APIGW
+participant "Backend (Monolith)" as BE
+participant "AI Service" as AIS
+participant "Orchestrator Agent" as ORCH
+participant "Analytics Agent" as ANALYTICS
+database "PostgreSQL" as PG
+collections "Cache" as CACHE
+queue "Queue" as Q
+participant "Export Worker" as EXW
+
+Student -> UI: Open personal dashboard
+UI -> APIGW: /dashboard/student
+APIGW -> BE
+BE -> CACHE: get cached metrics
+alt cache miss
+  BE -> PG: query progress/weakness/rank
+  BE -> CACHE: set cache
+end
+BE --> UI: personal analytics
+
+Teacher -> UI: Open class analytics
+UI -> APIGW: /dashboard/teacher
+APIGW -> BE
+BE -> AIS: ask for reteach suggestions
+AIS -> ORCH: intent=analytics
+ORCH -> ANALYTICS: analyze wrong-questions + weak students
+ANALYTICS -> PG: aggregate by class
+ANALYTICS --> ORCH: insights
+ORCH --> AIS
+AIS --> BE
+BE --> UI: class dashboard + recommendations
+
+Teacher -> UI: Export report
+UI -> APIGW: /reports/export
+APIGW -> BE
+BE -> Q: enqueue export (async)
+Q -> EXW: build PDF/Excel
+EXW -> PG: store file metadata
+
+Admin -> UI: Monitor system/agents/logs
+UI -> APIGW: /admin/metrics,/admin/logs
+APIGW -> BE
+BE -> PG: query operational logs
+BE --> UI: realtime metrics + searchable logs
+@enduml

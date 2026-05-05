@@ -1,0 +1,69 @@
+' @startuml AIChatOrchestrationFlow
+' actor Student
+' participant UI
+' participant "API Gateway" as APIGW
+' participant "Backend (Monolith)" as BE
+' participant "AI Service" as AIS
+' participant "Orchestrator Agent" as ORCH
+' participant "Tutor Agent" as TUTOR
+' participant "Assessment Agent" as ASSESS
+' participant "Analytics Agent" as ANALYTICS
+' database "PostgreSQL" as PG
+' collections "Cache/Session Memory" as CACHE
+
+' Student -> UI: Send message
+' UI -> APIGW: /chat/message
+' APIGW -> BE: validate JWT + payload
+' BE -> PG: load user profile
+' BE -> CACHE: load conversation context
+' BE -> AIS: process message
+' AIS -> ORCH: classify intent
+
+' alt intent == "tutor"
+'   ORCH -> TUTOR: handle tutoring
+' else intent == "assessment"
+'   ORCH -> ASSESS: handle exam/help
+' else intent == "analytics/planner"
+'   ORCH -> ANALYTICS: handle recommendation
+' else fallback
+'   ORCH -> TUTOR: default safe response
+' end
+
+' ORCH --> AIS: response + used_agent + latency
+' AIS --> BE: final answer
+' BE -> CACHE: update context
+' BE -> PG: persist chat + intent logs
+' BE --> UI: answer to student
+' @enduml
+
+@startuml AIChatFlow
+actor Student
+participant UI
+participant APIGateway
+participant Backend
+participant AIService
+participant Orchestrator
+participant TutorAgent
+participant AssessmentAgent
+participant Redis
+
+Student -> UI : Chat
+UI -> APIGateway
+APIGateway -> Backend : /chat
+Backend -> AIService
+
+AIService -> Orchestrator
+Orchestrator -> Redis : load context
+
+alt Learning
+  Orchestrator -> TutorAgent
+  TutorAgent --> Orchestrator
+else Practice
+  Orchestrator -> AssessmentAgent
+  AssessmentAgent --> Orchestrator
+end
+
+Orchestrator -> Redis : save context
+AIService --> Backend
+Backend --> UI
+@enduml

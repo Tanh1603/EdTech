@@ -1,0 +1,513 @@
+Project EdTechAI {
+  database_type: "PostgreSQL"
+}
+
+//////////////////////
+// ENUM
+//////////////////////
+
+Enum job_type {
+  ai_grade
+  ai_analyze
+  ai_generate_exam
+  analytics_aggregate
+  analytics_export
+  notification_dispatch
+  material_ingest
+  rag_index
+}
+
+Enum user_status {
+  pending
+  active
+  inactive
+}
+
+
+Enum class_role {
+  teacher
+  student
+}
+
+Enum material_status {
+  uploaded
+  indexing
+  ready
+  failed
+}
+
+Enum exam_status {
+  draft
+  published
+  archived
+}
+
+Enum question_type {
+  mcq
+  true_false
+  short_answer
+  essay
+}
+
+Enum difficulty_level {
+  easy
+  medium
+  hard
+}
+
+Enum submission_status {
+  in_progress
+  submitted
+  graded
+}
+
+Enum graded_status {
+  pending
+  partial
+  completed
+  failed
+}
+
+Enum notify_status {
+  queued
+  sent
+  failed
+  read
+}
+
+Enum job_status {
+  queued
+  running
+  succeeded
+  failed
+  dead_letter
+}
+
+//////////////////////
+// USERS (EXTERNAL AUTH)
+//////////////////////
+
+Table users {
+  id uuid [pk]
+  external_user_id varchar [not null, unique] // clerk_id / firebase_uid
+  email varchar [not null, unique]
+  full_name text
+  avatar_url text
+  status user_status [not null, default: 'active']
+  preferred_language varchar(8) [default: 'vi']
+
+  created_at timestamptz [default: `now()`]
+  updated_at timestamptz [default: `now()`]
+  deleted_at timestamptz
+
+  indexes {
+    (email)
+    external_user_id
+    (status, created_at)
+  }
+}
+
+//////////////////////
+// COURSE / CLASS
+//////////////////////
+
+Table courses {
+  id uuid [pk]
+  teacher_id uuid [not null, ref: > users.id]
+
+  name text [not null]
+  description text
+
+  created_at timestamptz [default: `now()`]
+  updated_at timestamptz
+}
+
+Table classes {
+  id uuid [pk]
+  course_id uuid [not null, ref: > courses.id]
+
+  name text [not null]
+  invite_code varchar [unique]
+
+  starts_at timestamptz
+  ends_at timestamptz
+
+  created_at timestamptz [default: `now()`]
+}
+
+Table class_memberships {
+  id uuid [pk]
+
+  class_id uuid [not null, ref: > classes.id]
+  user_id uuid [not null, ref: > users.id]
+
+  role_in_class class_role [default: 'student']
+
+  joined_at timestamptz [default: `now()`]
+
+  indexes {
+    (class_id, user_id) [unique]
+  }
+}
+
+//////////////////////
+// LESSON
+//////////////////////
+
+Table course_lessons {
+  id uuid [pk]
+
+  course_id uuid [not null, ref: > courses.id]
+
+  title text
+  topic text
+  order_no int
+
+  estimated_minutes int
+
+  created_at timestamptz [default: `now()`]
+
+  indexes {
+    (course_id, order_no) [unique]
+  }
+}
+
+//////////////////////
+// LEARNING
+//////////////////////
+
+Table learning_profiles {
+  user_id uuid [pk, ref: > users.id]
+
+  current_level varchar
+  target_goal text
+  weekly_hours int
+  preferred_language varchar(8)
+
+  updated_at timestamptz [default: `now()`]
+}
+
+Table learning_plans {
+  id uuid [pk]
+
+  user_id uuid [not null, ref: > users.id]
+  created_by_agent_run_id uuid [ref: > agent_runs.id]
+
+  goal text
+  status varchar [default: 'active']
+
+  start_date date
+  end_date date
+
+  created_at timestamptz [default: `now()`]
+}
+
+Table learning_plan_items {
+  id uuid [pk]
+
+  plan_id uuid [not null, ref: > learning_plans.id]
+  lesson_id uuid [not null, ref: > course_lessons.id]
+
+  due_date date
+  status varchar [default: 'todo']
+  sequence_no int
+}
+
+Table recommendations {
+  id uuid [pk]
+
+  user_id uuid [not null, ref: > users.id]
+  source_run_id uuid [ref: > agent_runs.id]
+
+  type varchar
+  payload jsonb
+
+  expires_at timestamptz
+  created_at timestamptz [default: `now()`]
+}
+
+//////////////////////
+// MATERIAL + RAG
+//////////////////////
+
+Table materials {
+  id uuid [pk]
+
+  course_id uuid [ref: > courses.id]
+  uploaded_by uuid [ref: > users.id]
+
+  title text
+  storage_url text
+  mime_type varchar
+
+  status material_status [default: 'uploaded']
+
+  created_at timestamptz [default: `now()`]
+}
+
+Table material_chunks {
+  id uuid [pk]
+
+  material_id uuid [not null, ref: > materials.id]
+
+  order_no int
+  vector_doc_id varchar
+
+  token_count int
+  checksum varchar
+
+  created_at timestamptz [default: `now()`]
+}
+
+//////////////////////
+// CHAT AI
+//////////////////////
+
+Table chat_sessions {
+  id uuid [pk]
+
+  user_id uuid [not null, ref: > users.id]
+  class_id uuid [ref: > classes.id]
+
+  title text
+  language varchar(8)
+
+  started_at timestamptz [default: `now()`]
+  last_message_at timestamptz
+}
+
+Table chat_messages {
+  id uuid [pk]
+
+  session_id uuid [not null, ref: > chat_sessions.id]
+
+  role varchar
+  content text
+  intent varchar
+
+  input_image_url text
+
+  created_at timestamptz [default: `now()`]
+}
+
+Table chat_citations {
+  id uuid [pk]
+
+  message_id uuid [not null, ref: > chat_messages.id]
+  material_id uuid [ref: > materials.id]
+
+  chunk_ref varchar
+  snippet text
+}
+
+Table agent_runs {
+  id uuid [pk]
+
+  session_id uuid [ref: > chat_sessions.id]
+
+  trigger_type varchar
+  intent varchar
+  routed_agent varchar
+
+  confidence numeric(5,4)
+  latency_ms int
+
+  tool_calls jsonb
+  status varchar
+
+  created_at timestamptz [default: `now()`]
+}
+
+//////////////////////
+// EXAM CORE
+//////////////////////
+
+Table exams {
+  id uuid [pk]
+
+  class_id uuid [not null, ref: > classes.id]
+  created_by uuid [not null, ref: > users.id]
+
+  title text
+  status exam_status
+  personalized boolean
+
+  duration int
+
+  published_at timestamptz
+  created_at timestamptz [default: `now()`]
+}
+
+Table exam_versions {
+  id uuid [pk]
+
+  exam_id uuid [not null, ref: > exams.id]
+
+  version int
+  blueprint jsonb
+}
+
+Table questions {
+  id uuid [pk]
+
+  type question_type
+  difficulty difficulty_level
+
+  prompt text
+  options jsonb
+  answer_key jsonb
+
+  explanation text
+}
+
+Table exam_questions {
+  id uuid [pk]
+
+  exam_version_id uuid [ref: > exam_versions.id]
+  question_id uuid [ref: > questions.id]
+
+  points numeric
+  order_no int
+}
+
+Table personalized_exam_sets {
+  id uuid [pk]
+
+  exam_id uuid [ref: > exams.id]
+  student_id uuid [ref: > users.id]
+
+  generated_by_agent_run_id uuid [ref: > agent_runs.id]
+
+  seed varchar
+}
+
+Table submissions {
+  id uuid [pk]
+
+  exam_set_id uuid [ref: > personalized_exam_sets.id]
+  student_id uuid [ref: > users.id]
+
+  status submission_status
+
+  started_at timestamptz
+  submitted_at timestamptz
+  timer_expired boolean
+}
+
+Table submission_answers {
+  id uuid [pk]
+
+  submission_id uuid [ref: > submissions.id]
+  question_id uuid [ref: > questions.id]
+
+  answer_text text
+  answer_json jsonb
+}
+
+Table results {
+  id uuid [pk]
+
+  submission_id uuid [unique, ref: > submissions.id]
+
+  objective_score numeric
+  essay_score numeric
+  total_score numeric
+
+  graded_status graded_status
+
+  feedback jsonb
+  graded_at timestamptz
+}
+
+//////////////////////
+// ANALYTICS
+//////////////////////
+
+Table student_topic_mastery {
+  id uuid [pk]
+
+  student_id uuid [ref: > users.id]
+  class_id uuid [ref: > classes.id]
+
+  topic text
+  mastery_score numeric
+}
+
+Table analytics_snapshots {
+  id uuid [pk]
+
+  scope varchar
+  scope_id uuid
+
+  metrics jsonb
+}
+
+//////////////////////
+// NOTIFICATION
+//////////////////////
+
+Table notifications {
+  id uuid [pk]
+
+  created_by uuid [ref: > users.id]
+
+  type varchar
+  title text
+  body text
+
+  channel varchar
+  scheduled_at timestamptz
+
+  created_at timestamptz [default: `now()`]
+}
+
+Table notification_recipients {
+  id uuid [pk]
+
+  notification_id uuid [ref: > notifications.id]
+  user_id uuid [ref: > users.id]
+
+  status notify_status
+
+  sent_at timestamptz
+  read_at timestamptz
+}
+
+//////////////////////
+// JOB SYSTEM
+//////////////////////
+
+Table jobs {
+  id uuid [pk]
+
+  type job_type
+  status job_status
+
+  priority int
+
+  payload jsonb
+  result jsonb
+
+  attempts int
+  max_attempts int
+
+  available_at timestamptz
+  created_at timestamptz [default: `now()`]
+}
+
+//////////////////////
+// AUDIT
+//////////////////////
+
+Table audit_logs {
+  id uuid [pk]
+
+  actor_user_id uuid [ref: > users.id]
+
+  action varchar
+  entity_type varchar
+  entity_id uuid
+
+  metadata jsonb
+  created_at timestamptz [default: `now()`]
+}

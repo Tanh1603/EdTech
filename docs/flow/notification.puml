@@ -1,0 +1,36 @@
+@startuml NotificationFlow
+actor Teacher
+actor Student
+participant UI
+participant "API Gateway" as APIGW
+participant "Backend (Monolith)" as BE
+participant "AI Service" as AIS
+participant "Orchestrator Agent" as ORCH
+participant "Analytics Agent" as ANALYTICS
+database "PostgreSQL" as PG
+queue "Queue" as Q
+participant "Notification Worker" as NW
+
+Teacher -> UI: Send announcement/exam notice
+UI -> APIGW: /notifications/send
+APIGW -> BE: validate audience
+BE -> PG: save notification
+BE -> Q: enqueue dispatch (async)
+
+... system-triggered alerts ...
+BE -> AIS: check risk/lag
+AIS -> ORCH: intent=alerting
+ORCH -> ANALYTICS: detect lag/anomaly
+ANALYTICS --> ORCH: alert events
+ORCH --> AIS
+AIS --> BE
+BE -> Q: enqueue reminder/alert jobs
+
+Q -> NW: deliver via channel
+NW -> PG: update delivery status
+NW --> Student: receive reminder/alert (<1 min for exam alert)
+
+alt delivery failed
+  NW -> Q: retry with backoff
+end
+@enduml

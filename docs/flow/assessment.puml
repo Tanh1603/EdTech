@@ -1,0 +1,63 @@
+@startuml AssessmentFlow
+actor Teacher
+actor Student
+participant UI
+participant "API Gateway" as APIGW
+participant "Backend (Monolith)" as BE
+participant "AI Service" as AIS
+participant "Orchestrator Agent" as ORCH
+participant "Assessment Agent" as ASSESS
+participant "Analytics Agent" as ANALYTICS
+database "PostgreSQL" as PG
+queue "Queue" as Q
+participant "Grading Worker" as GW
+participant "Proctor Worker" as PW
+
+Teacher -> UI: Generate exam config
+UI -> APIGW: /exams/generate
+APIGW -> BE: request
+BE -> AIS: generate exam
+AIS -> ORCH: intent=assessment_generate
+ORCH -> ASSESS: build exam (20-60-20, personalized)
+ASSESS --> ORCH: draft exam
+ORCH --> AIS: draft
+AIS --> BE: exam draft
+BE -> PG: save draft
+BE --> UI: draft for edit/publish
+
+Teacher -> UI: Publish exam
+UI -> APIGW: /exams/{id}/publish
+APIGW -> BE: publish
+BE -> PG: exam published
+
+Student -> UI: Start timed exam
+UI -> APIGW: /attempts/start
+APIGW -> BE: create attempt + timer
+BE -> PG: save attempt
+
+Student -> UI: Submit answers
+UI -> APIGW: /attempts/submit
+APIGW -> BE: store answers
+BE -> PG: persist answers
+BE -> Q: enqueue essay grading (async)
+BE -> Q: enqueue proctor/similarity checks (async)
+BE --> UI: immediate ack + objective score
+
+Q -> GW: essay grading
+GW -> AIS: grade rubric
+AIS -> ORCH: route grading
+ORCH -> ASSESS: evaluate + explanations
+ASSESS --> ORCH
+ORCH --> AIS
+AIS --> GW
+GW -> PG: save final score + feedback
+
+Q -> PW: anomaly/copy detection
+PW -> ANALYTICS: detect similarity/abnormal
+ANALYTICS -> PG: save alerts
+
+Teacher -> UI: review results/override
+UI -> APIGW: /results + /override
+APIGW -> BE: fetch/update
+BE -> PG: read/write scores
+@enduml

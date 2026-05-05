@@ -1,0 +1,38 @@
+@startuml LearningTutorRAGFlow
+actor Teacher
+actor Student
+participant UI
+participant "API Gateway" as APIGW
+participant "Backend (Monolith)" as BE
+participant "AI Service" as AIS
+participant "Orchestrator Agent" as ORCH
+participant "Tutor Agent" as TUTOR
+database "PostgreSQL" as PG
+collections "Vector DB" as VDB
+collections "Cache" as CACHE
+queue "Queue" as Q
+participant "Ingestion Worker" as IW
+
+Teacher -> UI: Upload material
+UI -> APIGW: /documents/upload
+APIGW -> BE: store metadata
+BE -> PG: save document metadata
+BE -> Q: enqueue ingest (async)
+Q -> IW: chunk + embed + index
+IW -> VDB: upsert vectors
+IW -> PG: update status=ready
+
+Student -> UI: Ask question/text/image + language
+UI -> APIGW: /chat/message
+APIGW -> BE: request
+BE -> AIS: tutoring request
+AIS -> ORCH: intent=tutor_rag
+ORCH -> TUTOR: answer with citations
+TUTOR -> VDB: semantic retrieve top-k
+TUTOR -> CACHE: optional cache lookup/update
+TUTOR --> ORCH: explanation + misconception check + follow-up + citations
+ORCH --> AIS: final answer
+AIS --> BE: response
+BE -> PG: save chat history
+BE --> UI: answer + citations
+@enduml

@@ -1,0 +1,1543 @@
+openapi: 3.0.3
+info:
+  title: EdTech AI Platform API
+  version: 1.1.0
+  description: |
+    Production-ready API contract for Monolith Backend + AI Service.
+    All endpoint descriptions map to User Stories (US-001..US-052).
+    Standard response envelope for all APIs:
+    {
+      "success": true|false,
+      "data": object|null,
+      "meta": { "requestId": "uuid", "timestamp": "ISO-8601", "pagination": {...optional} },
+      "error": { "code": "...", "message": "...", "details": [...] } | null
+    }
+servers:
+  - url: https://api.edtech.local/v1
+    description: Backend (Monolith)
+  - url: https://ai.edtech.local/v1
+    description: AI Service (separate service)
+
+tags:
+  - name: Auth APIs
+  - name: User APIs
+  - name: Course/Class APIs
+  - name: Learning APIs
+  - name: Chat / AI APIs
+  - name: Assessment APIs
+  - name: Analytics APIs
+  - name: Notification APIs
+  - name: Admin APIs
+  - name: Jobs APIs
+  - name: AI Service APIs
+
+security:
+  - bearerAuth: []
+
+paths:
+  /auth/clerk/webhook:
+    post:
+      tags: [Auth APIs]
+      summary: Clerk webhook for user lifecycle sync
+      description: "US-001, US-002 (public webhook endpoint; verify Clerk signature)"
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ClerkWebhookRequest' }
+      responses:
+        '200':
+          description: Webhook accepted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WebhookAckResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /auth/me:
+    get:
+      tags: [Auth APIs]
+      summary: Get current authenticated user from Clerk JWT
+      description: "US-002"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthMeResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /auth/logout:
+    post:
+      tags: [Auth APIs]
+      summary: Logout current session
+      description: "US-002 (stateless JWT; endpoint can clear server-side cache/session hints)"
+      responses:
+        '204': { description: No Content }
+
+  /users/me:
+    get:
+      tags: [User APIs]
+      summary: Get current user profile
+      description: "US-003, US-015, US-020"
+      responses:
+        '200':
+          description: OK
+          content: { application/json: { schema: { $ref: '#/components/schemas/UserResponse' } } }
+
+  /users/me/learning-profile:
+    put:
+      tags: [User APIs]
+      summary: Update learning profile
+      description: "US-003, US-017, US-018"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LearningProfile' }
+      responses:
+        '200':
+          description: Updated
+          content: { application/json: { schema: { $ref: '#/components/schemas/LearningProfileResponse' } } }
+
+  /users:
+    get:
+      tags: [Admin APIs]
+      summary: List users
+      description: "US-005"
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - in: query
+          name: role
+          schema: { type: string, enum: [student, teacher, admin] }
+        - in: query
+          name: q
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content: { application/json: { schema: { $ref: '#/components/schemas/PaginatedUsersResponse' } } }
+      security: [{ bearerAuth: [] }]
+    post:
+      tags: [Admin APIs]
+      summary: Create user
+      description: "US-005"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AdminCreateUserRequest' }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/UserResponse' } } } }
+
+  /users/{userId}:
+    put:
+      tags: [Admin APIs]
+      summary: Update user
+      description: "US-005"
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AdminUpdateUserRequest' }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/UserResponse' } } } }
+    delete:
+      tags: [Admin APIs]
+      summary: Deactivate user
+      description: "US-005"
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '204': { description: No Content }
+
+  /classes:
+    post:
+      tags: [Course/Class APIs]
+      summary: Create class
+      description: "US-004"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateClassRequest' }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/ClassroomResponse' } } } }
+    get:
+      tags: [Course/Class APIs]
+      summary: List classes
+      description: "US-004, US-042"
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/PaginatedClassesResponse' } } } }
+
+  /classes/{classId}/invites:
+    post:
+      tags: [Course/Class APIs]
+      summary: Invite students to class
+      description: "US-004"
+      parameters:
+        - $ref: '#/components/parameters/ClassId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [emails]
+              properties:
+                emails:
+                  type: array
+                  items: { type: string, format: email }
+      responses:
+        '202':
+          description: Async invite dispatch
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/JobAcceptedResponse' }
+
+  /courses:
+    post:
+      tags: [Course/Class APIs]
+      summary: Create course
+      description: "US-022, US-024"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Course' }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/CourseResponse' } } } }
+    get:
+      tags: [Course/Class APIs]
+      summary: List courses
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/PaginatedCoursesResponse' } } } }
+
+  /documents:
+    post:
+      tags: [Learning APIs]
+      summary: Upload learning document metadata
+      description: "US-022, US-024"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateDocumentRequest' }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/DocumentResponse' } } } }
+    get:
+      tags: [Learning APIs]
+      summary: List documents
+      description: "US-024"
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - in: query
+          name: courseId
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/PaginatedDocumentsResponse' } } } }
+
+  /documents/{documentId}:
+    put:
+      tags: [Learning APIs]
+      summary: Update document
+      description: "US-024"
+      parameters:
+        - $ref: '#/components/parameters/DocumentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateDocumentRequest' }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Document' } } } }
+    delete:
+      tags: [Learning APIs]
+      summary: Delete document
+      description: "US-024"
+      parameters:
+        - $ref: '#/components/parameters/DocumentId'
+      responses:
+        '204': { description: No Content }
+
+  /placement-tests:
+    post:
+      tags: [Learning APIs]
+      summary: Submit placement test
+      description: "US-003"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [answers]
+              properties:
+                answers:
+                  type: array
+                  items:
+                    type: object
+                    required: [questionId, answer]
+                    properties:
+                      questionId: { type: string }
+                      answer: { type: string }
+      responses:
+        '200':
+          description: Placement result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  level: { type: string, enum: [beginner, intermediate, advanced] }
+                  score: { type: number }
+
+  /learning/roadmap:
+    get:
+      tags: [Learning APIs]
+      summary: Get personalized roadmap
+      description: "US-017, US-018, US-019"
+      responses:
+        '200':
+          description: OK
+          content: { application/json: { schema: { $ref: '#/components/schemas/LearningPlan' } } }
+
+  /learning/progress:
+    get:
+      tags: [Learning APIs]
+      summary: Get progress summary
+      description: "US-020, US-039, US-040"
+      responses:
+        '200':
+          description: OK
+          content: { application/json: { schema: { $ref: '#/components/schemas/ProgressSummary' } } }
+
+  /chat/sessions:
+    post:
+      tags: [Chat / AI APIs]
+      summary: Create chat session
+      description: "US-006, US-009"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                language: { type: string, default: vi }
+      responses:
+        '201':
+          description: Created
+          content: { application/json: { schema: { $ref: '#/components/schemas/ChatSessionResponse' } } }
+    get:
+      tags: [Chat / AI APIs]
+      summary: List chat sessions
+      description: "US-014"
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: OK
+          content: { application/json: { schema: { $ref: '#/components/schemas/PaginatedChatSessionsResponse' } } }
+
+  /chat/sessions/{sessionId}/messages:
+    post:
+      tags: [Chat / AI APIs]
+      summary: Send message to AI orchestrator
+      description: "US-006, US-007, US-008, US-011, US-012, US-013, US-015, US-016, US-023"
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ChatMessageCreate' }
+      responses:
+        '200':
+          description: AI response
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ChatResponseEnvelope' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+    get:
+      tags: [Chat / AI APIs]
+      summary: Get chat history
+      description: "US-014"
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedChatMessagesResponse' }
+
+  /chat/sessions/{sessionId}/memory/reset:
+    post:
+      tags: [Chat / AI APIs]
+      summary: Reset session context
+      description: "US-009"
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '204': { description: No Content }
+
+  /exams/generate:
+    post:
+      tags: [Assessment APIs]
+      summary: Generate exam draft by AI
+      description: "US-025, US-027, US-028, US-029"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GenerateExamRequest' }
+      responses:
+        '201':
+          description: Draft created
+          content: { application/json: { schema: { $ref: '#/components/schemas/ExamResponse' } } }
+
+  /exams/{examId}:
+    put:
+      tags: [Assessment APIs]
+      summary: Edit exam draft
+      description: "US-026"
+      parameters:
+        - $ref: '#/components/parameters/ExamId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ExamUpdateRequest' }
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { $ref: '#/components/schemas/Exam' } } } }
+
+  /exams/{examId}/publish:
+    post:
+      tags: [Assessment APIs]
+      summary: Publish exam
+      description: "US-026"
+      parameters:
+        - $ref: '#/components/parameters/ExamId'
+      responses:
+        '200': { description: Published }
+
+  /exams/{examId}/attempts:
+    post:
+      tags: [Assessment APIs]
+      summary: Start online attempt
+      description: "US-030"
+      parameters:
+        - $ref: '#/components/parameters/ExamId'
+      responses:
+        '201':
+          description: Attempt started
+          content: { application/json: { schema: { $ref: '#/components/schemas/Submission' } } }
+
+  /attempts/{attemptId}/submit:
+    post:
+      tags: [Assessment APIs]
+      summary: Submit exam answers
+      description: "US-030, US-031, US-032, US-033"
+      parameters:
+        - $ref: '#/components/parameters/AttemptId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SubmitAttemptRequest' }
+      responses:
+        '200':
+          description: Objective result + async jobs for essay/proctoring
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  immediateResult: { $ref: '#/components/schemas/Result' }
+                  gradingJob: { $ref: '#/components/schemas/JobRef' }
+                  proctorJob: { $ref: '#/components/schemas/JobRef' }
+
+  /results:
+    get:
+      tags: [Assessment APIs]
+      summary: Query results
+      description: "US-034"
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - in: query
+          name: examId
+          schema: { type: string, format: uuid }
+        - in: query
+          name: studentId
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: OK
+          content: { application/json: { schema: { $ref: '#/components/schemas/PaginatedResults' } } }
+
+  /results/{resultId}/override:
+    post:
+      tags: [Assessment APIs]
+      summary: Override score
+      description: "US-035"
+      parameters:
+        - $ref: '#/components/parameters/ResultId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [score, reason]
+              properties:
+                score: { type: number, minimum: 0, maximum: 100 }
+                reason: { type: string, minLength: 3 }
+      responses:
+        '200': { description: Overridden }
+
+  /analytics/student:
+    get:
+      tags: [Analytics APIs]
+      summary: Student dashboard
+      description: "US-038, US-039, US-040, US-041"
+      responses:
+        '200':
+          description: OK
+          content: { application/json: { schema: { $ref: '#/components/schemas/AnalyticsReportResponse' } } }
+
+  /analytics/class/{classId}:
+    get:
+      tags: [Analytics APIs]
+      summary: Teacher class analytics
+      description: "US-042, US-043, US-044, US-045"
+      parameters:
+        - $ref: '#/components/parameters/ClassId'
+      responses:
+        '200':
+          description: OK
+          content: { application/json: { schema: { $ref: '#/components/schemas/AnalyticsReportResponse' } } }
+
+  /analytics/export:
+    post:
+      tags: [Analytics APIs]
+      summary: Export analytics (PDF/Excel)
+      description: "US-046 (async)"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [scope, format]
+              properties:
+                scope: { type: string, enum: [student, class, system] }
+                classId: { type: string, format: uuid }
+                format: { type: string, enum: [pdf, xlsx] }
+      responses:
+        '202':
+          description: Export job accepted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/JobAcceptedResponse' }
+
+  /notifications:
+    post:
+      tags: [Notification APIs]
+      summary: Create/send notification
+      description: "US-052, US-050, US-051 (async dispatch)"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NotificationRequest' }
+      responses:
+        '202':
+          description: Notification job accepted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/JobAcceptedResponse' }
+    get:
+      tags: [Notification APIs]
+      summary: List my notifications
+      description: "US-050, US-051"
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: OK
+          content: { application/json: { schema: { $ref: '#/components/schemas/PaginatedNotificationsResponse' } } }
+
+  /jobs/{jobId}:
+    get:
+      tags: [Jobs APIs]
+      summary: Get async job status/result
+      description: "Used by US-021, US-032, US-036, US-037, US-046, US-050, US-051, US-052"
+      parameters:
+        - $ref: '#/components/parameters/JobId'
+      responses:
+        '200':
+          description: OK
+          content: { application/json: { schema: { $ref: '#/components/schemas/JobStatusResponse' } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /admin/metrics:
+    get:
+      tags: [Admin APIs]
+      summary: Realtime platform metrics
+      description: "US-047"
+      responses:
+        '200':
+          description: OK
+          content: { application/json: { schema: { $ref: '#/components/schemas/SystemMetrics' } } }
+
+  /admin/agents/monitor:
+    get:
+      tags: [Admin APIs]
+      summary: Monitor AI agent latency/errors
+      description: "US-048"
+      parameters:
+        - in: query
+          name: from
+          schema: { type: string, format: date-time }
+        - in: query
+          name: to
+          schema: { type: string, format: date-time }
+      responses:
+        '200':
+          description: OK
+          content: { application/json: { schema: { $ref: '#/components/schemas/AgentMonitorReport' } } }
+
+  /admin/logs:
+    get:
+      tags: [Admin APIs]
+      summary: Search system logs
+      description: "US-049, US-010, US-037"
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - in: query
+          name: q
+          schema: { type: string }
+        - in: query
+          name: level
+          schema: { type: string, enum: [info, warn, error] }
+      responses:
+        '200':
+          description: OK
+          content: { application/json: { schema: { $ref: '#/components/schemas/PaginatedLogs' } } }
+
+  /ai/chat:
+    post:
+      tags: [AI Service APIs]
+      summary: AI orchestrated chat processing
+      description: "AI service endpoint for US-006..US-016, US-023"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AIChatRequest' }
+      responses:
+        '200':
+          description: AI response
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AIChatResponse' }
+
+  /ai/generate-exam:
+    post:
+      tags: [AI Service APIs]
+      summary: Generate exam content
+      description: "US-025..US-029"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AIGenerateExamRequest' }
+      responses:
+        '200':
+          description: Generated exam draft
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Exam' }
+
+  /ai/grade:
+    post:
+      tags: [AI Service APIs]
+      summary: Grade submission (essay/objective mix)
+      description: "US-031, US-032, US-033 (supports async)"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AIGradeRequest' }
+      responses:
+        '202':
+          description: Grading job accepted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/JobAcceptedResponse' }
+
+  /ai/analyze:
+    post:
+      tags: [AI Service APIs]
+      summary: Analyze weaknesses, class patterns, anomalies
+      description: "US-036, US-037, US-039, US-043, US-044, US-045, US-048"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AIAnalyzeRequest' }
+      responses:
+        '202':
+          description: Analysis job accepted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/JobAcceptedResponse' }
+
+  /ai/recommend:
+    post:
+      tags: [AI Service APIs]
+      summary: Generate personalized recommendations/roadmap
+      description: "US-017, US-018, US-019, US-021"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AIRecommendRequest' }
+      responses:
+        '200':
+          description: Recommendation result
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LearningPlan' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    Page: { in: query, name: page, schema: { type: integer, minimum: 1, default: 1 } }
+    Limit: { in: query, name: limit, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+    UserId: { in: path, name: userId, required: true, schema: { type: string, format: uuid } }
+    ClassId: { in: path, name: classId, required: true, schema: { type: string, format: uuid } }
+    SessionId: { in: path, name: sessionId, required: true, schema: { type: string, format: uuid } }
+    DocumentId: { in: path, name: documentId, required: true, schema: { type: string, format: uuid } }
+    ExamId: { in: path, name: examId, required: true, schema: { type: string, format: uuid } }
+    AttemptId: { in: path, name: attemptId, required: true, schema: { type: string, format: uuid } }
+    ResultId: { in: path, name: resultId, required: true, schema: { type: string, format: uuid } }
+    JobId: { in: path, name: jobId, required: true, schema: { type: string, format: uuid } }
+
+  responses:
+    BadRequest:
+      description: Validation error
+      content: { application/json: { schema: { $ref: '#/components/schemas/ApiErrorResponse' } } }
+    Unauthorized:
+      description: Unauthorized
+      content: { application/json: { schema: { $ref: '#/components/schemas/ApiErrorResponse' } } }
+    Forbidden:
+      description: Forbidden
+      content: { application/json: { schema: { $ref: '#/components/schemas/ApiErrorResponse' } } }
+    NotFound:
+      description: Not found
+      content: { application/json: { schema: { $ref: '#/components/schemas/ApiErrorResponse' } } }
+    Conflict:
+      description: Conflict
+      content: { application/json: { schema: { $ref: '#/components/schemas/ApiErrorResponse' } } }
+    UnprocessableEntity:
+      description: Unprocessable content
+      content: { application/json: { schema: { $ref: '#/components/schemas/ApiErrorResponse' } } }
+
+  schemas:
+    ResponseMeta:
+      type: object
+      required: [requestId, timestamp]
+      properties:
+        requestId: { type: string, format: uuid }
+        timestamp: { type: string, format: date-time }
+        pagination:
+          type: object
+          properties:
+            page: { type: integer }
+            limit: { type: integer }
+            total: { type: integer }
+
+    ApiError:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string }
+        message: { type: string }
+        details: { type: array, items: { type: string } }
+
+    ApiErrorResponse:
+      type: object
+      required: [success, data, meta, error]
+      properties:
+        success: { type: boolean, example: false }
+        data: { type: object, nullable: true, example: null }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+        error: { $ref: '#/components/schemas/ApiError' }
+
+    ErrorResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string }
+        message: { type: string }
+        details: { type: array, items: { type: string } }
+
+    AuthResponse:
+      type: object
+      deprecated: true
+      description: Deprecated for Clerk-first auth. Keep temporarily for backward compatibility.
+      properties:
+        accessToken: { type: string }
+        refreshToken: { type: string }
+        expiresIn: { type: integer }
+        user: { $ref: '#/components/schemas/User' }
+
+    RegisterRequest:
+      type: object
+      deprecated: true
+      required: [email, password, fullName]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8 }
+        fullName: { type: string, minLength: 2 }
+
+    LoginRequest:
+      type: object
+      deprecated: true
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string }
+
+    ClerkWebhookRequest:
+      type: object
+      required: [type, data]
+      properties:
+        type:
+          type: string
+          enum: [user.created, user.updated, user.deleted]
+        data:
+          type: object
+          required: [id]
+          properties:
+            id: { type: string, description: "Clerk user id (sub)" }
+            email_addresses:
+              type: array
+              items:
+                type: object
+                properties:
+                  email_address: { type: string, format: email }
+            first_name: { type: string, nullable: true }
+            last_name: { type: string, nullable: true }
+            image_url: { type: string, nullable: true }
+
+    WebhookAckPayload:
+      type: object
+      properties:
+        received: { type: boolean, example: true }
+        eventType: { type: string }
+        externalUserId: { type: string }
+
+    WebhookAckResponse:
+      type: object
+      required: [success, data, meta, error]
+      properties:
+        success: { type: boolean, example: true }
+        data: { $ref: '#/components/schemas/WebhookAckPayload' }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+        error: { type: object, nullable: true, example: null }
+
+    AuthMePayload:
+      type: object
+      properties:
+        user: { $ref: '#/components/schemas/User' }
+        auth:
+          type: object
+          properties:
+            externalUserId: { type: string }
+            issuer: { type: string }
+            audience: { type: string }
+
+    AuthMeResponse:
+      type: object
+      required: [success, data, meta, error]
+      properties:
+        success: { type: boolean, example: true }
+        data: { $ref: '#/components/schemas/AuthMePayload' }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+        error: { type: object, nullable: true, example: null }
+
+    User:
+      type: object
+      required: [id, email, role, status]
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        fullName: { type: string }
+        role: { type: string, enum: [student, teacher, admin] }
+        status: { type: string, enum: [active, inactive, pending] }
+        language: { type: string, default: vi }
+        createdAt: { type: string, format: date-time }
+
+    AdminCreateUserRequest:
+      type: object
+      required: [externalUserId, email, role]
+      properties:
+        externalUserId: { type: string, description: "Clerk user id (sub)" }
+        email: { type: string, format: email }
+        fullName: { type: string }
+        role: { type: string, enum: [student, teacher, admin] }
+        status: { type: string, enum: [active, inactive, pending], default: active }
+
+    AdminUpdateUserRequest:
+      type: object
+      properties:
+        fullName: { type: string }
+        role: { type: string, enum: [student, teacher, admin] }
+        status: { type: string, enum: [active, inactive] }
+
+    Course:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: string }
+        teacherId: { type: string, format: uuid }
+
+    Classroom:
+      type: object
+      required: [id, name, teacherId]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        courseId: { type: string, format: uuid }
+        teacherId: { type: string, format: uuid }
+        inviteCode: { type: string }
+
+    CreateClassRequest:
+      type: object
+      required: [name, courseId]
+      properties:
+        name: { type: string, minLength: 2 }
+        courseId: { type: string, format: uuid }
+
+    Lesson:
+      type: object
+      required: [id, courseId, title]
+      properties:
+        id: { type: string, format: uuid }
+        courseId: { type: string, format: uuid }
+        title: { type: string }
+        contentType: { type: string, enum: [text, video, quiz, lab] }
+
+    LearningProfile:
+      type: object
+      properties:
+        userId: { type: string, format: uuid }
+        level: { type: string, enum: [beginner, intermediate, advanced] }
+        goals: { type: array, items: { type: string } }
+        weakTopics: { type: array, items: { type: string } }
+        preferredLanguage: { type: string }
+
+    LearningPlan:
+      type: object
+      properties:
+        userId: { type: string, format: uuid }
+        milestones:
+          type: array
+          items:
+            type: object
+            properties:
+              week: { type: integer }
+              objective: { type: string }
+              tasks: { type: array, items: { type: string } }
+
+    ProgressSummary:
+      type: object
+      properties:
+        completionPercent: { type: number }
+        topWeaknesses:
+          type: array
+          items: { type: string }
+        trend: { type: string, enum: [up, flat, down] }
+
+    Document:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        courseId: { type: string, format: uuid }
+        title: { type: string }
+        fileUrl: { type: string }
+        status: { type: string, enum: [uploaded, indexing, ready, failed] }
+
+    CreateDocumentRequest:
+      type: object
+      required: [courseId, title, fileUrl]
+      properties:
+        courseId: { type: string, format: uuid }
+        title: { type: string }
+        fileUrl: { type: string }
+
+    UpdateDocumentRequest:
+      type: object
+      properties:
+        title: { type: string }
+
+    ChatSession:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        userId: { type: string, format: uuid }
+        language: { type: string }
+
+    ChatMessage:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        sessionId: { type: string, format: uuid }
+        role: { type: string, enum: [user, assistant, system] }
+        content: { type: string }
+        createdAt: { type: string, format: date-time }
+
+    ChatMessageCreate:
+      type: object
+      required: [content]
+      properties:
+        content: { type: string, minLength: 1, maxLength: 8000 }
+        language: { type: string }
+        imageUrl: { type: string, nullable: true }
+
+    ChatResponse:
+      type: object
+      properties:
+        message: { $ref: '#/components/schemas/ChatMessage' }
+        intent: { type: string }
+        confidence: { type: number }
+        citations:
+          type: array
+          items:
+            type: object
+            properties:
+              source: { type: string }
+              snippet: { type: string }
+        followUpQuestion: { type: string, nullable: true }
+
+    Exam:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        classId: { type: string, format: uuid }
+        title: { type: string }
+        status: { type: string, enum: [draft, published, archived] }
+        durationMinutes: { type: integer }
+        personalized: { type: boolean }
+        questions:
+          type: array
+          items: { $ref: '#/components/schemas/Question' }
+
+    Question:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        type: { type: string, enum: [mcq, true_false, short_answer, essay] }
+        difficulty: { type: string, enum: [easy, medium, hard] }
+        prompt: { type: string }
+        options: { type: array, items: { type: string } }
+        answerKey: { type: string, nullable: true }
+
+    GenerateExamRequest:
+      type: object
+      required: [classId, title, durationMinutes, blueprint]
+      properties:
+        classId: { type: string, format: uuid }
+        title: { type: string }
+        durationMinutes: { type: integer, minimum: 5 }
+        personalized: { type: boolean, default: false }
+        questionTypes:
+          type: array
+          items: { type: string, enum: [mcq, true_false, short_answer, essay] }
+        blueprint:
+          type: object
+          properties:
+            easyPercent: { type: integer, default: 20 }
+            mediumPercent: { type: integer, default: 60 }
+            hardPercent: { type: integer, default: 20 }
+
+    ExamUpdateRequest:
+      type: object
+      properties:
+        title: { type: string }
+        durationMinutes: { type: integer }
+        questions:
+          type: array
+          items: { $ref: '#/components/schemas/Question' }
+
+    Submission:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        examId: { type: string, format: uuid }
+        studentId: { type: string, format: uuid }
+        startedAt: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
+
+    SubmitAttemptRequest:
+      type: object
+      required: [answers]
+      properties:
+        answers:
+          type: array
+          items:
+            type: object
+            required: [questionId, answer]
+            properties:
+              questionId: { type: string, format: uuid }
+              answer: { type: string }
+
+    Result:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        attemptId: { type: string, format: uuid }
+        score: { type: number }
+        maxScore: { type: number }
+        breakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              questionId: { type: string, format: uuid }
+              correct: { type: boolean }
+              explanation: { type: string }
+
+    AnalyticsReport:
+      type: object
+      properties:
+        scope: { type: string, enum: [student, class, system] }
+        generatedAt: { type: string, format: date-time }
+        metrics:
+          type: object
+          additionalProperties: true
+        charts:
+          type: array
+          items:
+            type: object
+            properties:
+              type: { type: string }
+              data: { type: object, additionalProperties: true }
+        recommendations:
+          type: array
+          items: { type: string }
+
+    NotificationRequest:
+      type: object
+      required: [title, body, audience]
+      properties:
+        title: { type: string }
+        body: { type: string }
+        audience:
+          type: object
+          properties:
+            type: { type: string, enum: [user_ids, class_id, role] }
+            values: { type: array, items: { type: string } }
+        sendAt: { type: string, format: date-time, nullable: true }
+
+    Notification:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        userId: { type: string, format: uuid }
+        title: { type: string }
+        body: { type: string }
+        status: { type: string, enum: [queued, sent, failed, read] }
+        createdAt: { type: string, format: date-time }
+
+    JobRef:
+      type: object
+      properties:
+        jobId: { type: string, format: uuid }
+
+    JobAcceptedResponse:
+      type: object
+      required: [jobId, status]
+      properties:
+        jobId: { type: string, format: uuid }
+        status: { type: string, enum: [queued] }
+
+    JobStatus:
+      type: object
+      properties:
+        jobId: { type: string, format: uuid }
+        type: { type: string }
+        status: { type: string, enum: [queued, running, succeeded, failed] }
+        progress: { type: integer, minimum: 0, maximum: 100 }
+        result: { type: object, nullable: true }
+        error: { type: string, nullable: true }
+
+    SystemMetrics:
+      type: object
+      properties:
+        activeUsers: { type: integer }
+        reqPerMin: { type: integer }
+        avgLatencyMs: { type: number }
+        errorRate: { type: number }
+
+    AgentMonitorReport:
+      type: object
+      properties:
+        orchestrator:
+          type: object
+          properties:
+            p95LatencyMs: { type: number }
+            routeAccuracy: { type: number }
+        agents:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              p95LatencyMs: { type: number }
+              errorRate: { type: number }
+
+    LogEntry:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        level: { type: string }
+        message: { type: string }
+        traceId: { type: string }
+        createdAt: { type: string, format: date-time }
+
+    AIChatRequest:
+      type: object
+      required: [sessionId, userId, message]
+      properties:
+        sessionId: { type: string, format: uuid }
+        userId: { type: string, format: uuid }
+        message: { type: string }
+        language: { type: string }
+        context: { type: object, additionalProperties: true }
+
+    AIChatResponse:
+      type: object
+      properties:
+        intent: { type: string }
+        confidence: { type: number }
+        response: { type: string }
+        citations:
+          type: array
+          items:
+            type: object
+            properties:
+              source: { type: string }
+              snippet: { type: string }
+        agentTrace:
+          type: array
+          items: { type: string }
+
+    AIGenerateExamRequest:
+      allOf:
+        - $ref: '#/components/schemas/GenerateExamRequest'
+
+    AIGradeRequest:
+      type: object
+      required: [attemptId, answers]
+      properties:
+        attemptId: { type: string, format: uuid }
+        answers:
+          type: array
+          items:
+            type: object
+            properties:
+              questionId: { type: string, format: uuid }
+              answer: { type: string }
+
+    AIAnalyzeRequest:
+      type: object
+      required: [scope]
+      properties:
+        scope: { type: string, enum: [student, class, system, proctoring] }
+        classId: { type: string, format: uuid, nullable: true }
+        studentId: { type: string, format: uuid, nullable: true }
+        from: { type: string, format: date-time, nullable: true }
+        to: { type: string, format: date-time, nullable: true }
+
+    AIRecommendRequest:
+      type: object
+      required: [userId]
+      properties:
+        userId: { type: string, format: uuid }
+        goal: { type: string }
+        constraints:
+          type: object
+          properties:
+            hoursPerWeek: { type: integer }
+            deadline: { type: string, format: date }
+
+    PaginatedUsers:
+      type: object
+      properties:
+        data: { type: array, items: { $ref: '#/components/schemas/User' } }
+        page: { type: integer }
+        limit: { type: integer }
+        total: { type: integer }
+
+    PaginatedClasses:
+      type: object
+      properties:
+        data: { type: array, items: { $ref: '#/components/schemas/Classroom' } }
+        page: { type: integer }
+        limit: { type: integer }
+        total: { type: integer }
+
+    PaginatedCourses:
+      type: object
+      properties:
+        data: { type: array, items: { $ref: '#/components/schemas/Course' } }
+        page: { type: integer }
+        limit: { type: integer }
+        total: { type: integer }
+
+    PaginatedDocuments:
+      type: object
+      properties:
+        data: { type: array, items: { $ref: '#/components/schemas/Document' } }
+        page: { type: integer }
+        limit: { type: integer }
+        total: { type: integer }
+
+    PaginatedChatSessions:
+      type: object
+      properties:
+        data: { type: array, items: { $ref: '#/components/schemas/ChatSession' } }
+        page: { type: integer }
+        limit: { type: integer }
+        total: { type: integer }
+
+    PaginatedChatMessages:
+      type: object
+      properties:
+        data: { type: array, items: { $ref: '#/components/schemas/ChatMessage' } }
+        page: { type: integer }
+        limit: { type: integer }
+        total: { type: integer }
+
+    PaginatedResults:
+      type: object
+      properties:
+        data: { type: array, items: { $ref: '#/components/schemas/Result' } }
+        page: { type: integer }
+        limit: { type: integer }
+        total: { type: integer }
+
+    PaginatedNotifications:
+      type: object
+      properties:
+        data: { type: array, items: { $ref: '#/components/schemas/Notification' } }
+        page: { type: integer }
+        limit: { type: integer }
+        total: { type: integer }
+
+    PaginatedLogs:
+      type: object
+      properties:
+        data: { type: array, items: { $ref: '#/components/schemas/LogEntry' } }
+        page: { type: integer }
+        limit: { type: integer }
+        total: { type: integer }
+
+    UserResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data: { $ref: '#/components/schemas/User' }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+        error: { type: object, nullable: true, example: null }
+
+    LearningProfileResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data: { $ref: '#/components/schemas/LearningProfile' }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+        error: { type: object, nullable: true, example: null }
+
+    CourseResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data: { $ref: '#/components/schemas/Course' }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+        error: { type: object, nullable: true, example: null }
+
+    ClassroomResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data: { $ref: '#/components/schemas/Classroom' }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+        error: { type: object, nullable: true, example: null }
+
+    DocumentResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data: { $ref: '#/components/schemas/Document' }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+        error: { type: object, nullable: true, example: null }
+
+    ChatSessionResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data: { $ref: '#/components/schemas/ChatSession' }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+        error: { type: object, nullable: true, example: null }
+
+    ChatResponseEnvelope:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data: { $ref: '#/components/schemas/ChatResponse' }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+        error: { type: object, nullable: true, example: null }
+
+    ExamResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data: { $ref: '#/components/schemas/Exam' }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+        error: { type: object, nullable: true, example: null }
+
+    AnalyticsReportResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data: { $ref: '#/components/schemas/AnalyticsReport' }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+        error: { type: object, nullable: true, example: null }
+
+    JobStatusResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data: { $ref: '#/components/schemas/JobStatus' }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+        error: { type: object, nullable: true, example: null }
+
+    PaginatedUsersResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data: { type: array, items: { $ref: '#/components/schemas/User' } }
+        meta:
+          allOf:
+            - $ref: '#/components/schemas/ResponseMeta'
+            - type: object
+              properties:
+                pagination: { $ref: '#/components/schemas/PaginatedUsers' }
+        error: { type: object, nullable: true, example: null }
+
+    PaginatedClassesResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data: { type: array, items: { $ref: '#/components/schemas/Classroom' } }
+        meta:
+          allOf:
+            - $ref: '#/components/schemas/ResponseMeta'
+            - type: object
+              properties:
+                pagination: { $ref: '#/components/schemas/PaginatedClasses' }
+        error: { type: object, nullable: true, example: null }
+
+    PaginatedCoursesResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data: { type: array, items: { $ref: '#/components/schemas/Course' } }
+        meta:
+          allOf:
+            - $ref: '#/components/schemas/ResponseMeta'
+            - type: object
+              properties:
+                pagination: { $ref: '#/components/schemas/PaginatedCourses' }
+        error: { type: object, nullable: true, example: null }
+
+    PaginatedDocumentsResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data: { type: array, items: { $ref: '#/components/schemas/Document' } }
+        meta:
+          allOf:
+            - $ref: '#/components/schemas/ResponseMeta'
+            - type: object
+              properties:
+                pagination: { $ref: '#/components/schemas/PaginatedDocuments' }
+        error: { type: object, nullable: true, example: null }
+
+    PaginatedChatSessionsResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data: { type: array, items: { $ref: '#/components/schemas/ChatSession' } }
+        meta:
+          allOf:
+            - $ref: '#/components/schemas/ResponseMeta'
+            - type: object
+              properties:
+                pagination: { $ref: '#/components/schemas/PaginatedChatSessions' }
+        error: { type: object, nullable: true, example: null }
+
+    PaginatedChatMessagesResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data: { type: array, items: { $ref: '#/components/schemas/ChatMessage' } }
+        meta:
+          allOf:
+            - $ref: '#/components/schemas/ResponseMeta'
+            - type: object
+              properties:
+                pagination: { $ref: '#/components/schemas/PaginatedChatMessages' }
+        error: { type: object, nullable: true, example: null }
+
+    PaginatedNotificationsResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data: { type: array, items: { $ref: '#/components/schemas/Notification' } }
+        meta:
+          allOf:
+            - $ref: '#/components/schemas/ResponseMeta'
+            - type: object
+              properties:
+                pagination: { $ref: '#/components/schemas/PaginatedNotifications' }
+        error: { type: object, nullable: true, example: null }

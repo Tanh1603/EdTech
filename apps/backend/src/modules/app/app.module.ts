@@ -9,6 +9,7 @@ import { RequestLoggingMiddleware } from '../../common/middlewares/request-loggi
 import { PrismaModule } from '../../common/prisma/prisma.module';
 import { ClerkClientProvider } from '../../common/providers/clerk-client.provider';
 import { AcademicModule } from '../academic/academic.module';
+import { AssessmentsModule } from '../assessments/assessments.module';
 import { AuthModule } from '../auth/auth.module';
 import { ClerkAuthGuard } from '../auth/guards/clerk-auth.guard';
 import { HealthModule } from '../health/health.module';
@@ -23,6 +24,7 @@ import { UsersModule } from '../users/users.module';
     AuthModule,
     UsersModule,
     AcademicModule,
+    AssessmentsModule,
     LearningModule,
     StorageModule,
     ConfigModule.forRoot({

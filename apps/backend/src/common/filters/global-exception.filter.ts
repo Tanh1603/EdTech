@@ -4,6 +4,7 @@ import {
   ExceptionFilter,
   HttpException,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import { Prisma } from '../../generated/prisma/client';
 import { Request, Response } from 'express';
@@ -11,6 +12,7 @@ import { ApiEnvelope, ApiError } from '../types/api-envelope.type';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger(GlobalExceptionFilter.name);
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const req = ctx.getRequest<Request & { requestId?: string }>();
@@ -24,6 +26,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       code: 'INTERNAL_ERROR',
       message: 'Internal server error',
     };
+
+    this.logger.error(exception);
 
     if (exception instanceof Prisma.PrismaClientKnownRequestError) {
       statusCode = this.mapPrismaStatus(exception.code);
@@ -64,6 +68,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       },
       error,
     };
+
+    this.logger.debug(error);
 
     res.status(statusCode).json(payload);
   }

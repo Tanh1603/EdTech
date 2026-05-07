@@ -1,9 +1,15 @@
 import { Module } from '@nestjs/common';
-import { AcademicController } from './controllers/academic.controller';
-import { AcademicService } from './services/academic.service';
+import { ClassroomsModule } from './classrooms/classrooms.module';
+import { CoursesModule } from './courses/courses.module';
+import { EnrollmentsModule } from './enrollments/enrollments.module';
+import { LessonsModule } from './lessons/lessons.module';
 
 @Module({
-  controllers: [AcademicController],
-  providers: [AcademicService],
+  imports: [
+    CoursesModule,
+    ClassroomsModule,
+    EnrollmentsModule,
+    LessonsModule,
+  ],
 })
 export class AcademicModule {}

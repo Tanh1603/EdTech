@@ -9,15 +9,11 @@ import { RequestLoggingMiddleware } from '../../common/middlewares/request-loggi
 import { PrismaModule } from '../../common/prisma/prisma.module';
 import { ClerkClientProvider } from '../../common/providers/clerk-client.provider';
 import { AcademicModule } from '../academic/academic.module';
-import { AssessmentModule } from '../assessment/assessment.module';
 import { AuthModule } from '../auth/auth.module';
-import { ChatModule } from '../chat/chat.module';
-import { HealthModule } from '../health/health.module';
-import { LearningModule } from '../learning/learning.module';
-import { OpsModule } from '../ops/ops.module';
-import { UsersModule } from '../users/users.module';
 import { ClerkAuthGuard } from '../auth/guards/clerk-auth.guard';
+import { HealthModule } from '../health/health.module';
 import { StorageModule } from '../storage/storage.module';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
@@ -26,10 +22,6 @@ import { StorageModule } from '../storage/storage.module';
     AuthModule,
     UsersModule,
     AcademicModule,
-    LearningModule,
-    ChatModule,
-    AssessmentModule,
-    OpsModule,
     StorageModule,
     ConfigModule.forRoot({
       envFilePath: 'apps/backend/.env',

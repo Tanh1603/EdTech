@@ -4,17 +4,43 @@ import {
   Delete,
   Post,
   UploadedFile,
-  UseInterceptors
+  UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { memoryStorage } from 'multer';
+import { DeleteFileDto } from './dto/delete-file.dto';
 import { StorageService } from './storage.service';
 
+@ApiTags('Storage')
+@ApiBearerAuth()
 @Controller('storage')
 export class StorageController {
-  constructor(private readonly storageService: StorageService) { }
+  constructor(private readonly storageService: StorageService) {}
 
   @Post('upload')
+  @ApiOperation({ summary: 'Upload file to Cloudinary' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file'],
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  @ApiOkResponse({ description: 'File uploaded successfully' })
   @UseInterceptors(
     FileInterceptor('file', {
       storage: memoryStorage(),
@@ -30,11 +56,12 @@ export class StorageController {
   }
 
   @Delete('delete')
+  @ApiOperation({ summary: 'Delete file from Cloudinary' })
+  @ApiBody({ type: DeleteFileDto })
+  @ApiOkResponse({ description: 'File deleted successfully' })
   async deleteFile(
-    @Body() data: { publicId: string },
+    @Body() data: DeleteFileDto,
   ) {
-    console.log(data.publicId);
-
     return this.storageService.deleteFile(data.publicId);
   }
 }

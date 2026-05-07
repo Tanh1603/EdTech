@@ -7,11 +7,9 @@ datasource db {
   provider = "postgresql"
 }
 
-enum UserStatus {
-  pending
-  active
-  inactive
-}
+//////////////////////////////////////////////////////
+//////////////////// ENUMS ///////////////////////////
+//////////////////////////////////////////////////////
 
 enum ClassRole {
   teacher
@@ -31,6 +29,12 @@ enum ExamStatus {
   archived
 }
 
+enum SubmissionStatus {
+  in_progress
+  submitted
+  graded
+}
+
 enum QuestionType {
   mcq
   true_false
@@ -38,341 +42,310 @@ enum QuestionType {
   essay
 }
 
-enum DifficultyLevel {
-  easy
-  medium
-  hard
-}
-
-enum SubmissionStatus {
-  in_progress
-  submitted
-  graded
-}
-
-enum GradedStatus {
-  pending
-  partial
+enum RoadmapStatus {
+  active
   completed
-  failed
+  paused
 }
 
-enum NotifyStatus {
-  queued
-  sent
-  failed
-  read
-}
-
-enum JobStatus {
-  queued
-  running
-  succeeded
-  failed
-  dead_letter
-}
-
-enum JobType {
-  ai_grade
-  ai_analyze
-  ai_generate_exam
-  analytics_aggregate
-  analytics_export
-  notification_dispatch
-  material_ingest
-  rag_index
-}
-
-// model User {
-//   id                String             @id @default(uuid()) @db.Uuid
-//   externalUserId    String             @unique @map("external_user_id")
-//   email             String             @unique
-//   fullName          String?            @map("full_name")
-//   avatarUrl         String?            @map("avatar_url")
-//   status            UserStatus         @default(active)
-//   preferredLanguage String?            @default("vi") @map("preferred_language")
-//   createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
-//   updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
-//   deletedAt         DateTime?          @map("deleted_at") @db.Timestamptz(6)
-//   classes           ClassMembership[]
-//   courses           Course[]
-//   learningProfile   LearningProfile?
-//   chatSessions      ChatSession[]
-//   submissions       Submission[]
-//   notifications     NotificationRecipient[]
-//   auditLogs         AuditLog[]
-
-//   @@index([status, createdAt])
-//   @@map("users")
-// }
+//////////////////////////////////////////////////////
+//////////////////// ACADEMIC ////////////////////////
+//////////////////////////////////////////////////////
 
 model Course {
-  id          String     @id @default(uuid()) @db.Uuid
-  teacherId   String     @map("teacher_id")
-  name        String
-  description String?
-  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime?  @map("updated_at") @db.Timestamptz(6)
-  // teacher     s       @relation(fields: [teacherId], references: [id])
-  classes     Classroom[]
-  materials   Material[]
+  id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  teacherId    String      @map("teacher_id")
+  name         String
+  description  String?
+  thumbnailUrl String?     @map("thumbnail_url")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt
+  classrooms   Classroom[]
+  lessons      Lesson[]
 
   @@map("courses")
 }
 
 model Classroom {
-  id           String            @id @default(uuid()) @db.Uuid
-  courseId     String            @map("course_id") @db.Uuid
-  name         String
-  inviteCode   String?           @unique @map("invite_code")
-  startsAt     DateTime?         @map("starts_at") @db.Timestamptz(6)
-  endsAt       DateTime?         @map("ends_at") @db.Timestamptz(6)
-  createdAt    DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
-  course       Course            @relation(fields: [courseId], references: [id])
-  memberships  ClassMembership[]
-  chatSessions ChatSession[]
-  exams        Exam[]
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseId   String    @map("course_id") @db.Uuid
+  name       String
+  inviteCode String    @unique @map("invite_code")
+  startAt    DateTime? @map("start_at")
+  endAt      DateTime? @map("end_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
 
-  @@map("classes")
+  course           Course            @relation(fields: [courseId], references: [id])
+  enrollments      Enrollment[]
+  exams            Exam[]
+  chatSessions     ChatSession[]
+  classroomLessons ClassroomLesson[]
+
+  @@map("classrooms")
 }
 
-model ClassMembership {
-  id          String    @id @default(uuid()) @db.Uuid
-  classId     String    @map("class_id") @db.Uuid
-  userId      String    @map("user_id")
-  roleInClass ClassRole @default(student) @map("role_in_class")
-  joinedAt    DateTime  @default(now()) @map("joined_at") @db.Timestamptz(6)
-  classroom   Classroom @relation(fields: [classId], references: [id])
-  // user        User      @relation(fields: [userId], references: [id])
+model Enrollment {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  classId   String    @map("class_id") @db.Uuid
+  userId    String    @map("user_id")
+  role      ClassRole @default(student)
+  joinedAt  DateTime  @default(now())
+  classroom Classroom @relation(fields: [classId], references: [id])
 
   @@unique([classId, userId])
-  @@map("class_memberships")
+  @@map("enrollments")
 }
 
-model LearningProfile {
-  userId            String    @id @map("user_id")
-  currentLevel      String?   @map("current_level")
-  targetGoal        String?   @map("target_goal")
-  weeklyHours       Int?      @map("weekly_hours")
-  preferredLanguage String?   @map("preferred_language")
-  weakTopics        String[]  @default([])
-  goals             String[]  @default([])
-  updatedAt         DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
-  // user              User      @relation(fields: [userId], references: [id])
+//////////////////////////////////////////////////////
+//////////////////// LESSONS /////////////////////////
+//////////////////////////////////////////////////////
 
-  @@map("learning_profiles")
+model Lesson {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseId    String   @map("course_id") @db.Uuid
+  title       String
+  description String?
+  orderNo     Int      @map("order_no")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  course           Course            @relation(fields: [courseId], references: [id])
+  materials        Material[]
+  classroomLessons ClassroomLesson[]
+
+  @@index([courseId, orderNo])
+  @@map("lessons")
 }
+
+model ClassroomLesson {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  classId     String    @map("class_id") @db.Uuid
+  lessonId    String    @map("lesson_id") @db.Uuid
+  isPublished Boolean   @default(true) @map("is_published")
+  publishedAt DateTime? @map("published_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  classroom Classroom @relation(fields: [classId], references: [id])
+  lesson    Lesson    @relation(fields: [lessonId], references: [id])
+
+  @@unique([classId, lessonId])
+  @@map("classroom_lessons")
+}
+
+//////////////////////////////////////////////////////
+//////////////////// LEARNING ////////////////////////
+//////////////////////////////////////////////////////
 
 model Material {
-  id         String         @id @default(uuid()) @db.Uuid
-  courseId   String?        @map("course_id") @db.Uuid
-  uploadedBy String?        @map("uploaded_by") @db.Uuid
+  id         String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  lessonId   String         @map("lesson_id") @db.Uuid
   title      String
-  storageUrl String?        @map("storage_url")
+  storageUrl String         @map("storage_url")
+  publicId   String?        @map("public_id")
   mimeType   String?        @map("mime_type")
+  size       Int?
   status     MaterialStatus @default(uploaded)
-  createdAt  DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
-  course     Course?        @relation(fields: [courseId], references: [id])
-  chunks     MaterialChunk[]
+  createdBy  String         @map("created_by")
+  createdAt  DateTime       @default(now()) @map("created_at")
 
-  @@index([courseId, status])
+  lesson Lesson          @relation(fields: [lessonId], references: [id])
+  chunks MaterialChunk[]
+
+  @@index([lessonId, status])
   @@map("materials")
 }
 
 model MaterialChunk {
-  id         String    @id @default(uuid()) @db.Uuid
-  materialId String    @map("material_id") @db.Uuid
-  orderNo    Int?      @map("order_no")
-  vectorDocId String?  @map("vector_doc_id")
-  tokenCount Int?      @map("token_count")
-  checksum   String?
-  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  material   Material  @relation(fields: [materialId], references: [id])
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  materialId  String   @map("material_id") @db.Uuid
+  content     String
+  orderNo     Int      @map("order_no")
+  tokenCount  Int?     @map("token_count")
+  embeddingId String?  @map("embedding_id")
+  checksum    String?  @map("check_sum")
+  createdAt   DateTime @default(now()) @map("created_at")
 
+  material Material @relation(fields: [materialId], references: [id])
+
+  @@index([materialId, orderNo])
   @@map("material_chunks")
 }
 
+//////////////////////////////////////////////////////
+//////////////////// CHAT AI /////////////////////////
+//////////////////////////////////////////////////////
+
 model ChatSession {
-  id            String        @id @default(uuid()) @db.Uuid
-  userId        String        @map("user_id")
-  classId       String?       @map("class_id") @db.Uuid
-  title         String?
-  language      String?
-  startedAt     DateTime      @default(now()) @map("started_at") @db.Timestamptz(6)
-  lastMessageAt DateTime?     @map("last_message_at") @db.Timestamptz(6)
-  // user          User          @relation(fields: [userId], references: [id])
-  classroom     Classroom?    @relation(fields: [classId], references: [id])
-  messages      ChatMessage[]
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id")
+  classId   String?  @map("class_id") @db.Uuid
+  title     String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  classroom Classroom?    @relation(fields: [classId], references: [id])
+  messages  ChatMessage[]
 
   @@map("chat_sessions")
 }
 
 model ChatMessage {
-  id           String    @id @default(uuid()) @db.Uuid
-  sessionId    String    @map("session_id") @db.Uuid
-  role         String
-  content      String
-  intent       String?
-  inputImageUrl String?  @map("input_image_url")
-  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  session      ChatSession @relation(fields: [sessionId], references: [id])
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId String   @map("session_id") @db.Uuid
+  role      String
+  content   String
+  intent    String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  session ChatSession @relation(fields: [sessionId], references: [id])
 
   @@map("chat_messages")
 }
 
+//////////////////////////////////////////////////////
+//////////////////// EXAMS ///////////////////////////
+//////////////////////////////////////////////////////
+
 model Exam {
-  id            String      @id @default(uuid()) @db.Uuid
-  classId       String      @map("class_id") @db.Uuid
-  createdBy     String      @map("created_by") @db.Uuid
-  title         String
-  status        ExamStatus  @default(draft)
-  personalized  Boolean     @default(false)
-  duration      Int
-  publishedAt   DateTime?   @map("published_at") @db.Timestamptz(6)
-  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
-  classroom     Classroom   @relation(fields: [classId], references: [id])
-  versions      ExamVersion[]
-  submissions   Submission[]
+  id          String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  classId     String     @map("class_id") @db.Uuid
+  title       String
+  description String?
+  duration    Int
+  status      ExamStatus @default(draft)
+  createdBy   String     @map("created_by") @db.Uuid
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  classroom Classroom @relation(fields: [classId], references: [id])
+
+  questions   Question[]
+  submissions Submission[]
 
   @@map("exams")
 }
 
-model ExamVersion {
-  id        String   @id @default(uuid()) @db.Uuid
-  examId     String   @map("exam_id") @db.Uuid
-  version    Int
-  blueprint  Json?
-  exam       Exam     @relation(fields: [examId], references: [id])
-  questions  ExamQuestion[]
-
-  @@map("exam_versions")
-}
-
 model Question {
-  id          String          @id @default(uuid()) @db.Uuid
+  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  examId      String       @map("exam_id") @db.Uuid
   type        QuestionType
-  difficulty  DifficultyLevel
   prompt      String
   options     Json?
-  answerKey   Json?           @map("answer_key")
+  answerKey   Json?        @map("answer_key")
   explanation String?
-  examLinks   ExamQuestion[]
+  points      Float
+  orderNo     Int          @map("order_no")
 
+  exam Exam @relation(fields: [examId], references: [id])
+
+  @@index([examId, orderNo])
   @@map("questions")
 }
 
-model ExamQuestion {
-  id            String      @id @default(uuid()) @db.Uuid
-  examVersionId String?     @map("exam_version_id") @db.Uuid
-  questionId    String?     @map("question_id") @db.Uuid
-  points        Decimal?    @db.Decimal
-  orderNo       Int?        @map("order_no")
-  examVersion   ExamVersion? @relation(fields: [examVersionId], references: [id])
-  question      Question?   @relation(fields: [questionId], references: [id])
-
-  @@map("exam_questions")
-}
-
 model Submission {
-  id           String           @id @default(uuid()) @db.Uuid
-  examId       String           @map("exam_id") @db.Uuid
-  studentId    String           @map("student_id")
-  status       SubmissionStatus @default(in_progress)
-  startedAt    DateTime?        @map("started_at") @db.Timestamptz(6)
-  submittedAt  DateTime?        @map("submitted_at") @db.Timestamptz(6)
-  timerExpired Boolean?         @default(false) @map("timer_expired")
-  exam         Exam             @relation(fields: [examId], references: [id])
-  // student      User             @relation(fields: [studentId], references: [id])
-  result       Result?
+  id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  examId      String           @map("exam_id") @db.Uuid
+  studentId   String           @map("student_id")
+  status      SubmissionStatus @default(in_progress)
+  answers     Json?
+  startAt     DateTime         @default(now()) @map("start_at")
+  submittedAt DateTime?        @map("submitted_at")
 
+  exam   Exam    @relation(fields: [examId], references: [id])
+  result Result?
+
+  @@unique([examId, studentId])
   @@map("submissions")
 }
 
 model Result {
-  id             String       @id @default(uuid()) @db.Uuid
-  submissionId   String       @unique @map("submission_id") @db.Uuid
-  objectiveScore Decimal?     @map("objective_score") @db.Decimal
-  essayScore     Decimal?     @map("essay_score") @db.Decimal
-  totalScore     Decimal?     @map("total_score") @db.Decimal
-  gradedStatus   GradedStatus @default(pending) @map("graded_status")
-  feedback       Json?
-  gradedAt       DateTime?    @map("graded_at") @db.Timestamptz(6)
-  submission     Submission   @relation(fields: [submissionId], references: [id])
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  submissionId String    @unique @map("submission_id") @db.Uuid
+  score        Float
+  feedback     Json?
+  gradedByAi   Boolean   @default(true) @map("graded_by_ai")
+  gradedAt     DateTime? @map("graded_at")
+
+  submission Submission @relation(fields: [submissionId], references: [id])
 
   @@map("results")
 }
 
-model Notification {
-  id          String                  @id @default(uuid()) @db.Uuid
-  createdBy   String?                 @map("created_by") @db.Uuid
-  type        String?
+//////////////////////////////////////////////////////
+//////////////////// ROADMAP /////////////////////////
+//////////////////////////////////////////////////////
+
+model LearningRoadmap {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String        @map("user_id")
+  title         String
+  targetGoal    String?       @map("target_goal")
+  status        RoadmapStatus @default(active)
+  generatedByAi Boolean       @default(true) @map("generated_by_ai")
+  createdAt     DateTime      @default(now()) @map("created_at")
+
+  items RoadmapItem[]
+
+  @@map("learning_roadmaps")
+}
+
+model RoadmapItem {
+  id          String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  roadmapId   String  @map("roadmap_id") @db.Uuid
   title       String
-  body        String
-  channel     String?
-  scheduledAt DateTime?               @map("scheduled_at") @db.Timestamptz(6)
-  createdAt   DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
-  recipients  NotificationRecipient[]
+  description String?
+  topic       String?
+  orderNo     Int     @map("order_no")
+  isCompleted Boolean @default(false) @map("is_completed")
 
-  @@map("notifications")
+  roadmap LearningRoadmap @relation(fields: [roadmapId], references: [id])
+
+  @@index([roadmapId, orderNo])
+  @@map("roadmap_items")
 }
 
-model NotificationRecipient {
-  id             String        @id @default(uuid()) @db.Uuid
-  notificationId String?       @map("notification_id") @db.Uuid
-  userId         String?       @map("user_id")
-  status         NotifyStatus  @default(queued)
-  sentAt         DateTime?     @map("sent_at") @db.Timestamptz(6)
-  readAt         DateTime?     @map("read_at") @db.Timestamptz(6)
-  notification   Notification? @relation(fields: [notificationId], references: [id])
-  // user           User?         @relation(fields: [userId], references: [id])
-
-  @@map("notification_recipients")
-}
-
-model Job {
-  id          String    @id @default(uuid()) @db.Uuid
-  type        JobType
-  status      JobStatus @default(queued)
-  priority    Int?      @default(0)
-  payload     Json?
-  result      Json?
-  attempts    Int?      @default(0)
-  maxAttempts Int?      @default(3) @map("max_attempts")
-  availableAt DateTime? @map("available_at") @db.Timestamptz(6)
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-
-  @@map("jobs")
-}
-
-model AnalyticsSnapshot {
-  id      String  @id @default(uuid()) @db.Uuid
-  scope   String?
-  scopeId String? @map("scope_id") @db.Uuid
-  metrics Json?
-
-  @@map("analytics_snapshots")
-}
+//////////////////////////////////////////////////////
+//////////////////// ANALYTICS ///////////////////////
+//////////////////////////////////////////////////////
 
 model StudentTopicMastery {
-  id           String   @id @default(uuid()) @db.Uuid
-  studentId    String?  @map("student_id") @db.Uuid
-  classId      String?  @map("class_id") @db.Uuid
-  topic        String?
-  masteryScore Decimal? @map("mastery_score") @db.Decimal
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId    String   @map("student_id")
+  classId      String   @map("class_id") @db.Uuid
+  topic        String
+  masteryScore Float    @map("mastery_score")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
+  @@unique([studentId, classId, topic])
   @@map("student_topic_mastery")
 }
 
-model AuditLog {
-  id          String    @id @default(uuid()) @db.Uuid
-  actorUserId String?   @map("actor_user_id")
-  action      String
-  entityType  String    @map("entity_type")
-  entityId    String?   @map("entity_id") @db.Uuid
-  metadata    Json?
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  // actor       User?     @relation(fields: [actorUserId], references: [id])
+//////////////////////////////////////////////////////
+//////////////////// NOTIFICATIONS ///////////////////
+//////////////////////////////////////////////////////
 
-  @@map("audit_logs")
+model Notification {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id")
+  title     String
+  body      String
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId, isRead])
+  @@map("notifications")
 }
 
+//////////////////////////////////////////////////////
+//////////////////// JOBS ////////////////////////////
+//////////////////////////////////////////////////////
+
+model Job {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type      String
+  payload   Json?
+  status    String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("jobs")
+}

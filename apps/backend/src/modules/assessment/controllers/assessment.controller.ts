@@ -1,3 +1,4 @@
+import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import {
   Body,
   Controller,
@@ -15,14 +16,15 @@ import { StartAttemptDto } from '../dto/start-attempt.dto';
 import { SubmitAttemptDto } from '../dto/submit-attempt.dto';
 import { UpdateExamDto } from '../dto/update-exam.dto';
 import { AssessmentService } from '../services/assessment.service';
+import { User } from '@clerk/backend';
 
 @Controller()
 export class AssessmentController {
   constructor(private readonly assessmentService: AssessmentService) {}
 
   @Post('exams/generate')
-  generateExam(@Body() payload: GenerateExamDto) {
-    return this.assessmentService.generateExam(payload);
+  generateExam(@Body() payload: GenerateExamDto, @CurrentUser() user: User) {
+    return this.assessmentService.generateExam(payload, user.id);
   }
 
   @Put('exams/:examId')

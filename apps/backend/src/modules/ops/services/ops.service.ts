@@ -1,12 +1,14 @@
-import { Injectable } from '@nestjs/common';
-import { JobStatus, JobType, NotifyStatus, UserStatus } from '../../../generated/prisma/client';
+import { ClerkClient } from '@clerk/backend';
+import { Inject, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../common/prisma/prisma.service';
+import { JobStatus, JobType, NotifyStatus } from '../../../generated/prisma/client';
 import { CreateNotificationDto } from '../dto/create-notification.dto';
 import { ExportAnalyticsDto } from '../dto/export-analytics.dto';
 
 @Injectable()
 export class OpsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService, @Inject('ClerkClient')
+  private readonly clerkClient: ClerkClient,) { }
 
   async getJobStatus(jobId: string) {
     return this.prisma.job.findUniqueOrThrow({ where: { id: jobId } });
@@ -96,8 +98,8 @@ export class OpsService {
   }
 
   async getAdminMetrics() {
-    const [activeUsers, queuedJobs] = await this.prisma.$transaction([
-      this.prisma.user.count({ where: { status: UserStatus.active } }),
+    const [activeUsers, queuedJobs] = await Promise.all([
+      this.clerkClient.users.getCount({}),
       this.prisma.job.count({ where: { status: JobStatus.queued } }),
     ]);
     return {

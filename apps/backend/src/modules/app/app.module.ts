@@ -8,6 +8,7 @@ import { RequestIdMiddleware } from '../../common/middlewares/request-id.middlew
 import { RequestLoggingMiddleware } from '../../common/middlewares/request-logging.middleware';
 import { PrismaModule } from '../../common/prisma/prisma.module';
 import { ClerkClientProvider } from '../../common/providers/clerk-client.provider';
+import { AcademicModule } from '../academic/academic.module';
 import { AssessmentModule } from '../assessment/assessment.module';
 import { AuthModule } from '../auth/auth.module';
 import { ChatModule } from '../chat/chat.module';
@@ -16,6 +17,7 @@ import { LearningModule } from '../learning/learning.module';
 import { OpsModule } from '../ops/ops.module';
 import { UsersModule } from '../users/users.module';
 import { ClerkAuthGuard } from '../auth/guards/clerk-auth.guard';
+import { StorageModule } from '../storage/storage.module';
 
 @Module({
   imports: [
@@ -23,16 +25,21 @@ import { ClerkAuthGuard } from '../auth/guards/clerk-auth.guard';
     HealthModule,
     AuthModule,
     UsersModule,
+    AcademicModule,
     LearningModule,
     ChatModule,
     AssessmentModule,
     OpsModule,
+    StorageModule,
     ConfigModule.forRoot({
       envFilePath: 'apps/backend/.env',
       validationSchema: Joi.object({
         DATABASE_URL: Joi.string().required(),
         CLERK_PUBLISHABLE_KEY: Joi.string().required(),
         CLERK_SECRET_KEY: Joi.string().required(),
+        CLOUDINARY_NAME: Joi.string().required(),
+        CLOUDINARY_API_KEY: Joi.string().required(),
+        CLOUDINARY_API_SECRET: Joi.string().required(),
       }),
       isGlobal: true,
     }),
@@ -50,7 +57,7 @@ import { ClerkAuthGuard } from '../auth/guards/clerk-auth.guard';
       provide: APP_GUARD,
       useClass: ClerkAuthGuard,
     },
-    ClerkClientProvider
+    ClerkClientProvider,
   ],
 })
 export class AppModule implements NestModule {
@@ -60,4 +67,3 @@ export class AppModule implements NestModule {
       .forRoutes('*');
   }
 }
-

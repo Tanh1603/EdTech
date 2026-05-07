@@ -12,12 +12,11 @@ import { UpdateExamDto } from '../dto/update-exam.dto';
 export class AssessmentService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async generateExam(payload: GenerateExamDto) {
-    const creator = await this.prisma.user.findFirst({ orderBy: { createdAt: 'asc' } });
+  async generateExam(payload: GenerateExamDto, creatorId: string) {
     return this.prisma.exam.create({
       data: {
         classId: payload.classId,
-        createdBy: creator?.id ?? payload.classId,
+        createdBy: creatorId,
         title: payload.title,
         duration: payload.durationMinutes,
         personalized: payload.personalized ?? false,

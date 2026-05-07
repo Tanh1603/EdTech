@@ -83,37 +83,37 @@ enum JobType {
   rag_index
 }
 
-model User {
-  id                String             @id @default(uuid()) @db.Uuid
-  externalUserId    String             @unique @map("external_user_id")
-  email             String             @unique
-  fullName          String?            @map("full_name")
-  avatarUrl         String?            @map("avatar_url")
-  status            UserStatus         @default(active)
-  preferredLanguage String?            @default("vi") @map("preferred_language")
-  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt         DateTime?          @map("deleted_at") @db.Timestamptz(6)
-  classes           ClassMembership[]
-  courses           Course[]
-  learningProfile   LearningProfile?
-  chatSessions      ChatSession[]
-  submissions       Submission[]
-  notifications     NotificationRecipient[]
-  auditLogs         AuditLog[]
+// model User {
+//   id                String             @id @default(uuid()) @db.Uuid
+//   externalUserId    String             @unique @map("external_user_id")
+//   email             String             @unique
+//   fullName          String?            @map("full_name")
+//   avatarUrl         String?            @map("avatar_url")
+//   status            UserStatus         @default(active)
+//   preferredLanguage String?            @default("vi") @map("preferred_language")
+//   createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+//   updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+//   deletedAt         DateTime?          @map("deleted_at") @db.Timestamptz(6)
+//   classes           ClassMembership[]
+//   courses           Course[]
+//   learningProfile   LearningProfile?
+//   chatSessions      ChatSession[]
+//   submissions       Submission[]
+//   notifications     NotificationRecipient[]
+//   auditLogs         AuditLog[]
 
-  @@index([status, createdAt])
-  @@map("users")
-}
+//   @@index([status, createdAt])
+//   @@map("users")
+// }
 
 model Course {
   id          String     @id @default(uuid()) @db.Uuid
-  teacherId   String     @map("teacher_id") @db.Uuid
+  teacherId   String     @map("teacher_id")
   name        String
   description String?
   createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime?  @map("updated_at") @db.Timestamptz(6)
-  teacher     User       @relation(fields: [teacherId], references: [id])
+  // teacher     s       @relation(fields: [teacherId], references: [id])
   classes     Classroom[]
   materials   Material[]
 
@@ -139,18 +139,18 @@ model Classroom {
 model ClassMembership {
   id          String    @id @default(uuid()) @db.Uuid
   classId     String    @map("class_id") @db.Uuid
-  userId      String    @map("user_id") @db.Uuid
+  userId      String    @map("user_id")
   roleInClass ClassRole @default(student) @map("role_in_class")
   joinedAt    DateTime  @default(now()) @map("joined_at") @db.Timestamptz(6)
   classroom   Classroom @relation(fields: [classId], references: [id])
-  user        User      @relation(fields: [userId], references: [id])
+  // user        User      @relation(fields: [userId], references: [id])
 
   @@unique([classId, userId])
   @@map("class_memberships")
 }
 
 model LearningProfile {
-  userId            String    @id @map("user_id") @db.Uuid
+  userId            String    @id @map("user_id")
   currentLevel      String?   @map("current_level")
   targetGoal        String?   @map("target_goal")
   weeklyHours       Int?      @map("weekly_hours")
@@ -158,7 +158,7 @@ model LearningProfile {
   weakTopics        String[]  @default([])
   goals             String[]  @default([])
   updatedAt         DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
-  user              User      @relation(fields: [userId], references: [id])
+  // user              User      @relation(fields: [userId], references: [id])
 
   @@map("learning_profiles")
 }
@@ -194,13 +194,13 @@ model MaterialChunk {
 
 model ChatSession {
   id            String        @id @default(uuid()) @db.Uuid
-  userId        String        @map("user_id") @db.Uuid
+  userId        String        @map("user_id")
   classId       String?       @map("class_id") @db.Uuid
   title         String?
   language      String?
   startedAt     DateTime      @default(now()) @map("started_at") @db.Timestamptz(6)
   lastMessageAt DateTime?     @map("last_message_at") @db.Timestamptz(6)
-  user          User          @relation(fields: [userId], references: [id])
+  // user          User          @relation(fields: [userId], references: [id])
   classroom     Classroom?    @relation(fields: [classId], references: [id])
   messages      ChatMessage[]
 
@@ -276,13 +276,13 @@ model ExamQuestion {
 model Submission {
   id           String           @id @default(uuid()) @db.Uuid
   examId       String           @map("exam_id") @db.Uuid
-  studentId    String           @map("student_id") @db.Uuid
+  studentId    String           @map("student_id")
   status       SubmissionStatus @default(in_progress)
   startedAt    DateTime?        @map("started_at") @db.Timestamptz(6)
   submittedAt  DateTime?        @map("submitted_at") @db.Timestamptz(6)
   timerExpired Boolean?         @default(false) @map("timer_expired")
   exam         Exam             @relation(fields: [examId], references: [id])
-  student      User             @relation(fields: [studentId], references: [id])
+  // student      User             @relation(fields: [studentId], references: [id])
   result       Result?
 
   @@map("submissions")
@@ -319,12 +319,12 @@ model Notification {
 model NotificationRecipient {
   id             String        @id @default(uuid()) @db.Uuid
   notificationId String?       @map("notification_id") @db.Uuid
-  userId         String?       @map("user_id") @db.Uuid
+  userId         String?       @map("user_id")
   status         NotifyStatus  @default(queued)
   sentAt         DateTime?     @map("sent_at") @db.Timestamptz(6)
   readAt         DateTime?     @map("read_at") @db.Timestamptz(6)
   notification   Notification? @relation(fields: [notificationId], references: [id])
-  user           User?         @relation(fields: [userId], references: [id])
+  // user           User?         @relation(fields: [userId], references: [id])
 
   @@map("notification_recipients")
 }
@@ -365,13 +365,13 @@ model StudentTopicMastery {
 
 model AuditLog {
   id          String    @id @default(uuid()) @db.Uuid
-  actorUserId String?   @map("actor_user_id") @db.Uuid
+  actorUserId String?   @map("actor_user_id")
   action      String
   entityType  String    @map("entity_type")
   entityId    String?   @map("entity_id") @db.Uuid
   metadata    Json?
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  actor       User?     @relation(fields: [actorUserId], references: [id])
+  // actor       User?     @relation(fields: [actorUserId], references: [id])
 
   @@map("audit_logs")
 }

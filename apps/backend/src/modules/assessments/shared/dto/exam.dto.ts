@@ -6,12 +6,12 @@ export class CreateExamDto {
   @IsUUID()
   classId!: string;
 
-  @ApiProperty({ example: 'Calculus Midterm', minLength: 2 })
+  @ApiProperty({ example: 'Midterm Exam', minLength: 2 })
   @IsString()
   @MinLength(2)
   title!: string;
 
-  @ApiPropertyOptional({ example: 'Chapter 1-5' })
+  @ApiPropertyOptional({ example: 'Calculus midterm' })
   @IsOptional()
   @IsString()
   description?: string;
@@ -23,7 +23,7 @@ export class CreateExamDto {
 }
 
 export class UpdateExamDto {
-  @ApiPropertyOptional({ example: 'Updated Midterm', minLength: 2 })
+  @ApiPropertyOptional({ example: 'Updated title', minLength: 2 })
   @IsOptional()
   @IsString()
   @MinLength(2)

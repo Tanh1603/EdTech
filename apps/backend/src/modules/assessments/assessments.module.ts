@@ -1,11 +1,17 @@
 import { Module } from '@nestjs/common';
-import { PrismaModule } from '../../common/prisma/prisma.module';
-import { AssessmentsController } from './assessments.controller';
-import { AssessmentsService } from './assessments.service';
+import { AnalyticsModule } from './analytics/analytics.module';
+import { ExamsModule } from './exams/exams.module';
+import { QuestionsModule } from './questions/questions.module';
+import { ResultsModule } from './results/results.module';
+import { SubmissionsModule } from './submissions/submissions.module';
 
 @Module({
-  imports: [PrismaModule],
-  controllers: [AssessmentsController],
-  providers: [AssessmentsService],
+  imports: [
+    ExamsModule,
+    QuestionsModule,
+    SubmissionsModule,
+    ResultsModule,
+    AnalyticsModule,
+  ],
 })
 export class AssessmentsModule {}

@@ -5,8 +5,6 @@ import { PrismaService } from '../../../common/prisma/prisma.service';
 import { MaterialStatus, Prisma } from '../../../generated/prisma/client';
 import { StorageService } from '../../storage/storage.service';
 import { MaterialQueryDto } from './dto/material-query.dto';
-import { ReindexMaterialDto } from './dto/reindex-material.dto';
-import { SearchMaterialsDto } from './dto/search-materials.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
 
 @Injectable()
@@ -23,7 +21,7 @@ export class MaterialsService {
   ) {
     const uploaded = await this.storageService.uploadFile(
       file,
-      'edtech-ai/materials',
+      'edtech/materials',
     );
 
     return this.prisma.material.create({
@@ -106,48 +104,6 @@ export class MaterialsService {
     return { id: materialId, deleted: true };
   }
 
-  async reindexMaterial(materialId: string, payload: ReindexMaterialDto) {
-    await this.prisma.material.update({
-      where: { id: materialId },
-      data: { status: MaterialStatus.indexing },
-    });
-
-    const job = await this.prisma.job.create({
-      data: {
-        type: 'material_ingest',
-        status: 'queued',
-        payload: {
-          materialId,
-          force: payload.force ?? false,
-          chunkSize: payload.chunkSize ?? 500,
-          chunkOverlap: payload.chunkOverlap ?? 100,
-        },
-      },
-    });
-
-    return { materialId, status: MaterialStatus.indexing, jobId: job.id };
-  }
-
-  async getMaterialJobs(materialId: string) {
-    return this.prisma.job.findMany({
-      where: {
-        type: {
-          in: [
-            'material_ingest',
-            'material_chunking',
-            'rag_embedding',
-            'vector_index_sync',
-          ],
-        },
-        payload: {
-          path: ['materialId'],
-          equals: materialId,
-        } as any,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-  }
-
   async getMaterialChunks(
     materialId: string,
     query: PaginationQueryDto,
@@ -173,28 +129,6 @@ export class MaterialsService {
     return this.prisma.materialChunk.findFirstOrThrow({
       where: { id: chunkId, materialId },
     });
-  }
-
-  async searchMaterials(payload: SearchMaterialsDto) {
-    const topK = payload.topK ?? 5;
-    const chunks = await this.prisma.materialChunk.findMany({
-      where: {
-        content: { contains: payload.query, mode: 'insensitive' },
-        ...(payload.lessonId
-          ? { material: { lessonId: payload.lessonId } }
-          : {}),
-      },
-      take: topK,
-      orderBy: { createdAt: 'desc' },
-    });
-
-    return {
-      matches: chunks.map((chunk) => ({
-        chunkId: chunk.id,
-        content: chunk.content,
-        score: 1,
-      })),
-    };
   }
 
   private toPage<T>(

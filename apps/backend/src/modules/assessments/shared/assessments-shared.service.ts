@@ -178,11 +178,6 @@ export class AssessmentsSharedService {
     return this.prisma.result.findUniqueOrThrow({ where: { submissionId } });
   }
 
-  async regradeSubmission(submissionId: string) {
-    const job = await this.createGradingJob(submissionId);
-    return { submissionId, status: 'regrading', jobId: job.id };
-  }
-
   async manualGrade(submissionId: string, payload: ManualGradeDto) {
     return this.prisma.result.upsert({
       where: { submissionId },
@@ -243,26 +238,6 @@ export class AssessmentsSharedService {
       completedExams: aggregate._count._all,
       weakTopics: [],
     };
-  }
-
-  async triggerAiGrading(submissionId: string) {
-    const job = await this.createGradingJob(submissionId);
-    return { submissionId, status: 'grading', jobId: job.id };
-  }
-
-  async getGradingJob(jobId: string) {
-    const job = await this.prisma.job.findUniqueOrThrow({ where: { id: jobId } });
-    return { jobId: job.id, status: job.status };
-  }
-
-  private createGradingJob(submissionId: string) {
-    return this.prisma.job.create({
-      data: {
-        type: 'auto_grading',
-        status: 'queued',
-        payload: { submissionId },
-      },
-    });
   }
 
   private toExamStatus(status?: string): ExamStatus | undefined {

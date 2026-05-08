@@ -24,7 +24,6 @@ import { CurrentUser as CurrentUserPayload } from '../../../common/types/current
 import { RoadmapStatus } from '../../../generated/prisma/client';
 import { CreateRoadmapItemDto } from './dto/create-roadmap-item.dto';
 import { CreateRoadmapDto } from './dto/create-roadmap.dto';
-import { GenerateRoadmapDto } from './dto/generate-roadmap.dto';
 import { RoadmapQueryDto } from './dto/roadmap-query.dto';
 import { UpdateRoadmapItemDto } from './dto/update-roadmap-item.dto';
 import { UpdateRoadmapDto } from './dto/update-roadmap.dto';
@@ -35,17 +34,6 @@ import { RoadmapsService } from './roadmaps.service';
 @Controller('learning/roadmaps')
 export class RoadmapsController {
   constructor(private readonly roadmapsService: RoadmapsService) {}
-
-  @Post('generate')
-  @ApiOperation({ summary: 'Generate AI roadmap' })
-  @ApiBody({ type: GenerateRoadmapDto })
-  @ApiCreatedResponse({ description: 'Roadmap generation job queued' })
-  generateRoadmap(
-    @Body() body: GenerateRoadmapDto,
-    @CurrentUser() user: CurrentUserPayload,
-  ) {
-    return this.roadmapsService.generateRoadmap(body, user.id);
-  }
 
   @Post()
   @ApiOperation({ summary: 'Create manual roadmap' })
@@ -72,7 +60,7 @@ export class RoadmapsController {
   }
 
   @Get('next')
-  @ApiOperation({ summary: 'Get next recommended roadmap item' })
+  @ApiOperation({ summary: 'Get next roadmap item' })
   @ApiOkResponse({ description: 'Next roadmap item returned successfully' })
   getNextRoadmapItem(@CurrentUser() user: CurrentUserPayload) {
     return this.roadmapsService.getNextRoadmapItem(user.id);

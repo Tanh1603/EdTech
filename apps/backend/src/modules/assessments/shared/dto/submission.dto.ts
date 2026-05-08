@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsNumber, IsUUID, Max, Min } from 'class-validator';
+import { IsArray, IsNumber, Min } from 'class-validator';
 
 export class AnswersDto {
   @ApiProperty({ example: [{ questionId: 'uuid', answer: '2x' }] })
@@ -15,10 +15,4 @@ export class ManualGradeDto {
 
   @ApiProperty({ example: { comment: 'Well done' } })
   feedback!: unknown;
-}
-
-export class AiGradingDto {
-  @ApiProperty({ format: 'uuid' })
-  @IsUUID()
-  submissionId!: string;
 }

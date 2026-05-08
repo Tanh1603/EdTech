@@ -11,6 +11,7 @@ import { ClerkClientProvider } from '../../common/providers/clerk-client.provide
 import { AcademicModule } from '../academic/academic.module';
 import { AssessmentsModule } from '../assessments/assessments.module';
 import { AuthModule } from '../auth/auth.module';
+import { ChatModule } from '../chat/chat.module';
 import { ClerkAuthGuard } from '../auth/guards/clerk-auth.guard';
 import { HealthModule } from '../health/health.module';
 import { LearningModule } from '../learning/learning.module';
@@ -26,6 +27,7 @@ import { UsersModule } from '../users/users.module';
     AcademicModule,
     AssessmentsModule,
     LearningModule,
+    ChatModule,
     StorageModule,
     ConfigModule.forRoot({
       envFilePath: 'apps/backend/.env',

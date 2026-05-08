@@ -29,8 +29,6 @@ import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { CurrentUser as CurrentUserPayload } from '../../../common/types/current-user.type';
 import { MaterialStatus } from '../../../generated/prisma/client';
 import { MaterialQueryDto } from './dto/material-query.dto';
-import { ReindexMaterialDto } from './dto/reindex-material.dto';
-import { SearchMaterialsDto } from './dto/search-materials.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
 import { MaterialsService } from './materials.service';
 
@@ -81,14 +79,6 @@ export class MaterialsController {
     return this.materialsService.getMaterials(query);
   }
 
-  @Post('search')
-  @ApiOperation({ summary: 'Search material chunks' })
-  @ApiBody({ type: SearchMaterialsDto })
-  @ApiOkResponse({ description: 'Material search matches returned' })
-  searchMaterials(@Body() body: SearchMaterialsDto) {
-    return this.materialsService.searchMaterials(body);
-  }
-
   @Get(':materialId')
   @ApiOperation({ summary: 'Get material detail' })
   @ApiParam({ name: 'materialId', format: 'uuid' })
@@ -115,26 +105,6 @@ export class MaterialsController {
   @ApiOkResponse({ description: 'Material deleted successfully' })
   deleteMaterial(@Param('materialId', ParseUUIDPipe) materialId: string) {
     return this.materialsService.deleteMaterial(materialId);
-  }
-
-  @Post(':materialId/reindex')
-  @ApiOperation({ summary: 'Queue material reindexing' })
-  @ApiParam({ name: 'materialId', format: 'uuid' })
-  @ApiBody({ type: ReindexMaterialDto })
-  @ApiCreatedResponse({ description: 'Material reindex job queued' })
-  reindexMaterial(
-    @Param('materialId', ParseUUIDPipe) materialId: string,
-    @Body() body: ReindexMaterialDto,
-  ) {
-    return this.materialsService.reindexMaterial(materialId, body);
-  }
-
-  @Get(':materialId/jobs')
-  @ApiOperation({ summary: 'Get material jobs history' })
-  @ApiParam({ name: 'materialId', format: 'uuid' })
-  @ApiOkResponse({ description: 'Material jobs returned successfully' })
-  getMaterialJobs(@Param('materialId', ParseUUIDPipe) materialId: string) {
-    return this.materialsService.getMaterialJobs(materialId);
   }
 
   @Get(':materialId/chunks')

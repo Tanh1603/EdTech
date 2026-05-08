@@ -4,7 +4,6 @@ import { PrismaService } from '../../../common/prisma/prisma.service';
 import { Prisma, RoadmapStatus } from '../../../generated/prisma/client';
 import { CreateRoadmapItemDto } from './dto/create-roadmap-item.dto';
 import { CreateRoadmapDto } from './dto/create-roadmap.dto';
-import { GenerateRoadmapDto } from './dto/generate-roadmap.dto';
 import { RoadmapQueryDto } from './dto/roadmap-query.dto';
 import { UpdateRoadmapItemDto } from './dto/update-roadmap-item.dto';
 import { UpdateRoadmapDto } from './dto/update-roadmap.dto';
@@ -12,38 +11,6 @@ import { UpdateRoadmapDto } from './dto/update-roadmap.dto';
 @Injectable()
 export class RoadmapsService {
   constructor(private readonly prisma: PrismaService) {}
-
-  async generateRoadmap(payload: GenerateRoadmapDto, userId: string) {
-    const roadmap = await this.prisma.learningRoadmap.create({
-      data: {
-        userId,
-        title: payload.targetGoal,
-        targetGoal: payload.targetGoal,
-        status: RoadmapStatus.active,
-        generatedByAi: true,
-      },
-    });
-
-    const job = await this.prisma.job.create({
-      data: {
-        type: 'ai_roadmap_generation',
-        status: 'queued',
-        payload: {
-          roadmapId: roadmap.id,
-          userId,
-          classId: payload.classId,
-          weakTopics: payload.weakTopics ?? [],
-        },
-      },
-    });
-
-    return {
-      roadmapId: roadmap.id,
-      generatedByAi: true,
-      status: 'generating',
-      jobId: job.id,
-    };
-  }
 
   async createRoadmap(payload: CreateRoadmapDto, userId: string) {
     return this.prisma.learningRoadmap.create({

@@ -1,21 +1,21 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { lastValueFrom } from 'rxjs';
 import { ChatMessagesQueryDto, ChatSessionsQueryDto, CreateChatSessionDto, SendMessageDto, UpdateChatSessionDto } from '@edtech/contracts';
 import { GrpcMetadataBuilder } from '../common/grpc-metadata/grpc-metadata.builder';
 import { toProtoStruct, unwrapObjectResponse, unwrapPageResponse } from '@edtech/contracts';
 import { RequestWithContext } from '../common/types/request-with-context';
-import { CoreGrpcClientService } from '../grpc-clients/core-grpc-client.service';
+import { BeCoreGrpcClientService } from '../grpc-clients/be-core-grpc-client.service';
 
 @ApiTags('Chat - Sessions')
 @ApiBearerAuth()
 @Controller('chat/sessions')
 export class ChatSessionsGatewayController {
-  constructor(private readonly grpc: CoreGrpcClientService, private readonly metadata: GrpcMetadataBuilder) {}
+  constructor(private readonly grpc: BeCoreGrpcClientService, private readonly metadata: GrpcMetadataBuilder) {}
 
   @Post()
   @ApiOperation({ summary: 'Create chat session' })
-  @ApiBody({ schema: { type: 'object' } })
+  @ApiBody({ type: CreateChatSessionDto })
   createSession(@Body() body: CreateChatSessionDto, @Req() req: RequestWithContext) {
     return this.object(this.grpc.chatSessions.createSession({ body: toProtoStruct(body) }, this.metadata.build(req)));
   }
@@ -37,19 +37,22 @@ export class ChatSessionsGatewayController {
 
   @Get(':sessionId')
   @ApiOperation({ summary: 'Get session detail' })
+  @ApiParam({ name: 'sessionId', format: 'uuid' })
   getSessionDetail(@Param('sessionId') sessionId: string, @Req() req: RequestWithContext) {
     return this.object(this.grpc.chatSessions.getSessionDetail({ sessionId }, this.metadata.build(req)));
   }
 
   @Patch(':sessionId')
   @ApiOperation({ summary: 'Update session title' })
-  @ApiBody({ schema: { type: 'object' } })
+  @ApiParam({ name: 'sessionId', format: 'uuid' })
+  @ApiBody({ type: UpdateChatSessionDto })
   updateSession(@Param('sessionId') sessionId: string, @Body() body: UpdateChatSessionDto, @Req() req: RequestWithContext) {
     return this.object(this.grpc.chatSessions.updateSession({ sessionId, body: toProtoStruct(body) }, this.metadata.build(req)));
   }
 
   @Delete(':sessionId')
   @ApiOperation({ summary: 'Delete chat session' })
+  @ApiParam({ name: 'sessionId', format: 'uuid' })
   deleteSession(@Param('sessionId') sessionId: string, @Req() req: RequestWithContext) {
     return lastValueFrom(this.grpc.chatSessions.deleteSession({ sessionId }, this.metadata.build(req)));
   }
@@ -63,10 +66,14 @@ export class ChatSessionsGatewayController {
 @ApiBearerAuth()
 @Controller('chat')
 export class ChatMessagesGatewayController {
-  constructor(private readonly grpc: CoreGrpcClientService, private readonly metadata: GrpcMetadataBuilder) {}
+  constructor(private readonly grpc: BeCoreGrpcClientService, private readonly metadata: GrpcMetadataBuilder) {}
 
   @Get('sessions/:sessionId/messages')
   @ApiOperation({ summary: 'Get chat messages' })
+  @ApiParam({ name: 'sessionId', format: 'uuid' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'before', required: false, type: String })
   async getMessages(@Param('sessionId') sessionId: string, @Query() query: ChatMessagesQueryDto, @Req() req: RequestWithContext) {
     return unwrapPageResponse(await lastValueFrom(this.grpc.chatMessages.getMessages({
       sessionId,
@@ -78,19 +85,22 @@ export class ChatMessagesGatewayController {
 
   @Post('sessions/:sessionId/messages')
   @ApiOperation({ summary: 'Create chat message' })
-  @ApiBody({ schema: { type: 'object' } })
+  @ApiParam({ name: 'sessionId', format: 'uuid' })
+  @ApiBody({ type: SendMessageDto })
   createMessage(@Param('sessionId') sessionId: string, @Body() body: SendMessageDto, @Req() req: RequestWithContext) {
     return this.object(this.grpc.chatMessages.createMessage({ sessionId, body: toProtoStruct(body) }, this.metadata.build(req)));
   }
 
   @Get('messages/:messageId')
   @ApiOperation({ summary: 'Get message detail' })
+  @ApiParam({ name: 'messageId', format: 'uuid' })
   getMessageDetail(@Param('messageId') messageId: string, @Req() req: RequestWithContext) {
     return this.object(this.grpc.chatMessages.getMessageDetail({ messageId }, this.metadata.build(req)));
   }
 
   @Delete('messages/:messageId')
   @ApiOperation({ summary: 'Delete message' })
+  @ApiParam({ name: 'messageId', format: 'uuid' })
   deleteMessage(@Param('messageId') messageId: string, @Req() req: RequestWithContext) {
     return lastValueFrom(this.grpc.chatMessages.deleteMessage({ messageId }, this.metadata.build(req)));
   }
@@ -104,7 +114,7 @@ export class ChatMessagesGatewayController {
 @ApiBearerAuth()
 @Controller('chat/analytics')
 export class ChatAnalyticsGatewayController {
-  constructor(private readonly grpc: CoreGrpcClientService, private readonly metadata: GrpcMetadataBuilder) {}
+  constructor(private readonly grpc: BeCoreGrpcClientService, private readonly metadata: GrpcMetadataBuilder) {}
 
   @Get('sessions/me')
   @ApiOperation({ summary: 'Get user chat analytics' })
@@ -114,6 +124,7 @@ export class ChatAnalyticsGatewayController {
 
   @Get('classrooms/:classId')
   @ApiOperation({ summary: 'Get classroom AI usage analytics' })
+  @ApiParam({ name: 'classId', format: 'uuid' })
   getClassroomAnalytics(@Param('classId') classId: string, @Req() req: RequestWithContext) {
     return this.object(this.grpc.chatAnalytics.getClassroomAnalytics({ classId }, this.metadata.build(req)));
   }

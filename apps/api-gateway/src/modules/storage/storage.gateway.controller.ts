@@ -7,7 +7,7 @@ import { DeleteFileDto } from '@edtech/contracts';
 import { GrpcMetadataBuilder } from '../common/grpc-metadata/grpc-metadata.builder';
 import { unwrapObjectResponse } from '@edtech/contracts';
 import { RequestWithContext } from '../common/types/request-with-context';
-import { CoreGrpcClientService } from '../grpc-clients/core-grpc-client.service';
+import { BeCoreGrpcClientService } from '../grpc-clients/be-core-grpc-client.service';
 import { GatewayStorageService } from './gateway-storage.service';
 
 @ApiTags('Storage')
@@ -16,7 +16,7 @@ import { GatewayStorageService } from './gateway-storage.service';
 export class StorageGatewayController {
   constructor(
     private readonly storage: GatewayStorageService,
-    private readonly grpc: CoreGrpcClientService,
+    private readonly grpc: BeCoreGrpcClientService,
     private readonly metadata: GrpcMetadataBuilder,
   ) {}
 
@@ -31,7 +31,7 @@ export class StorageGatewayController {
 
   @Delete('delete')
   @ApiOperation({ summary: 'Delete file from Cloudinary' })
-  @ApiBody({ schema: { type: 'object', properties: { publicId: { type: 'string' } } } })
+  @ApiBody({ type: DeleteFileDto })
   async deleteFile(@Body() body: DeleteFileDto, @Req() req: RequestWithContext) {
     return unwrapObjectResponse(
       await lastValueFrom(

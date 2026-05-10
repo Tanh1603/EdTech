@@ -1,34 +1,21 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { lastValueFrom } from 'rxjs';
 import { BulkUpsertMasteryDto, CreateMaterialDto, CreateRoadmapDto, CreateRoadmapItemDto, MaterialQueryDto, PaginationQueryDto, RoadmapQueryDto, UpdateMaterialDto, UpdateRoadmapDto, UpdateRoadmapItemDto, UpsertMasteryDto } from '@edtech/contracts';
 import { GrpcMetadataBuilder } from '../common/grpc-metadata/grpc-metadata.builder';
 import { toProtoStruct, unwrapListResponse, unwrapObjectResponse, unwrapPageResponse } from '@edtech/contracts';
 import { RequestWithContext } from '../common/types/request-with-context';
-import { CoreGrpcClientService } from '../grpc-clients/core-grpc-client.service';
+import { BeCoreGrpcClientService } from '../grpc-clients/be-core-grpc-client.service';
 
 @ApiTags('Learning - Materials')
 @ApiBearerAuth()
 @Controller('learning/materials')
 export class LearningMaterialsGatewayController {
-  constructor(private readonly grpc: CoreGrpcClientService, private readonly metadata: GrpcMetadataBuilder) {}
+  constructor(private readonly grpc: BeCoreGrpcClientService, private readonly metadata: GrpcMetadataBuilder) {}
 
   @Post()
   @ApiOperation({ summary: 'Create learning material metadata from uploaded file URL' })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      required: ['lessonId', 'title', 'storageUrl'],
-      properties: {
-        lessonId: { type: 'string', format: 'uuid' },
-        title: { type: 'string', example: 'Chapter 1 PDF' },
-        storageUrl: { type: 'string', example: 'https://res.cloudinary.com/.../file.pdf' },
-        publicId: { type: 'string', example: 'edtech/materials/file' },
-        mimeType: { type: 'string', example: 'application/pdf' },
-        size: { type: 'number', example: 102400 },
-      },
-    },
-  })
+  @ApiBody({ type: CreateMaterialDto })
   async createMaterial(@Body() body: CreateMaterialDto, @Req() req: RequestWithContext) {
     return unwrapObjectResponse(await lastValueFrom(this.grpc.learningMaterials.createMaterial({
       lessonId: body.lessonId,
@@ -59,25 +46,31 @@ export class LearningMaterialsGatewayController {
 
   @Get(':materialId')
   @ApiOperation({ summary: 'Get material detail' })
+  @ApiParam({ name: 'materialId', format: 'uuid' })
   getMaterialDetail(@Param('materialId') materialId: string, @Req() req: RequestWithContext) {
     return this.object(this.grpc.learningMaterials.getMaterialDetail({ materialId }, this.metadata.build(req)));
   }
 
   @Patch(':materialId')
   @ApiOperation({ summary: 'Update material metadata' })
-  @ApiBody({ schema: { type: 'object' } })
+  @ApiParam({ name: 'materialId', format: 'uuid' })
+  @ApiBody({ type: UpdateMaterialDto })
   updateMaterial(@Param('materialId') materialId: string, @Body() body: UpdateMaterialDto, @Req() req: RequestWithContext) {
     return this.object(this.grpc.learningMaterials.updateMaterial({ materialId, body: toProtoStruct(body) }, this.metadata.build(req)));
   }
 
   @Delete(':materialId')
   @ApiOperation({ summary: 'Delete material' })
+  @ApiParam({ name: 'materialId', format: 'uuid' })
   deleteMaterial(@Param('materialId') materialId: string, @Req() req: RequestWithContext) {
     return lastValueFrom(this.grpc.learningMaterials.deleteMaterial({ materialId }, this.metadata.build(req)));
   }
 
   @Get(':materialId/chunks')
   @ApiOperation({ summary: 'Get material chunks' })
+  @ApiParam({ name: 'materialId', format: 'uuid' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
   async getMaterialChunks(@Param('materialId') materialId: string, @Query() query: PaginationQueryDto, @Req() req: RequestWithContext) {
     return unwrapPageResponse(await lastValueFrom(this.grpc.learningMaterials.getMaterialChunks({
       materialId,
@@ -88,6 +81,8 @@ export class LearningMaterialsGatewayController {
 
   @Get(':materialId/chunks/:chunkId')
   @ApiOperation({ summary: 'Get material chunk detail' })
+  @ApiParam({ name: 'materialId', format: 'uuid' })
+  @ApiParam({ name: 'chunkId', format: 'uuid' })
   getChunkDetail(@Param('materialId') materialId: string, @Param('chunkId') chunkId: string, @Req() req: RequestWithContext) {
     return this.object(this.grpc.learningMaterials.getChunkDetail({ materialId, chunkId }, this.metadata.build(req)));
   }
@@ -101,17 +96,20 @@ export class LearningMaterialsGatewayController {
 @ApiBearerAuth()
 @Controller('learning/roadmaps')
 export class LearningRoadmapsGatewayController {
-  constructor(private readonly grpc: CoreGrpcClientService, private readonly metadata: GrpcMetadataBuilder) {}
+  constructor(private readonly grpc: BeCoreGrpcClientService, private readonly metadata: GrpcMetadataBuilder) {}
 
   @Post()
   @ApiOperation({ summary: 'Create manual roadmap' })
-  @ApiBody({ schema: { type: 'object' } })
+  @ApiBody({ type: CreateRoadmapDto })
   createRoadmap(@Body() body: CreateRoadmapDto, @Req() req: RequestWithContext) {
     return this.object(this.grpc.learningRoadmaps.createRoadmap({ body: toProtoStruct(body) }, this.metadata.build(req)));
   }
 
   @Get()
   @ApiOperation({ summary: 'Get current user roadmaps' })
+  @ApiQuery({ name: 'status', required: false })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
   async getRoadmaps(@Query() query: RoadmapQueryDto, @Req() req: RequestWithContext) {
     return unwrapPageResponse(await lastValueFrom(this.grpc.learningRoadmaps.getRoadmaps({
       status: query.status,
@@ -128,57 +126,66 @@ export class LearningRoadmapsGatewayController {
 
   @Get(':roadmapId')
   @ApiOperation({ summary: 'Get roadmap detail' })
+  @ApiParam({ name: 'roadmapId', format: 'uuid' })
   getRoadmapDetail(@Param('roadmapId') roadmapId: string, @Req() req: RequestWithContext) {
     return this.object(this.grpc.learningRoadmaps.getRoadmapDetail({ roadmapId }, this.metadata.build(req)));
   }
 
   @Patch(':roadmapId')
   @ApiOperation({ summary: 'Update roadmap' })
-  @ApiBody({ schema: { type: 'object' } })
+  @ApiParam({ name: 'roadmapId', format: 'uuid' })
+  @ApiBody({ type: UpdateRoadmapDto })
   updateRoadmap(@Param('roadmapId') roadmapId: string, @Body() body: UpdateRoadmapDto, @Req() req: RequestWithContext) {
     return this.object(this.grpc.learningRoadmaps.updateRoadmap({ roadmapId, body: toProtoStruct(body) }, this.metadata.build(req)));
   }
 
   @Delete(':roadmapId')
   @ApiOperation({ summary: 'Delete roadmap' })
+  @ApiParam({ name: 'roadmapId', format: 'uuid' })
   deleteRoadmap(@Param('roadmapId') roadmapId: string, @Req() req: RequestWithContext) {
     return lastValueFrom(this.grpc.learningRoadmaps.deleteRoadmap({ roadmapId }, this.metadata.build(req)));
   }
 
   @Post(':roadmapId/items')
   @ApiOperation({ summary: 'Create roadmap item' })
-  @ApiBody({ schema: { type: 'object' } })
+  @ApiParam({ name: 'roadmapId', format: 'uuid' })
+  @ApiBody({ type: CreateRoadmapItemDto })
   createRoadmapItem(@Param('roadmapId') roadmapId: string, @Body() body: CreateRoadmapItemDto, @Req() req: RequestWithContext) {
     return this.object(this.grpc.learningRoadmaps.createRoadmapItem({ roadmapId, body: toProtoStruct(body) }, this.metadata.build(req)));
   }
 
   @Get(':roadmapId/progress')
   @ApiOperation({ summary: 'Get roadmap progress summary' })
+  @ApiParam({ name: 'roadmapId', format: 'uuid' })
   getRoadmapProgress(@Param('roadmapId') roadmapId: string, @Req() req: RequestWithContext) {
     return this.object(this.grpc.learningRoadmaps.getRoadmapProgress({ roadmapId }, this.metadata.build(req)));
   }
 
   @Patch('items/:itemId')
   @ApiOperation({ summary: 'Update roadmap item' })
-  @ApiBody({ schema: { type: 'object' } })
+  @ApiParam({ name: 'itemId', format: 'uuid' })
+  @ApiBody({ type: UpdateRoadmapItemDto })
   updateRoadmapItem(@Param('itemId') itemId: string, @Body() body: UpdateRoadmapItemDto, @Req() req: RequestWithContext) {
     return this.object(this.grpc.learningRoadmaps.updateRoadmapItem({ itemId, body: toProtoStruct(body) }, this.metadata.build(req)));
   }
 
   @Delete('items/:itemId')
   @ApiOperation({ summary: 'Delete roadmap item' })
+  @ApiParam({ name: 'itemId', format: 'uuid' })
   deleteRoadmapItem(@Param('itemId') itemId: string, @Req() req: RequestWithContext) {
     return lastValueFrom(this.grpc.learningRoadmaps.deleteRoadmapItem({ itemId }, this.metadata.build(req)));
   }
 
   @Post('items/:itemId/complete')
   @ApiOperation({ summary: 'Mark roadmap item completed' })
+  @ApiParam({ name: 'itemId', format: 'uuid' })
   completeRoadmapItem(@Param('itemId') itemId: string, @Req() req: RequestWithContext) {
     return this.object(this.grpc.learningRoadmaps.completeRoadmapItem({ itemId }, this.metadata.build(req)));
   }
 
   @Post('items/:itemId/uncomplete')
   @ApiOperation({ summary: 'Mark roadmap item incomplete' })
+  @ApiParam({ name: 'itemId', format: 'uuid' })
   uncompleteRoadmapItem(@Param('itemId') itemId: string, @Req() req: RequestWithContext) {
     return this.object(this.grpc.learningRoadmaps.uncompleteRoadmapItem({ itemId }, this.metadata.build(req)));
   }
@@ -192,7 +199,7 @@ export class LearningRoadmapsGatewayController {
 @ApiBearerAuth()
 @Controller('learning/mastery')
 export class LearningMasteryGatewayController {
-  constructor(private readonly grpc: CoreGrpcClientService, private readonly metadata: GrpcMetadataBuilder) {}
+  constructor(private readonly grpc: BeCoreGrpcClientService, private readonly metadata: GrpcMetadataBuilder) {}
 
   @Get('me')
   @ApiOperation({ summary: 'Get current student mastery' })
@@ -202,12 +209,14 @@ export class LearningMasteryGatewayController {
 
   @Get('classes/:classId')
   @ApiOperation({ summary: 'Get mastery by class' })
+  @ApiParam({ name: 'classId', format: 'uuid' })
   async getMasteryByClass(@Param('classId') classId: string, @Req() req: RequestWithContext) {
     return unwrapListResponse(await lastValueFrom(this.grpc.learningMastery.getMasteryByClass({ classId }, this.metadata.build(req)))).items;
   }
 
   @Get('topics/:topic')
   @ApiOperation({ summary: 'Get mastery history by topic' })
+  @ApiParam({ name: 'topic' })
   async getMasteryByTopic(@Param('topic') topic: string, @Req() req: RequestWithContext) {
     return unwrapListResponse(await lastValueFrom(this.grpc.learningMastery.getMasteryByTopic({ topic }, this.metadata.build(req)))).items;
   }
@@ -220,14 +229,14 @@ export class LearningMasteryGatewayController {
 
   @Post()
   @ApiOperation({ summary: 'Update mastery score' })
-  @ApiBody({ schema: { type: 'object' } })
+  @ApiBody({ type: UpsertMasteryDto })
   upsertMastery(@Body() body: UpsertMasteryDto, @Req() req: RequestWithContext) {
     return this.object(this.grpc.learningMastery.upsertMastery({ body: toProtoStruct(body) }, this.metadata.build(req)));
   }
 
   @Post('bulk')
   @ApiOperation({ summary: 'Bulk update mastery scores' })
-  @ApiBody({ schema: { type: 'object' } })
+  @ApiBody({ type: BulkUpsertMasteryDto })
   bulkUpsertMastery(@Body() body: BulkUpsertMasteryDto, @Req() req: RequestWithContext) {
     return this.object(this.grpc.learningMastery.bulkUpsertMastery({ body: toProtoStruct(body) }, this.metadata.build(req)));
   }

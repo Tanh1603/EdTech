@@ -2,6 +2,10 @@ import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { GrpcServices } from '@edtech/contracts';
 import { ClientGrpc } from '@nestjs/microservices';
 import {
+  AcademicClassroomsGrpc,
+  AcademicCoursesGrpc,
+  AcademicEnrollmentsGrpc,
+  AcademicLessonsGrpc,
   AssessmentAnalyticsGrpc,
   AssessmentExamsGrpc,
   AssessmentQuestionsGrpc,
@@ -15,12 +19,16 @@ import {
   LearningRoadmapsGrpc,
   StorageGrpc,
   UsersGrpc,
-} from './core-grpc.types';
+} from './be-core-grpc.types';
 
-export const CORE_GRPC_CLIENT = 'CORE_GRPC_CLIENT';
+export const BE_CORE_GRPC_CLIENT = 'BE_CORE_GRPC_CLIENT';
 
 @Injectable()
-export class CoreGrpcClientService implements OnModuleInit {
+export class BeCoreGrpcClientService implements OnModuleInit {
+  courses!: AcademicCoursesGrpc;
+  classrooms!: AcademicClassroomsGrpc;
+  lessons!: AcademicLessonsGrpc;
+  enrollments!: AcademicEnrollmentsGrpc;
   assessmentExams!: AssessmentExamsGrpc;
   assessmentQuestions!: AssessmentQuestionsGrpc;
   assessmentSubmissions!: AssessmentSubmissionsGrpc;
@@ -35,9 +43,13 @@ export class CoreGrpcClientService implements OnModuleInit {
   storage!: StorageGrpc;
   users!: UsersGrpc;
 
-  constructor(@Inject(CORE_GRPC_CLIENT) private readonly client: ClientGrpc) {}
+  constructor(@Inject(BE_CORE_GRPC_CLIENT) private readonly client: ClientGrpc) {}
 
   onModuleInit(): void {
+    this.courses = this.client.getService(GrpcServices.academicCourses);
+    this.classrooms = this.client.getService(GrpcServices.academicClassrooms);
+    this.lessons = this.client.getService(GrpcServices.academicLessons);
+    this.enrollments = this.client.getService(GrpcServices.academicEnrollments);
     this.assessmentExams = this.client.getService(GrpcServices.assessmentExams);
     this.assessmentQuestions = this.client.getService(GrpcServices.assessmentQuestions);
     this.assessmentSubmissions = this.client.getService(GrpcServices.assessmentSubmissions);

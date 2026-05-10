@@ -12,7 +12,7 @@ Current codebase baseline:
 - BE Core: `apps/backend`, NestJS 11, TypeScript, Prisma 7, PostgreSQL.
 - Auth: Clerk through global NestJS guard.
 - Storage: Cloudinary through the existing `storage` module.
-- API contracts: `docs/api-contract`.
+- API contracts: `docs/api-contract`. The current public Gateway route contract is `docs/api-contract/gateway.md`; module files are supporting domain notes.
 - AI service design docs already exist under `docs/ai-service`.
 
 The target architecture has three deployable services:
@@ -191,13 +191,18 @@ apps/
       clients/
         be-core.grpc-client.ts
         ai-service.grpc-client.ts
-      proto/
-        proto-loader.ts
       observability/
         logger.ts
         telemetry.ts
       health/
         health.controller.ts
+  libs/
+    contracts/
+      proto/
+      src/
+        grpc/
+        dtos/
+        mappers/
 ```
 
 ---
@@ -971,32 +976,41 @@ Gateway maps gRPC errors back to the public HTTP response envelope for browser c
 Recommended contract location:
 
 ```txt
-proto/
-  common/
-    envelope.proto
-    identity.proto
-    pagination.proto
-  academic/
-    courses.proto
-    classrooms.proto
-  learning/
-    materials.proto
-    roadmaps.proto
-    mastery.proto
-  chat/
-    chat.proto
-  assessments/
-    grading.proto
-  ai/
-    ai_orchestrator.proto
-    ai_jobs.proto
-  events/
-    material_events.proto
-    assessment_events.proto
-    chat_events.proto
+libs/contracts/
+  proto/
+    common/
+      envelope.proto
+      identity.proto
+      pagination.proto
+    academic/
+      courses.proto
+      classrooms.proto
+    learning/
+      materials.proto
+      roadmaps.proto
+      mastery.proto
+    chat/
+      chat.proto
+    assessments/
+      grading.proto
+    ai/
+      ai_orchestrator.proto
+      ai_jobs.proto
+    events/
+      material_events.proto
+      assessment_events.proto
+      chat_events.proto
+  src/
+    grpc/
+      proto-paths.ts
+      packages.ts
+      services.ts
+      methods.ts
+    dtos/
+    mappers/
 ```
 
-If the workspace later introduces shared libraries, `libs/contracts/proto/` is also acceptable. For this repo, start with top-level `proto/` because it is language-neutral for Node and Python services.
+`libs/contracts/proto/` is the wire-contract source of truth. API Gateway, BE Core, and future AI services must resolve proto files through `@edtech/contracts` helpers such as `getProtoRoot()` and `getAllProtoPaths()` instead of hard-coding filesystem paths.
 
 ### Timeout Budget
 

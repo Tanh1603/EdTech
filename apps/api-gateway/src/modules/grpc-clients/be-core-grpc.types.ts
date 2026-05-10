@@ -3,6 +3,44 @@ import { Observable } from 'rxjs';
 
 type GrpcCall = (payload: unknown, metadata?: Metadata) => Observable<any>;
 
+export interface AcademicCoursesGrpc {
+  getCourses: GrpcCall;
+  createCourse: GrpcCall;
+  getCourseDetail: GrpcCall;
+  updateCourse: GrpcCall;
+  deleteCourse: GrpcCall;
+}
+
+export interface AcademicClassroomsGrpc {
+  getClassrooms: GrpcCall;
+  createClassroom: GrpcCall;
+  getClassroomDetail: GrpcCall;
+  updateClassroom: GrpcCall;
+  deleteClassroom: GrpcCall;
+  regenerateInviteCode: GrpcCall;
+  inviteClassMembers: GrpcCall;
+}
+
+export interface AcademicLessonsGrpc {
+  createLesson: GrpcCall;
+  getLessonsByCourse: GrpcCall;
+  getLessonDetail: GrpcCall;
+  updateLesson: GrpcCall;
+  deleteLesson: GrpcCall;
+  publishLessonToClassroom: GrpcCall;
+  getClassroomLessons: GrpcCall;
+  updateClassroomLesson: GrpcCall;
+  removeLessonFromClassroom: GrpcCall;
+}
+
+export interface AcademicEnrollmentsGrpc {
+  joinClassroom: GrpcCall;
+  createEnrollment: GrpcCall;
+  getClassroomStudents: GrpcCall;
+  updateEnrollmentRole: GrpcCall;
+  removeEnrollment: GrpcCall;
+}
+
 export interface AssessmentExamsGrpc {
   createExam: GrpcCall;
   getExams: GrpcCall;

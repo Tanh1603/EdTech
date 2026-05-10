@@ -1,27 +1,36 @@
 import { existsSync } from 'fs';
-import { join } from 'path';
+import { dirname, join } from 'path';
+
+function findUp(start: string, relativePath: string): string | undefined {
+  let current = start;
+
+  while (true) {
+    const candidate = join(current, relativePath);
+
+    if (existsSync(candidate)) {
+      return candidate;
+    }
+
+    const parent = dirname(current);
+
+    if (parent === current) {
+      return undefined;
+    }
+
+    current = parent;
+  }
+}
 
 export function getProtoRoot(): string {
   const candidates = [
-    join(process.cwd(), 'proto'),
-    join(__dirname, '../../../../proto'),
-    join(__dirname, '../../../../../proto'),
+    findUp(process.cwd(), 'libs/contracts/proto'),
+    findUp(__dirname, 'libs/contracts/proto'),
+    findUp(process.cwd(), 'contracts/proto'),
+    findUp(__dirname, 'contracts/proto'),
+    join(process.cwd(), 'libs/contracts/proto'),
   ];
 
-  return candidates.find((candidate) => existsSync(candidate)) ?? candidates[0];
-}
-
-export function getAcademicProtoPaths(): string[] {
-  const root = getProtoRoot();
-  return [
-    join(root, 'common/pagination.proto'),
-    join(root, 'common/envelope.proto'),
-    join(root, 'common/json.proto'),
-    join(root, 'academic/courses.proto'),
-    join(root, 'academic/classrooms.proto'),
-    join(root, 'academic/lessons.proto'),
-    join(root, 'academic/enrollments.proto'),
-  ];
+  return candidates.find((candidate): candidate is string => Boolean(candidate)) ?? candidates[candidates.length - 1]!;
 }
 
 export function getAllProtoPaths(): string[] {

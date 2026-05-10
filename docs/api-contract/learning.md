@@ -6,6 +6,8 @@
 /api/learning
 ```
 
+Public client contract is exposed by API Gateway Swagger at `GET /api/docs`.
+
 ---
 
 # Standard Response Format
@@ -42,22 +44,27 @@ modules/
 
 ## POST `/materials`
 
-Upload learning material.
+Create learning material metadata from an uploaded file URL.
 
-Supports:
-
-* PDF
-* DOCX
-* PPTX
-* Images
-* Video
-
-### Multipart Form Data
+File bytes are uploaded first through:
 
 ```txt
-file: url
-lessonId: uuid
-title: string
+POST /api/storage/upload
+```
+
+The frontend then sends JSON metadata to `/api/learning/materials`. BE Core stores the URL and metadata only; file bytes are not sent through this endpoint or through gRPC.
+
+### JSON Body
+
+```json
+{
+  "lessonId": "lesson_uuid",
+  "title": "Chapter 1 PDF",
+  "storageUrl": "https://res.cloudinary.com/example/file.pdf",
+  "publicId": "edtech/materials/file",
+  "mimeType": "application/pdf",
+  "size": 2048000
+}
 ```
 
 ### Response
@@ -132,43 +139,6 @@ Soft delete material.
 
 ---
 
-## POST `/materials/:materialId/reindex`
-
-Regenerate:
-
-* chunks
-* embeddings
-* vector index
-* semantic search index
-
-### Request Body
-
-```json
-{
-  "force": true,
-  "chunkSize": 500,
-  "chunkOverlap": 100
-}
-```
-
-### Response
-
-```json
-{
-  "materialId": "material_uuid",
-  "status": "indexing",
-  "jobId": "job_uuid"
-}
-```
-
----
-
-## GET `/materials/:materialId/jobs`
-
-Get indexing jobs history.
-
----
-
 ## GET `/materials/:materialId/chunks`
 
 Get material chunks.
@@ -188,66 +158,7 @@ Get chunk detail.
 
 ---
 
-## POST `/materials/search`
-
-Semantic search materials using vector search.
-
-### Request Body
-
-```json
-{
-  "query": "integral formulas",
-  "lessonId": "uuid",
-  "topK": 5
-}
-```
-
-### Response
-
-```json
-{
-  "matches": [
-    {
-      "chunkId": "chunk_uuid",
-      "content": "Integral is ...",
-      "score": 0.92
-    }
-  ]
-}
-```
-
----
-
 # Roadmaps APIs
-
-## POST `/roadmaps/generate`
-
-Generate AI roadmap.
-
-### Request Body
-
-```json
-{
-  "targetGoal": "Master Calculus",
-  "weakTopics": [
-    "Derivative",
-    "Integral"
-  ],
-  "classId": "class_uuid"
-}
-```
-
-### Response
-
-```json
-{
-  "roadmapId": "roadmap_uuid",
-  "generatedByAi": true,
-  "status": "generating"
-}
-```
-
----
 
 ## POST `/roadmaps`
 
@@ -380,68 +291,6 @@ Get next recommended roadmap item.
 {
   "itemId": "item_uuid",
   "title": "Learn Integrals"
-}
-```
-
----
-
-# Recommendations APIs
-
-## GET `/recommendations`
-
-Get AI recommendations.
-
-### Query Params
-
-```txt
-classId?: uuid
-```
-
-### Response
-
-```json
-{
-  "weakTopics": [
-    "Integral"
-  ],
-  "recommendedLessons": [],
-  "recommendedMaterials": [],
-  "recommendedExercises": [],
-  "recommendedRoadmaps": []
-}
-```
-
----
-
-## GET `/recommendations/lessons`
-
-Get recommended lessons only.
-
----
-
-## GET `/recommendations/materials`
-
-Get recommended materials only.
-
----
-
-## GET `/recommendations/topics`
-
-Get weak topics analysis.
-
----
-
-## GET `/recommendations/next-learning`
-
-Get recommended next learning action.
-
-### Response
-
-```json
-{
-  "type": "lesson",
-  "lessonId": "uuid",
-  "title": "Integral Basics"
 }
 ```
 

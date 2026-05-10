@@ -23,14 +23,14 @@ import { lastValueFrom } from 'rxjs';
 import { CourseQueryDto, CreateCourseDto, UpdateCourseDto } from '@edtech/contracts';
 import { GrpcMetadataBuilder } from '../common/grpc-metadata/grpc-metadata.builder';
 import { RequestWithContext } from '../common/types/request-with-context';
-import { AcademicGrpcClientService } from '../grpc-clients/academic-grpc-client.service';
+import { BeCoreGrpcClientService } from '../grpc-clients/be-core-grpc-client.service';
 
 @ApiTags('Academic - Courses')
 @ApiBearerAuth()
 @Controller('courses')
 export class CoursesGatewayController {
   constructor(
-    private readonly academicGrpc: AcademicGrpcClientService,
+    private readonly grpc: BeCoreGrpcClientService,
     private readonly metadataBuilder: GrpcMetadataBuilder,
   ) {}
 
@@ -43,7 +43,7 @@ export class CoursesGatewayController {
   @ApiOkResponse({ description: 'Courses returned successfully' })
   getCourses(@Query() query: CourseQueryDto, @Req() req: RequestWithContext) {
     return lastValueFrom(
-      this.academicGrpc.courses.getCourses(
+      this.grpc.courses.getCourses(
         {
           page: Number(query.page) || undefined,
           limit: Number(query.limit) || undefined,
@@ -57,11 +57,11 @@ export class CoursesGatewayController {
 
   @Post()
   @ApiOperation({ summary: 'Create course' })
-  @ApiBody({ schema: { type: 'object' } })
+  @ApiBody({ type: CreateCourseDto })
   @ApiCreatedResponse({ description: 'Course created successfully' })
   createCourse(@Body() body: CreateCourseDto, @Req() req: RequestWithContext) {
     return lastValueFrom(
-      this.academicGrpc.courses.createCourse(
+      this.grpc.courses.createCourse(
         {
           teacherId: body.teacherId,
           name: body.name,
@@ -82,7 +82,7 @@ export class CoursesGatewayController {
     @Req() req: RequestWithContext,
   ) {
     return lastValueFrom(
-      this.academicGrpc.courses.getCourseDetail(
+      this.grpc.courses.getCourseDetail(
         { courseId },
         this.metadataBuilder.build(req),
       ),
@@ -92,15 +92,15 @@ export class CoursesGatewayController {
   @Patch(':courseId')
   @ApiOperation({ summary: 'Update course' })
   @ApiParam({ name: 'courseId', format: 'uuid' })
-  @ApiBody({ schema: { type: 'object' } })
+  @ApiBody({ type: UpdateCourseDto })
   @ApiOkResponse({ description: 'Course updated successfully' })
   updateCourse(
     @Param('courseId') courseId: string,
-    @Body() body: CreateCourseDto,
+    @Body() body: UpdateCourseDto,
     @Req() req: RequestWithContext,
   ) {
     return lastValueFrom(
-      this.academicGrpc.courses.updateCourse(
+      this.grpc.courses.updateCourse(
         {
           courseId,
           name: body.name,
@@ -121,7 +121,7 @@ export class CoursesGatewayController {
     @Req() req: RequestWithContext,
   ) {
     return lastValueFrom(
-      this.academicGrpc.courses.deleteCourse(
+      this.grpc.courses.deleteCourse(
         { courseId },
         this.metadataBuilder.build(req),
       ),

@@ -21,24 +21,24 @@ import { lastValueFrom } from 'rxjs';
 import { CreateEnrollmentDto, JoinClassroomDto, UpdateEnrollmentDto } from '@edtech/contracts';
 import { GrpcMetadataBuilder } from '../common/grpc-metadata/grpc-metadata.builder';
 import { RequestWithContext } from '../common/types/request-with-context';
-import { AcademicGrpcClientService } from '../grpc-clients/academic-grpc-client.service';
+import { BeCoreGrpcClientService } from '../grpc-clients/be-core-grpc-client.service';
 
 @ApiTags('Academic - Enrollments')
 @ApiBearerAuth()
 @Controller()
 export class EnrollmentsGatewayController {
   constructor(
-    private readonly academicGrpc: AcademicGrpcClientService,
+    private readonly grpc: BeCoreGrpcClientService,
     private readonly metadataBuilder: GrpcMetadataBuilder,
   ) {}
 
   @Post('enrollments/join')
   @ApiOperation({ summary: 'Join classroom by invite code' })
-  @ApiBody({ schema: { type: 'object' } })
+  @ApiBody({ type: JoinClassroomDto })
   @ApiCreatedResponse({ description: 'Joined classroom successfully' })
   joinClassroom(@Body() body: JoinClassroomDto, @Req() req: RequestWithContext) {
     return lastValueFrom(
-      this.academicGrpc.enrollments.joinClassroom(
+      this.grpc.enrollments.joinClassroom(
         { inviteCode: body.inviteCode, userId: req.user?.id },
         this.metadataBuilder.build(req),
       ),
@@ -47,11 +47,11 @@ export class EnrollmentsGatewayController {
 
   @Post('enrollments')
   @ApiOperation({ summary: 'Add student to classroom' })
-  @ApiBody({ schema: { type: 'object' } })
+  @ApiBody({ type: CreateEnrollmentDto })
   @ApiCreatedResponse({ description: 'Enrollment created successfully' })
   createEnrollment(@Body() body: CreateEnrollmentDto, @Req() req: RequestWithContext) {
     return lastValueFrom(
-      this.academicGrpc.enrollments.createEnrollment(
+      this.grpc.enrollments.createEnrollment(
         {
           classId: body.classId,
           userId: body.userId,
@@ -71,7 +71,7 @@ export class EnrollmentsGatewayController {
     @Req() req: RequestWithContext,
   ) {
     const response = await lastValueFrom(
-      this.academicGrpc.enrollments.getClassroomStudents(
+      this.grpc.enrollments.getClassroomStudents(
         { classroomId },
         this.metadataBuilder.build(req),
       ),
@@ -82,7 +82,7 @@ export class EnrollmentsGatewayController {
   @Patch('enrollments/:enrollmentId')
   @ApiOperation({ summary: 'Update enrollment role' })
   @ApiParam({ name: 'enrollmentId', format: 'uuid' })
-  @ApiBody({ schema: { type: 'object' } })
+  @ApiBody({ type: UpdateEnrollmentDto })
   @ApiOkResponse({ description: 'Enrollment updated successfully' })
   updateEnrollmentRole(
     @Param('enrollmentId') enrollmentId: string,
@@ -90,7 +90,7 @@ export class EnrollmentsGatewayController {
     @Req() req: RequestWithContext,
   ) {
     return lastValueFrom(
-      this.academicGrpc.enrollments.updateEnrollmentRole(
+      this.grpc.enrollments.updateEnrollmentRole(
         { enrollmentId, role: body.role },
         this.metadataBuilder.build(req),
       ),
@@ -106,7 +106,7 @@ export class EnrollmentsGatewayController {
     @Req() req: RequestWithContext,
   ) {
     return lastValueFrom(
-      this.academicGrpc.enrollments.removeEnrollment(
+      this.grpc.enrollments.removeEnrollment(
         { enrollmentId },
         this.metadataBuilder.build(req),
       ),

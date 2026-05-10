@@ -4,8 +4,10 @@ Version: `v1`
 Base URL:
 
 ```txt
-/api/v1
+/api
 ```
+
+Public client contract is exposed by API Gateway Swagger at `GET /api/docs`.
 
 ---
 
@@ -345,7 +347,7 @@ Soft delete recommended.
 
 # Create Classroom
 
-## POST `/classrooms`
+## POST `/classes`
 
 ## Authorization
 
@@ -384,7 +386,7 @@ Teacher only
 
 # Get Classrooms
 
-## GET `/classrooms`
+## GET `/classes`
 
 ---
 
@@ -400,13 +402,13 @@ Teacher only
 
 # Get Classroom Detail
 
-## GET `/classrooms/:classroomId`
+## GET `/classes/:classroomId`
 
 ---
 
 # Update Classroom
 
-## PATCH `/classrooms/:classroomId`
+## PATCH `/classes/:classroomId`
 
 ---
 
@@ -422,13 +424,13 @@ Teacher only
 
 # Delete Classroom
 
-## DELETE `/classrooms/:classroomId`
+## DELETE `/classes/:classroomId`
 
 ---
 
 # Regenerate Invite Code
 
-## POST `/classrooms/:classroomId/regenerate-invite-code`
+## POST `/classes/:classroomId/regenerate-invite-code`
 
 ---
 
@@ -625,7 +627,7 @@ Teacher only
 
 # Publish Lesson To Classroom
 
-## POST `/classrooms/:classroomId/lessons`
+## POST `/classes/:classroomId/lessons`
 
 ---
 
@@ -663,7 +665,7 @@ Publish reusable Lesson into Classroom.
 
 # Get Classroom Lessons
 
-## GET `/classrooms/:classroomId/lessons`
+## GET `/classes/:classroomId/lessons`
 
 ---
 
@@ -696,7 +698,7 @@ Publish reusable Lesson into Classroom.
 
 # Update Classroom Lesson
 
-## PATCH `/classrooms/:classroomId/lessons/:lessonId`
+## PATCH `/classes/:classroomId/lessons/:lessonId`
 
 ---
 
@@ -712,7 +714,7 @@ Publish reusable Lesson into Classroom.
 
 # Remove Lesson From Classroom
 
-## DELETE `/classrooms/:classroomId/lessons/:lessonId`
+## DELETE `/classes/:classroomId/lessons/:lessonId`
 
 ---
 
@@ -796,7 +798,7 @@ Publish reusable Lesson into Classroom.
 # Classroom Analytics
 
 ```txt
-GET /classrooms/:id/analytics
+GET /classes/:id/analytics
 ```
 
 ---
@@ -814,7 +816,7 @@ DELETE /materials/:materialId
 # Classroom Progress
 
 ```txt
-GET /classrooms/:id/progress
+GET /classes/:id/progress
 ```
 
 ---

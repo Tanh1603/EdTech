@@ -15,11 +15,3 @@ export const AllGrpcPackages = [
   GrpcPackages.storage,
   GrpcPackages.users,
 ] as const;
-
-export const CoreGrpcPackages = [
-  GrpcPackages.assessments,
-  GrpcPackages.chat,
-  GrpcPackages.learning,
-  GrpcPackages.storage,
-  GrpcPackages.users,
-] as const;

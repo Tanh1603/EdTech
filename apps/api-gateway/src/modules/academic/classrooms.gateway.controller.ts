@@ -26,14 +26,14 @@ import { lastValueFrom } from 'rxjs';
 import { ClassInvitesDto, ClassroomQueryDto, CreateClassroomDto, UpdateClassroomDto } from '@edtech/contracts';
 import { GrpcMetadataBuilder } from '../common/grpc-metadata/grpc-metadata.builder';
 import { RequestWithContext } from '../common/types/request-with-context';
-import { AcademicGrpcClientService } from '../grpc-clients/academic-grpc-client.service';
+import { BeCoreGrpcClientService } from '../grpc-clients/be-core-grpc-client.service';
 
 @ApiTags('Academic - Classrooms')
 @ApiBearerAuth()
 @Controller()
 export class ClassroomsGatewayController {
   constructor(
-    private readonly academicGrpc: AcademicGrpcClientService,
+    private readonly grpc: BeCoreGrpcClientService,
     private readonly metadataBuilder: GrpcMetadataBuilder,
   ) {}
 
@@ -45,7 +45,7 @@ export class ClassroomsGatewayController {
   @ApiOkResponse({ description: 'Classes returned successfully' })
   getClassrooms(@Query() query: ClassroomQueryDto, @Req() req: RequestWithContext) {
     return lastValueFrom(
-      this.academicGrpc.classrooms.getClassrooms(
+      this.grpc.classrooms.getClassrooms(
         {
           page: Number(query.page) || undefined,
           limit: Number(query.limit) || undefined,
@@ -58,11 +58,11 @@ export class ClassroomsGatewayController {
 
   @Post('classes')
   @ApiOperation({ summary: 'Create class' })
-  @ApiBody({ schema: { type: 'object' } })
+  @ApiBody({ type: CreateClassroomDto })
   @ApiCreatedResponse({ description: 'Class created successfully' })
   createClassroom(@Body() body: CreateClassroomDto, @Req() req: RequestWithContext) {
     return lastValueFrom(
-      this.academicGrpc.classrooms.createClassroom(
+      this.grpc.classrooms.createClassroom(
         {
           courseId: body.courseId,
           name: body.name,
@@ -84,7 +84,7 @@ export class ClassroomsGatewayController {
     @Req() req: RequestWithContext,
   ) {
     return lastValueFrom(
-      this.academicGrpc.classrooms.getClassroomDetail(
+      this.grpc.classrooms.getClassroomDetail(
         { classroomId },
         this.metadataBuilder.build(req),
       ),
@@ -94,7 +94,7 @@ export class ClassroomsGatewayController {
   @Patch('classes/:classroomId')
   @ApiOperation({ summary: 'Update classroom' })
   @ApiParam({ name: 'classroomId', format: 'uuid' })
-  @ApiBody({ schema: { type: 'object' } })
+  @ApiBody({ type: UpdateClassroomDto })
   @ApiOkResponse({ description: 'Classroom updated successfully' })
   updateClassroom(
     @Param('classroomId') classroomId: string,
@@ -102,7 +102,7 @@ export class ClassroomsGatewayController {
     @Req() req: RequestWithContext,
   ) {
     return lastValueFrom(
-      this.academicGrpc.classrooms.updateClassroom(
+      this.grpc.classrooms.updateClassroom(
         {
           classroomId,
           name: body.name,
@@ -123,7 +123,7 @@ export class ClassroomsGatewayController {
     @Req() req: RequestWithContext,
   ) {
     return lastValueFrom(
-      this.academicGrpc.classrooms.deleteClassroom(
+      this.grpc.classrooms.deleteClassroom(
         { classroomId },
         this.metadataBuilder.build(req),
       ),
@@ -139,7 +139,7 @@ export class ClassroomsGatewayController {
     @Req() req: RequestWithContext,
   ) {
     return lastValueFrom(
-      this.academicGrpc.classrooms.regenerateInviteCode(
+      this.grpc.classrooms.regenerateInviteCode(
         { classroomId },
         this.metadataBuilder.build(req),
       ),
@@ -150,7 +150,7 @@ export class ClassroomsGatewayController {
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiOperation({ summary: 'Invite class members' })
   @ApiParam({ name: 'classId', format: 'uuid' })
-  @ApiBody({ schema: { type: 'object' } })
+  @ApiBody({ type: ClassInvitesDto })
   @ApiAcceptedResponse({ description: 'Invite job queued successfully' })
   inviteClassMembers(
     @Param('classId') classId: string,
@@ -158,7 +158,7 @@ export class ClassroomsGatewayController {
     @Req() req: RequestWithContext,
   ) {
     return lastValueFrom(
-      this.academicGrpc.classrooms.inviteClassMembers(
+      this.grpc.classrooms.inviteClassMembers(
         { classId, emails: body.emails ?? [] },
         this.metadataBuilder.build(req),
       ),

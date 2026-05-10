@@ -6,6 +6,8 @@
 /api/assessments
 ```
 
+Public client contract is exposed by API Gateway Swagger at `GET /api/docs`.
+
 ---
 
 # Standard Response Format

@@ -5,13 +5,13 @@ import { UserQueryDto } from '@edtech/contracts';
 import { GrpcMetadataBuilder } from '../common/grpc-metadata/grpc-metadata.builder';
 import { unwrapPageResponse } from '@edtech/contracts';
 import { RequestWithContext } from '../common/types/request-with-context';
-import { CoreGrpcClientService } from '../grpc-clients/core-grpc-client.service';
+import { BeCoreGrpcClientService } from '../grpc-clients/be-core-grpc-client.service';
 
 @ApiTags('Users')
 @ApiBearerAuth()
 @Controller('users')
 export class UsersGatewayController {
-  constructor(private readonly grpc: CoreGrpcClientService, private readonly metadata: GrpcMetadataBuilder) {}
+  constructor(private readonly grpc: BeCoreGrpcClientService, private readonly metadata: GrpcMetadataBuilder) {}
 
   @Get()
   @ApiOperation({ summary: 'Get users' })

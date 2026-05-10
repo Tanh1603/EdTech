@@ -1,11 +1,11 @@
 import { Metadata } from '@grpc/grpc-js';
 import { Controller } from '@nestjs/common';
-import { GrpcMethod } from '@nestjs/microservices';
+import { GrpcContractMethod, GrpcMethods, GrpcServices } from '@edtech/contracts';
 import {
   fromProtoStruct,
   toListResponse,
   toObjectResponse,
-} from '../../../common/grpc/json.mapper';
+} from '@edtech/contracts';
 import { getGrpcUserId } from '../../../common/grpc/metadata.mapper';
 import { runGrpc } from '../../../common/grpc/error-to-rpc-exception';
 import { assertServiceToken } from '../../../common/grpc/service-token';
@@ -15,21 +15,21 @@ import { MasteryService } from './mastery.service';
 export class MasteryGrpcController {
   constructor(private readonly masteryService: MasteryService) {}
 
-  @GrpcMethod('LearningMasteryService', 'GetMyMastery')
+  @GrpcContractMethod(GrpcServices.learningMastery, GrpcMethods.learningMastery.getMyMastery)
   getMyMastery(_: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.masteryService.getMyMastery(getGrpcUserId(metadata)).then(toListResponse),
     );
   }
 
-  @GrpcMethod('LearningMasteryService', 'GetMasteryByClass')
+  @GrpcContractMethod(GrpcServices.learningMastery, GrpcMethods.learningMastery.getMasteryByClass)
   getMasteryByClass(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.masteryService.getMasteryByClass(payload.classId).then(toListResponse),
     );
   }
 
-  @GrpcMethod('LearningMasteryService', 'GetMasteryByTopic')
+  @GrpcContractMethod(GrpcServices.learningMastery, GrpcMethods.learningMastery.getMasteryByTopic)
   getMasteryByTopic(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.masteryService
@@ -38,7 +38,7 @@ export class MasteryGrpcController {
     );
   }
 
-  @GrpcMethod('LearningMasteryService', 'GetMasteryAnalytics')
+  @GrpcContractMethod(GrpcServices.learningMastery, GrpcMethods.learningMastery.getMasteryAnalytics)
   getMasteryAnalytics(_: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.masteryService
@@ -47,7 +47,7 @@ export class MasteryGrpcController {
     );
   }
 
-  @GrpcMethod('LearningMasteryService', 'UpsertMastery')
+  @GrpcContractMethod(GrpcServices.learningMastery, GrpcMethods.learningMastery.upsertMastery)
   upsertMastery(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.masteryService
@@ -56,7 +56,7 @@ export class MasteryGrpcController {
     );
   }
 
-  @GrpcMethod('LearningMasteryService', 'BulkUpsertMastery')
+  @GrpcContractMethod(GrpcServices.learningMastery, GrpcMethods.learningMastery.bulkUpsertMastery)
   bulkUpsertMastery(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.masteryService
@@ -65,7 +65,7 @@ export class MasteryGrpcController {
     );
   }
 
-  @GrpcMethod('LearningMasteryService', 'GetRiskStudents')
+  @GrpcContractMethod(GrpcServices.learningMastery, GrpcMethods.learningMastery.getRiskStudents)
   getRiskStudents(_: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.masteryService.getRiskStudents().then(toObjectResponse),

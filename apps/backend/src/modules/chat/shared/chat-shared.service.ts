@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PageDto } from '../../../common/dto/page.dto';
+import { PageDto } from '@edtech/contracts';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import { Prisma } from '../../../generated/prisma/client';
 import {
@@ -8,7 +8,7 @@ import {
   CreateChatSessionDto,
   SendMessageDto,
   UpdateChatSessionDto,
-} from './dto/chat.dto';
+} from '@edtech/contracts';
 
 @Injectable()
 export class ChatSharedService {

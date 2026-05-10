@@ -16,7 +16,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { memoryStorage } from 'multer';
-import { DeleteFileDto } from './dto/delete-file.dto';
+import { DeleteFileDto } from '@edtech/contracts';
 import { StorageService } from './storage.service';
 
 @ApiTags('Storage')

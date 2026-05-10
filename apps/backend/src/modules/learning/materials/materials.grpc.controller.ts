@@ -1,11 +1,11 @@
 import { Metadata } from '@grpc/grpc-js';
 import { Controller } from '@nestjs/common';
-import { GrpcMethod } from '@nestjs/microservices';
+import { GrpcContractMethod, GrpcMethods, GrpcServices } from '@edtech/contracts';
 import {
   fromProtoStruct,
   toObjectResponse,
   toPageResponse,
-} from '../../../common/grpc/json.mapper';
+} from '@edtech/contracts';
 import { getGrpcUserId } from '../../../common/grpc/metadata.mapper';
 import { runGrpc } from '../../../common/grpc/error-to-rpc-exception';
 import { assertServiceToken } from '../../../common/grpc/service-token';
@@ -15,7 +15,7 @@ import { MaterialsService } from './materials.service';
 export class MaterialsGrpcController {
   constructor(private readonly materialsService: MaterialsService) {}
 
-  @GrpcMethod('LearningMaterialsService', 'CreateMaterial')
+  @GrpcContractMethod(GrpcServices.learningMaterials, GrpcMethods.learningMaterials.createMaterial)
   createMaterial(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.materialsService
@@ -34,7 +34,7 @@ export class MaterialsGrpcController {
     );
   }
 
-  @GrpcMethod('LearningMaterialsService', 'GetMaterials')
+  @GrpcContractMethod(GrpcServices.learningMaterials, GrpcMethods.learningMaterials.getMaterials)
   getMaterials(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.materialsService.getMaterials({
@@ -47,7 +47,7 @@ export class MaterialsGrpcController {
     );
   }
 
-  @GrpcMethod('LearningMaterialsService', 'GetMaterialDetail')
+  @GrpcContractMethod(GrpcServices.learningMaterials, GrpcMethods.learningMaterials.getMaterialDetail)
   getMaterialDetail(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.materialsService
@@ -56,7 +56,7 @@ export class MaterialsGrpcController {
     );
   }
 
-  @GrpcMethod('LearningMaterialsService', 'UpdateMaterial')
+  @GrpcContractMethod(GrpcServices.learningMaterials, GrpcMethods.learningMaterials.updateMaterial)
   updateMaterial(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.materialsService
@@ -65,14 +65,14 @@ export class MaterialsGrpcController {
     );
   }
 
-  @GrpcMethod('LearningMaterialsService', 'DeleteMaterial')
+  @GrpcContractMethod(GrpcServices.learningMaterials, GrpcMethods.learningMaterials.deleteMaterial)
   deleteMaterial(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.materialsService.deleteMaterial(payload.materialId),
     );
   }
 
-  @GrpcMethod('LearningMaterialsService', 'GetMaterialChunks')
+  @GrpcContractMethod(GrpcServices.learningMaterials, GrpcMethods.learningMaterials.getMaterialChunks)
   getMaterialChunks(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.materialsService.getMaterialChunks(payload.materialId, {
@@ -82,7 +82,7 @@ export class MaterialsGrpcController {
     );
   }
 
-  @GrpcMethod('LearningMaterialsService', 'GetChunkDetail')
+  @GrpcContractMethod(GrpcServices.learningMaterials, GrpcMethods.learningMaterials.getChunkDetail)
   getChunkDetail(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.materialsService

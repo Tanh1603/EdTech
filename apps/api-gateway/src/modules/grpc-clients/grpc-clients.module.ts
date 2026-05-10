@@ -1,4 +1,11 @@
 import { Module } from '@nestjs/common';
+import {
+  CoreGrpcPackages,
+  getAcademicProtoPaths,
+  getAllProtoPaths,
+  getProtoRoot,
+  GrpcPackages,
+} from '@edtech/contracts';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { GrpcMetadataBuilder } from '../common/grpc-metadata/grpc-metadata.builder';
 import {
@@ -9,7 +16,6 @@ import {
   CORE_GRPC_CLIENT,
   CoreGrpcClientService,
 } from './core-grpc-client.service';
-import { getAcademicProtoPaths, getAllProtoPaths, getProtoRoot } from './proto-paths';
 
 @Module({
   imports: [
@@ -18,7 +24,7 @@ import { getAcademicProtoPaths, getAllProtoPaths, getProtoRoot } from './proto-p
         name: ACADEMIC_GRPC_CLIENT,
         transport: Transport.GRPC,
         options: {
-          package: 'academic',
+          package: GrpcPackages.academic,
           protoPath: getAcademicProtoPaths(),
           url: process.env.BE_CORE_GRPC_URL ?? 'localhost:50051',
           loader: {
@@ -31,7 +37,7 @@ import { getAcademicProtoPaths, getAllProtoPaths, getProtoRoot } from './proto-p
         name: CORE_GRPC_CLIENT,
         transport: Transport.GRPC,
         options: {
-          package: ['assessments', 'chat', 'learning', 'storage', 'users'],
+          package: [...CoreGrpcPackages],
           protoPath: getAllProtoPaths(),
           url: process.env.BE_CORE_GRPC_URL ?? 'localhost:50051',
           loader: {

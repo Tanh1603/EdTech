@@ -3,7 +3,7 @@ import { ApiBearerAuth, ApiBody, ApiOkResponse, ApiOperation, ApiParam, ApiQuery
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { CurrentUser as CurrentUserPayload } from '../../../common/types/current-user.type';
 import { ChatSharedService } from '../shared/chat-shared.service';
-import { ChatMessagesQueryDto, SendMessageDto } from '../shared/dto/chat.dto';
+import { ChatMessagesQueryDto, SendMessageDto } from '@edtech/contracts';
 
 @ApiTags('Chat - Messages')
 @ApiBearerAuth()

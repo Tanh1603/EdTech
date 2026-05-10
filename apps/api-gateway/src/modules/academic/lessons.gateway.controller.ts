@@ -20,6 +20,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { lastValueFrom } from 'rxjs';
+import { ClassroomLessonsQueryDto, CreateLessonDto, PaginationQueryDto, PublishClassroomLessonDto, UpdateClassroomLessonDto, UpdateLessonDto } from '@edtech/contracts';
 import { GrpcMetadataBuilder } from '../common/grpc-metadata/grpc-metadata.builder';
 import { RequestWithContext } from '../common/types/request-with-context';
 import { AcademicGrpcClientService } from '../grpc-clients/academic-grpc-client.service';
@@ -37,7 +38,7 @@ export class LessonsGatewayController {
   @ApiOperation({ summary: 'Create lesson' })
   @ApiBody({ schema: { type: 'object' } })
   @ApiCreatedResponse({ description: 'Lesson created successfully' })
-  createLesson(@Body() body: any, @Req() req: RequestWithContext) {
+  createLesson(@Body() body: CreateLessonDto, @Req() req: RequestWithContext) {
     return lastValueFrom(
       this.academicGrpc.lessons.createLesson(
         {
@@ -59,7 +60,7 @@ export class LessonsGatewayController {
   @ApiOkResponse({ description: 'Course lessons returned successfully' })
   getLessonsByCourse(
     @Param('courseId') courseId: string,
-    @Query() query: any,
+    @Query() query: PaginationQueryDto,
     @Req() req: RequestWithContext,
   ) {
     return lastValueFrom(
@@ -97,7 +98,7 @@ export class LessonsGatewayController {
   @ApiOkResponse({ description: 'Lesson updated successfully' })
   updateLesson(
     @Param('lessonId') lessonId: string,
-    @Body() body: any,
+    @Body() body: UpdateLessonDto,
     @Req() req: RequestWithContext,
   ) {
     return lastValueFrom(
@@ -136,7 +137,7 @@ export class LessonsGatewayController {
   @ApiCreatedResponse({ description: 'Lesson published successfully' })
   publishLessonToClassroom(
     @Param('classroomId') classroomId: string,
-    @Body() body: any,
+    @Body() body: PublishClassroomLessonDto,
     @Req() req: RequestWithContext,
   ) {
     return lastValueFrom(
@@ -158,12 +159,17 @@ export class LessonsGatewayController {
   @ApiOkResponse({ description: 'Classroom lessons returned successfully' })
   async getClassroomLessons(
     @Param('classroomId') classroomId: string,
-    @Query() query: any,
+    @Query() query: ClassroomLessonsQueryDto,
     @Req() req: RequestWithContext,
   ) {
     const response = await lastValueFrom(
       this.academicGrpc.lessons.getClassroomLessons(
-        { classroomId, publishedOnly: query.publishedOnly === 'true' },
+        {
+          classroomId,
+          publishedOnly:
+            query.publishedOnly === true ||
+            String(query.publishedOnly) === 'true',
+        },
         this.metadataBuilder.build(req),
       ),
     );
@@ -179,7 +185,7 @@ export class LessonsGatewayController {
   updateClassroomLesson(
     @Param('classroomId') classroomId: string,
     @Param('lessonId') lessonId: string,
-    @Body() body: any,
+    @Body() body: UpdateClassroomLessonDto,
     @Req() req: RequestWithContext,
   ) {
     return lastValueFrom(

@@ -3,7 +3,7 @@ import { ApiBearerAuth, ApiBody, ApiOkResponse, ApiOperation, ApiParam, ApiTags 
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { CurrentUser as CurrentUserPayload } from '../../../common/types/current-user.type';
 import { AssessmentsSharedService } from '../shared/assessments-shared.service';
-import { AnswersDto } from '../shared/dto/submission.dto';
+import { AnswersDto } from '@edtech/contracts';
 
 @ApiTags('Assessments - Submissions')
 @ApiBearerAuth()

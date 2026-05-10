@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { PageDto } from '../../../common/dto/page.dto';
-import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { PageDto } from '@edtech/contracts';
+import { PaginationQueryDto } from '@edtech/contracts';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import { MaterialStatus, Prisma } from '../../../generated/prisma/client';
 import { StorageService } from '../../storage/storage.service';
-import { MaterialQueryDto } from './dto/material-query.dto';
-import { UpdateMaterialDto } from './dto/update-material.dto';
+import { MaterialQueryDto } from '@edtech/contracts';
+import { UpdateMaterialDto } from '@edtech/contracts';
 
 @Injectable()
 export class MaterialsService {

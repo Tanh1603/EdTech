@@ -3,7 +3,7 @@ import { ApiBearerAuth, ApiBody, ApiCreatedResponse, ApiOkResponse, ApiOperation
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { CurrentUser as CurrentUserPayload } from '../../../common/types/current-user.type';
 import { ChatSharedService } from '../shared/chat-shared.service';
-import { ChatSessionsQueryDto, CreateChatSessionDto, UpdateChatSessionDto } from '../shared/dto/chat.dto';
+import { ChatSessionsQueryDto, CreateChatSessionDto, UpdateChatSessionDto } from '@edtech/contracts';
 
 @ApiTags('Chat - Sessions')
 @ApiBearerAuth()

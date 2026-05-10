@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { PageDto } from '../../../common/dto/page.dto';
+import { PageDto } from '@edtech/contracts';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import { Prisma } from '../../../generated/prisma/client';
-import { CourseQueryDto } from './dto/course-query.dto';
-import { CreateCourseDto } from './dto/create-course.dto';
-import { UpdateCourseDto } from './dto/update-course.dto';
+import { CourseQueryDto } from '@edtech/contracts';
+import { CreateCourseDto } from '@edtech/contracts';
+import { UpdateCourseDto } from '@edtech/contracts';
 
 @Injectable()
 export class CoursesService {

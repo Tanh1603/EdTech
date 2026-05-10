@@ -1,11 +1,11 @@
 import { Metadata } from '@grpc/grpc-js';
 import { Controller } from '@nestjs/common';
-import { GrpcMethod } from '@nestjs/microservices';
+import { GrpcContractMethod, GrpcMethods, GrpcServices } from '@edtech/contracts';
 import {
   fromProtoStruct,
   toObjectResponse,
   toPageResponse,
-} from '../../../common/grpc/json.mapper';
+} from '@edtech/contracts';
 import { getGrpcUserId } from '../../../common/grpc/metadata.mapper';
 import { runGrpc } from '../../../common/grpc/error-to-rpc-exception';
 import { assertServiceToken } from '../../../common/grpc/service-token';
@@ -15,7 +15,7 @@ import { ChatSharedService } from './chat-shared.service';
 export class ChatGrpcController {
   constructor(private readonly chatService: ChatSharedService) {}
 
-  @GrpcMethod('ChatSessionsService', 'CreateSession')
+  @GrpcContractMethod(GrpcServices.chatSessions, GrpcMethods.chatSessions.createSession)
   createSession(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       Promise.resolve(
@@ -27,7 +27,7 @@ export class ChatGrpcController {
     );
   }
 
-  @GrpcMethod('ChatSessionsService', 'GetSessions')
+  @GrpcContractMethod(GrpcServices.chatSessions, GrpcMethods.chatSessions.getSessions)
   getSessions(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.chatService.getSessions(
@@ -42,7 +42,7 @@ export class ChatGrpcController {
     );
   }
 
-  @GrpcMethod('ChatSessionsService', 'GetSessionDetail')
+  @GrpcContractMethod(GrpcServices.chatSessions, GrpcMethods.chatSessions.getSessionDetail)
   getSessionDetail(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       Promise.resolve(
@@ -51,7 +51,7 @@ export class ChatGrpcController {
     );
   }
 
-  @GrpcMethod('ChatSessionsService', 'UpdateSession')
+  @GrpcContractMethod(GrpcServices.chatSessions, GrpcMethods.chatSessions.updateSession)
   updateSession(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.chatService
@@ -64,14 +64,14 @@ export class ChatGrpcController {
     );
   }
 
-  @GrpcMethod('ChatSessionsService', 'DeleteSession')
+  @GrpcContractMethod(GrpcServices.chatSessions, GrpcMethods.chatSessions.deleteSession)
   deleteSession(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.chatService.deleteSession(payload.sessionId, getGrpcUserId(metadata)),
     );
   }
 
-  @GrpcMethod('ChatMessagesService', 'GetMessages')
+  @GrpcContractMethod(GrpcServices.chatMessages, GrpcMethods.chatMessages.getMessages)
   getMessages(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.chatService.getMessages(
@@ -86,7 +86,7 @@ export class ChatGrpcController {
     );
   }
 
-  @GrpcMethod('ChatMessagesService', 'CreateMessage')
+  @GrpcContractMethod(GrpcServices.chatMessages, GrpcMethods.chatMessages.createMessage)
   createMessage(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.chatService
@@ -99,7 +99,7 @@ export class ChatGrpcController {
     );
   }
 
-  @GrpcMethod('ChatMessagesService', 'GetMessageDetail')
+  @GrpcContractMethod(GrpcServices.chatMessages, GrpcMethods.chatMessages.getMessageDetail)
   getMessageDetail(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       Promise.resolve(this.chatService.getMessageDetail(payload.messageId)).then(
@@ -108,21 +108,21 @@ export class ChatGrpcController {
     );
   }
 
-  @GrpcMethod('ChatMessagesService', 'DeleteMessage')
+  @GrpcContractMethod(GrpcServices.chatMessages, GrpcMethods.chatMessages.deleteMessage)
   deleteMessage(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.chatService.deleteMessage(payload.messageId),
     );
   }
 
-  @GrpcMethod('ChatAnalyticsService', 'GetMyAnalytics')
+  @GrpcContractMethod(GrpcServices.chatAnalytics, GrpcMethods.chatAnalytics.getMyAnalytics)
   getMyAnalytics(_: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.chatService.getMyAnalytics(getGrpcUserId(metadata)).then(toObjectResponse),
     );
   }
 
-  @GrpcMethod('ChatAnalyticsService', 'GetClassroomAnalytics')
+  @GrpcContractMethod(GrpcServices.chatAnalytics, GrpcMethods.chatAnalytics.getClassroomAnalytics)
   getClassroomAnalytics(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.chatService

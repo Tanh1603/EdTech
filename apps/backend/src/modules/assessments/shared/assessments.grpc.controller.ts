@@ -1,12 +1,12 @@
 import { Metadata } from '@grpc/grpc-js';
 import { Controller } from '@nestjs/common';
-import { GrpcMethod } from '@nestjs/microservices';
+import { GrpcContractMethod, GrpcMethods, GrpcServices } from '@edtech/contracts';
 import {
   fromProtoStruct,
   toListResponse,
   toObjectResponse,
   toPageResponse,
-} from '../../../common/grpc/json.mapper';
+} from '@edtech/contracts';
 import { getGrpcUserId } from '../../../common/grpc/metadata.mapper';
 import { runGrpc } from '../../../common/grpc/error-to-rpc-exception';
 import { assertServiceToken } from '../../../common/grpc/service-token';
@@ -16,7 +16,7 @@ import { AssessmentsSharedService } from './assessments-shared.service';
 export class AssessmentsGrpcController {
   constructor(private readonly assessmentsService: AssessmentsSharedService) {}
 
-  @GrpcMethod('AssessmentExamsService', 'CreateExam')
+  @GrpcContractMethod(GrpcServices.assessmentExams, GrpcMethods.assessmentExams.createExam)
   createExam(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.assessmentsService.createExam(
@@ -26,7 +26,7 @@ export class AssessmentsGrpcController {
     );
   }
 
-  @GrpcMethod('AssessmentExamsService', 'GetExams')
+  @GrpcContractMethod(GrpcServices.assessmentExams, GrpcMethods.assessmentExams.getExams)
   getExams(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.assessmentsService.getExams({
@@ -39,14 +39,14 @@ export class AssessmentsGrpcController {
     );
   }
 
-  @GrpcMethod('AssessmentExamsService', 'GetExamDetail')
+  @GrpcContractMethod(GrpcServices.assessmentExams, GrpcMethods.assessmentExams.getExamDetail)
   getExamDetail(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.assessmentsService.getExamDetail(payload.examId).then(toObjectResponse),
     );
   }
 
-  @GrpcMethod('AssessmentExamsService', 'UpdateExam')
+  @GrpcContractMethod(GrpcServices.assessmentExams, GrpcMethods.assessmentExams.updateExam)
   updateExam(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       Promise.resolve(
@@ -58,28 +58,28 @@ export class AssessmentsGrpcController {
     );
   }
 
-  @GrpcMethod('AssessmentExamsService', 'DeleteExam')
+  @GrpcContractMethod(GrpcServices.assessmentExams, GrpcMethods.assessmentExams.deleteExam)
   deleteExam(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.assessmentsService.deleteExam(payload.examId),
     );
   }
 
-  @GrpcMethod('AssessmentExamsService', 'PublishExam')
+  @GrpcContractMethod(GrpcServices.assessmentExams, GrpcMethods.assessmentExams.publishExam)
   publishExam(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.assessmentsService.publishExam(payload.examId).then(toObjectResponse),
     );
   }
 
-  @GrpcMethod('AssessmentExamsService', 'CloseExam')
+  @GrpcContractMethod(GrpcServices.assessmentExams, GrpcMethods.assessmentExams.closeExam)
   closeExam(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.assessmentsService.closeExam(payload.examId).then(toObjectResponse),
     );
   }
 
-  @GrpcMethod('AssessmentQuestionsService', 'CreateQuestion')
+  @GrpcContractMethod(GrpcServices.assessmentQuestions, GrpcMethods.assessmentQuestions.createQuestion)
   createQuestion(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       Promise.resolve(
@@ -91,7 +91,7 @@ export class AssessmentsGrpcController {
     );
   }
 
-  @GrpcMethod('AssessmentQuestionsService', 'GetExamQuestions')
+  @GrpcContractMethod(GrpcServices.assessmentQuestions, GrpcMethods.assessmentQuestions.getExamQuestions)
   getExamQuestions(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       Promise.resolve(this.assessmentsService.getExamQuestions(payload.examId)).then(
@@ -100,7 +100,7 @@ export class AssessmentsGrpcController {
     );
   }
 
-  @GrpcMethod('AssessmentQuestionsService', 'GetQuestionDetail')
+  @GrpcContractMethod(GrpcServices.assessmentQuestions, GrpcMethods.assessmentQuestions.getQuestionDetail)
   getQuestionDetail(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       Promise.resolve(
@@ -109,7 +109,7 @@ export class AssessmentsGrpcController {
     );
   }
 
-  @GrpcMethod('AssessmentQuestionsService', 'UpdateQuestion')
+  @GrpcContractMethod(GrpcServices.assessmentQuestions, GrpcMethods.assessmentQuestions.updateQuestion)
   updateQuestion(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       Promise.resolve(
@@ -121,14 +121,14 @@ export class AssessmentsGrpcController {
     );
   }
 
-  @GrpcMethod('AssessmentQuestionsService', 'DeleteQuestion')
+  @GrpcContractMethod(GrpcServices.assessmentQuestions, GrpcMethods.assessmentQuestions.deleteQuestion)
   deleteQuestion(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.assessmentsService.deleteQuestion(payload.questionId),
     );
   }
 
-  @GrpcMethod('AssessmentQuestionsService', 'ReorderQuestions')
+  @GrpcContractMethod(GrpcServices.assessmentQuestions, GrpcMethods.assessmentQuestions.reorderQuestions)
   reorderQuestions(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.assessmentsService
@@ -137,7 +137,7 @@ export class AssessmentsGrpcController {
     );
   }
 
-  @GrpcMethod('AssessmentSubmissionsService', 'StartExam')
+  @GrpcContractMethod(GrpcServices.assessmentSubmissions, GrpcMethods.assessmentSubmissions.startExam)
   startExam(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.assessmentsService
@@ -146,7 +146,7 @@ export class AssessmentsGrpcController {
     );
   }
 
-  @GrpcMethod('AssessmentSubmissionsService', 'GetSubmissionDetail')
+  @GrpcContractMethod(GrpcServices.assessmentSubmissions, GrpcMethods.assessmentSubmissions.getSubmissionDetail)
   getSubmissionDetail(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       Promise.resolve(
@@ -155,7 +155,7 @@ export class AssessmentsGrpcController {
     );
   }
 
-  @GrpcMethod('AssessmentSubmissionsService', 'AutosaveAnswers')
+  @GrpcContractMethod(GrpcServices.assessmentSubmissions, GrpcMethods.assessmentSubmissions.autosaveAnswers)
   autosaveAnswers(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       Promise.resolve(
@@ -167,7 +167,7 @@ export class AssessmentsGrpcController {
     );
   }
 
-  @GrpcMethod('AssessmentSubmissionsService', 'SubmitSubmission')
+  @GrpcContractMethod(GrpcServices.assessmentSubmissions, GrpcMethods.assessmentSubmissions.submitSubmission)
   submitSubmission(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.assessmentsService
@@ -176,7 +176,7 @@ export class AssessmentsGrpcController {
     );
   }
 
-  @GrpcMethod('AssessmentResultsService', 'GetResult')
+  @GrpcContractMethod(GrpcServices.assessmentResults, GrpcMethods.assessmentResults.getResult)
   getResult(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       Promise.resolve(this.assessmentsService.getResult(payload.submissionId)).then(
@@ -185,7 +185,7 @@ export class AssessmentsGrpcController {
     );
   }
 
-  @GrpcMethod('AssessmentResultsService', 'ManualGrade')
+  @GrpcContractMethod(GrpcServices.assessmentResults, GrpcMethods.assessmentResults.manualGrade)
   manualGrade(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.assessmentsService
@@ -194,7 +194,7 @@ export class AssessmentsGrpcController {
     );
   }
 
-  @GrpcMethod('AssessmentAnalyticsService', 'GetExamAnalytics')
+  @GrpcContractMethod(GrpcServices.assessmentAnalytics, GrpcMethods.assessmentAnalytics.getExamAnalytics)
   getExamAnalytics(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.assessmentsService
@@ -203,7 +203,7 @@ export class AssessmentsGrpcController {
     );
   }
 
-  @GrpcMethod('AssessmentAnalyticsService', 'GetQuestionAnalytics')
+  @GrpcContractMethod(GrpcServices.assessmentAnalytics, GrpcMethods.assessmentAnalytics.getQuestionAnalytics)
   getQuestionAnalytics(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.assessmentsService
@@ -212,7 +212,7 @@ export class AssessmentsGrpcController {
     );
   }
 
-  @GrpcMethod('AssessmentAnalyticsService', 'GetStudentAnalytics')
+  @GrpcContractMethod(GrpcServices.assessmentAnalytics, GrpcMethods.assessmentAnalytics.getStudentAnalytics)
   getStudentAnalytics(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.assessmentsService

@@ -19,9 +19,9 @@ import {
 } from '@nestjs/swagger';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { CurrentUser as CurrentUserPayload } from '../../../common/types/current-user.type';
-import { CreateEnrollmentDto } from './dto/create-enrollment.dto';
-import { JoinClassroomDto } from './dto/join-classroom.dto';
-import { UpdateEnrollmentDto } from './dto/update-enrollment.dto';
+import { CreateEnrollmentDto } from '@edtech/contracts';
+import { JoinClassroomDto } from '@edtech/contracts';
+import { UpdateEnrollmentDto } from '@edtech/contracts';
 import { EnrollmentsService } from './enrollments.service';
 
 @ApiTags('Academic - Enrollments')

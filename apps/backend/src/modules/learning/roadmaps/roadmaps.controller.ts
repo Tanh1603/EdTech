@@ -22,11 +22,13 @@ import {
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { CurrentUser as CurrentUserPayload } from '../../../common/types/current-user.type';
 import { RoadmapStatus } from '../../../generated/prisma/client';
-import { CreateRoadmapItemDto } from './dto/create-roadmap-item.dto';
-import { CreateRoadmapDto } from './dto/create-roadmap.dto';
-import { RoadmapQueryDto } from './dto/roadmap-query.dto';
-import { UpdateRoadmapItemDto } from './dto/update-roadmap-item.dto';
-import { UpdateRoadmapDto } from './dto/update-roadmap.dto';
+import {
+  CreateRoadmapDto,
+  CreateRoadmapItemDto,
+  RoadmapQueryDto,
+  UpdateRoadmapDto,
+  UpdateRoadmapItemDto,
+} from '@edtech/contracts';
 import { RoadmapsService } from './roadmaps.service';
 
 @ApiTags('Learning - Roadmaps')

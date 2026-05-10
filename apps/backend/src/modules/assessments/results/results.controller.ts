@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { AssessmentsSharedService } from '../shared/assessments-shared.service';
-import { ManualGradeDto } from '../shared/dto/submission.dto';
+import { ManualGradeDto } from '@edtech/contracts';
 
 @ApiTags('Assessments - Results')
 @ApiBearerAuth()

@@ -1,4 +1,5 @@
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { GrpcServices } from '@edtech/contracts';
 import { ClientGrpc } from '@nestjs/microservices';
 import {
   AcademicClassroomsGrpc,
@@ -20,16 +21,16 @@ export class AcademicGrpcClientService implements OnModuleInit {
 
   onModuleInit(): void {
     this.courses = this.client.getService<AcademicCoursesGrpc>(
-      'AcademicCoursesService',
+      GrpcServices.academicCourses,
     );
     this.classrooms = this.client.getService<AcademicClassroomsGrpc>(
-      'AcademicClassroomsService',
+      GrpcServices.academicClassrooms,
     );
     this.lessons = this.client.getService<AcademicLessonsGrpc>(
-      'AcademicLessonsService',
+      GrpcServices.academicLessons,
     );
     this.enrollments = this.client.getService<AcademicEnrollmentsGrpc>(
-      'AcademicEnrollmentsService',
+      GrpcServices.academicEnrollments,
     );
   }
 }

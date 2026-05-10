@@ -3,8 +3,8 @@ import { ApiBearerAuth, ApiBody, ApiCreatedResponse, ApiOkResponse, ApiOperation
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { CurrentUser as CurrentUserPayload } from '../../../common/types/current-user.type';
 import { AssessmentsSharedService } from '../shared/assessments-shared.service';
-import { CreateExamDto, UpdateExamDto } from '../shared/dto/exam.dto';
-import { ExamsQueryDto } from '../shared/dto/query.dto';
+import { CreateExamDto, UpdateExamDto } from '@edtech/contracts';
+import { ExamsQueryDto } from '@edtech/contracts';
 
 @ApiTags('Assessments - Exams')
 @ApiBearerAuth()

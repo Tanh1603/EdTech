@@ -1,7 +1,7 @@
 import { Metadata } from '@grpc/grpc-js';
 import { Controller } from '@nestjs/common';
-import { GrpcMethod } from '@nestjs/microservices';
-import { toPageResponse } from '../../../common/grpc/json.mapper';
+import { GrpcContractMethod, GrpcMethods, GrpcServices } from '@edtech/contracts';
+import { toPageResponse } from '@edtech/contracts';
 import { runGrpc } from '../../../common/grpc/error-to-rpc-exception';
 import { assertServiceToken } from '../../../common/grpc/service-token';
 import { UsersService } from '../services/users.service';
@@ -10,7 +10,7 @@ import { UsersService } from '../services/users.service';
 export class UsersGrpcController {
   constructor(private readonly usersService: UsersService) {}
 
-  @GrpcMethod('UsersService', 'GetUsers')
+  @GrpcContractMethod(GrpcServices.users, GrpcMethods.users.getUsers)
   getUsers(payload: any, metadata: Metadata) {
     assertServiceToken(metadata);
     return runGrpc(async () =>

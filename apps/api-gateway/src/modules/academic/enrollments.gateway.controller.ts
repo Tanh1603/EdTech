@@ -18,6 +18,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { lastValueFrom } from 'rxjs';
+import { CreateEnrollmentDto, JoinClassroomDto, UpdateEnrollmentDto } from '@edtech/contracts';
 import { GrpcMetadataBuilder } from '../common/grpc-metadata/grpc-metadata.builder';
 import { RequestWithContext } from '../common/types/request-with-context';
 import { AcademicGrpcClientService } from '../grpc-clients/academic-grpc-client.service';
@@ -35,7 +36,7 @@ export class EnrollmentsGatewayController {
   @ApiOperation({ summary: 'Join classroom by invite code' })
   @ApiBody({ schema: { type: 'object' } })
   @ApiCreatedResponse({ description: 'Joined classroom successfully' })
-  joinClassroom(@Body() body: any, @Req() req: RequestWithContext) {
+  joinClassroom(@Body() body: JoinClassroomDto, @Req() req: RequestWithContext) {
     return lastValueFrom(
       this.academicGrpc.enrollments.joinClassroom(
         { inviteCode: body.inviteCode, userId: req.user?.id },
@@ -48,7 +49,7 @@ export class EnrollmentsGatewayController {
   @ApiOperation({ summary: 'Add student to classroom' })
   @ApiBody({ schema: { type: 'object' } })
   @ApiCreatedResponse({ description: 'Enrollment created successfully' })
-  createEnrollment(@Body() body: any, @Req() req: RequestWithContext) {
+  createEnrollment(@Body() body: CreateEnrollmentDto, @Req() req: RequestWithContext) {
     return lastValueFrom(
       this.academicGrpc.enrollments.createEnrollment(
         {
@@ -85,7 +86,7 @@ export class EnrollmentsGatewayController {
   @ApiOkResponse({ description: 'Enrollment updated successfully' })
   updateEnrollmentRole(
     @Param('enrollmentId') enrollmentId: string,
-    @Body() body: any,
+    @Body() body: UpdateEnrollmentDto,
     @Req() req: RequestWithContext,
   ) {
     return lastValueFrom(

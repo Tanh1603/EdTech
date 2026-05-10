@@ -3,8 +3,9 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { memoryStorage } from 'multer';
 import { lastValueFrom } from 'rxjs';
+import { DeleteFileDto } from '@edtech/contracts';
 import { GrpcMetadataBuilder } from '../common/grpc-metadata/grpc-metadata.builder';
-import { unwrapObjectResponse } from '../common/grpc-json/grpc-json.mapper';
+import { unwrapObjectResponse } from '@edtech/contracts';
 import { RequestWithContext } from '../common/types/request-with-context';
 import { CoreGrpcClientService } from '../grpc-clients/core-grpc-client.service';
 import { GatewayStorageService } from './gateway-storage.service';
@@ -31,7 +32,7 @@ export class StorageGatewayController {
   @Delete('delete')
   @ApiOperation({ summary: 'Delete file from Cloudinary' })
   @ApiBody({ schema: { type: 'object', properties: { publicId: { type: 'string' } } } })
-  async deleteFile(@Body() body: any, @Req() req: RequestWithContext) {
+  async deleteFile(@Body() body: DeleteFileDto, @Req() req: RequestWithContext) {
     return unwrapObjectResponse(
       await lastValueFrom(
         this.grpc.storage.deleteFile(

@@ -1,9 +1,9 @@
 import { Metadata } from '@grpc/grpc-js';
 import { Controller } from '@nestjs/common';
-import { GrpcMethod } from '@nestjs/microservices';
-import { toIsoString } from '../../../common/grpc/date.mapper';
+import { GrpcContractMethod, GrpcMethods, GrpcServices } from '@edtech/contracts';
+import { toIsoString } from '@edtech/contracts';
 import { runGrpc } from '../../../common/grpc/error-to-rpc-exception';
-import { toGrpcPage } from '../../../common/grpc/page.mapper';
+import { toGrpcPage } from '@edtech/contracts';
 import { assertServiceToken } from '../../../common/grpc/service-token';
 import { CoursesService } from './courses.service';
 
@@ -11,7 +11,7 @@ import { CoursesService } from './courses.service';
 export class CoursesGrpcController {
   constructor(private readonly coursesService: CoursesService) {}
 
-  @GrpcMethod('AcademicCoursesService', 'GetCourses')
+  @GrpcContractMethod(GrpcServices.academicCourses, GrpcMethods.academicCourses.getCourses)
   getCourses(payload: any, metadata: Metadata) {
     assertServiceToken(metadata);
     return runGrpc(async () => {
@@ -25,7 +25,7 @@ export class CoursesGrpcController {
     });
   }
 
-  @GrpcMethod('AcademicCoursesService', 'CreateCourse')
+  @GrpcContractMethod(GrpcServices.academicCourses, GrpcMethods.academicCourses.createCourse)
   createCourse(payload: any, metadata: Metadata) {
     assertServiceToken(metadata);
     return runGrpc(async () =>
@@ -40,7 +40,7 @@ export class CoursesGrpcController {
     );
   }
 
-  @GrpcMethod('AcademicCoursesService', 'GetCourseDetail')
+  @GrpcContractMethod(GrpcServices.academicCourses, GrpcMethods.academicCourses.getCourseDetail)
   getCourseDetail(payload: any, metadata: Metadata) {
     assertServiceToken(metadata);
     return runGrpc(async () =>
@@ -50,7 +50,7 @@ export class CoursesGrpcController {
     );
   }
 
-  @GrpcMethod('AcademicCoursesService', 'UpdateCourse')
+  @GrpcContractMethod(GrpcServices.academicCourses, GrpcMethods.academicCourses.updateCourse)
   updateCourse(payload: any, metadata: Metadata) {
     assertServiceToken(metadata);
     return runGrpc(async () =>
@@ -64,7 +64,7 @@ export class CoursesGrpcController {
     );
   }
 
-  @GrpcMethod('AcademicCoursesService', 'DeleteCourse')
+  @GrpcContractMethod(GrpcServices.academicCourses, GrpcMethods.academicCourses.deleteCourse)
   deleteCourse(payload: any, metadata: Metadata) {
     assertServiceToken(metadata);
     return runGrpc(() => this.coursesService.deleteCourse(payload.courseId));

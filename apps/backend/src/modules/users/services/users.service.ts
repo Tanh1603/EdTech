@@ -1,8 +1,8 @@
 import { ClerkClient, User } from '@clerk/backend';
 import { Inject, Injectable } from '@nestjs/common';
-import { PageDto } from '../../../common/dto/page.dto';
+import { PageDto } from '@edtech/contracts';
 import { PrismaService } from '../../../common/prisma/prisma.service';
-import { UserQueryDto } from '../dto/user-query.dto';
+import { UserQueryDto } from '@edtech/contracts';
 
 @Injectable()
 export class UsersService {

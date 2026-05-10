@@ -1,8 +1,9 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { lastValueFrom } from 'rxjs';
+import { AnswersDto, CreateExamDto, CreateQuestionDto, ExamsQueryDto, ManualGradeDto, ReorderQuestionsDto, UpdateExamDto, UpdateQuestionDto } from '@edtech/contracts';
 import { GrpcMetadataBuilder } from '../common/grpc-metadata/grpc-metadata.builder';
-import { toProtoStruct, unwrapListResponse, unwrapObjectResponse, unwrapPageResponse } from '../common/grpc-json/grpc-json.mapper';
+import { toProtoStruct, unwrapListResponse, unwrapObjectResponse, unwrapPageResponse } from '@edtech/contracts';
 import { RequestWithContext } from '../common/types/request-with-context';
 import { CoreGrpcClientService } from '../grpc-clients/core-grpc-client.service';
 
@@ -15,7 +16,7 @@ export class AssessmentExamsGatewayController {
   @Post()
   @ApiOperation({ summary: 'Create exam' })
   @ApiBody({ schema: { type: 'object' } })
-  createExam(@Body() body: any, @Req() req: RequestWithContext) {
+  createExam(@Body() body: CreateExamDto, @Req() req: RequestWithContext) {
     return this.object(this.grpc.assessmentExams.createExam({ body: toProtoStruct(body) }, this.metadata.build(req)));
   }
 
@@ -26,7 +27,7 @@ export class AssessmentExamsGatewayController {
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'search', required: false })
-  async getExams(@Query() query: any, @Req() req: RequestWithContext) {
+  async getExams(@Query() query: ExamsQueryDto, @Req() req: RequestWithContext) {
     return unwrapPageResponse(await lastValueFrom(this.grpc.assessmentExams.getExams({
       classId: query.classId,
       status: query.status,
@@ -46,7 +47,7 @@ export class AssessmentExamsGatewayController {
   @Patch(':examId')
   @ApiOperation({ summary: 'Update exam' })
   @ApiBody({ schema: { type: 'object' } })
-  updateExam(@Param('examId') examId: string, @Body() body: any, @Req() req: RequestWithContext) {
+  updateExam(@Param('examId') examId: string, @Body() body: UpdateExamDto, @Req() req: RequestWithContext) {
     return this.object(this.grpc.assessmentExams.updateExam({ examId, body: toProtoStruct(body) }, this.metadata.build(req)));
   }
 
@@ -82,7 +83,7 @@ export class AssessmentsGatewayController {
   @Post('exams/:examId/questions')
   @ApiOperation({ summary: 'Create question' })
   @ApiBody({ schema: { type: 'object' } })
-  createQuestion(@Param('examId') examId: string, @Body() body: any, @Req() req: RequestWithContext) {
+  createQuestion(@Param('examId') examId: string, @Body() body: CreateQuestionDto, @Req() req: RequestWithContext) {
     return this.object(this.grpc.assessmentQuestions.createQuestion({ examId, body: toProtoStruct(body) }, this.metadata.build(req)));
   }
 
@@ -101,7 +102,7 @@ export class AssessmentsGatewayController {
   @Patch('questions/:questionId')
   @ApiOperation({ summary: 'Update question' })
   @ApiBody({ schema: { type: 'object' } })
-  updateQuestion(@Param('questionId') questionId: string, @Body() body: any, @Req() req: RequestWithContext) {
+  updateQuestion(@Param('questionId') questionId: string, @Body() body: UpdateQuestionDto, @Req() req: RequestWithContext) {
     return this.object(this.grpc.assessmentQuestions.updateQuestion({ questionId, body: toProtoStruct(body) }, this.metadata.build(req)));
   }
 
@@ -114,7 +115,7 @@ export class AssessmentsGatewayController {
   @Post('questions/reorder')
   @ApiOperation({ summary: 'Reorder questions' })
   @ApiBody({ schema: { type: 'object' } })
-  reorderQuestions(@Body() body: any, @Req() req: RequestWithContext) {
+  reorderQuestions(@Body() body: ReorderQuestionsDto, @Req() req: RequestWithContext) {
     return this.object(this.grpc.assessmentQuestions.reorderQuestions({ body: toProtoStruct(body) }, this.metadata.build(req)));
   }
 
@@ -133,7 +134,7 @@ export class AssessmentsGatewayController {
   @Patch('submissions/:submissionId/answers')
   @ApiOperation({ summary: 'Autosave answers' })
   @ApiBody({ schema: { type: 'object' } })
-  autosaveAnswers(@Param('submissionId') submissionId: string, @Body() body: any, @Req() req: RequestWithContext) {
+  autosaveAnswers(@Param('submissionId') submissionId: string, @Body() body: AnswersDto, @Req() req: RequestWithContext) {
     return this.object(this.grpc.assessmentSubmissions.autosaveAnswers({ submissionId, body: toProtoStruct(body) }, this.metadata.build(req)));
   }
 
@@ -152,7 +153,7 @@ export class AssessmentsGatewayController {
   @Post('results/:submissionId/manual-grade')
   @ApiOperation({ summary: 'Teacher manual grading' })
   @ApiBody({ schema: { type: 'object' } })
-  manualGrade(@Param('submissionId') submissionId: string, @Body() body: any, @Req() req: RequestWithContext) {
+  manualGrade(@Param('submissionId') submissionId: string, @Body() body: ManualGradeDto, @Req() req: RequestWithContext) {
     return this.object(this.grpc.assessmentResults.manualGrade({ submissionId, body: toProtoStruct(body) }, this.metadata.build(req)));
   }
 

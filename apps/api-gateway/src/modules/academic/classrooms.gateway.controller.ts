@@ -23,6 +23,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { lastValueFrom } from 'rxjs';
+import { ClassInvitesDto, ClassroomQueryDto, CreateClassroomDto, UpdateClassroomDto } from '@edtech/contracts';
 import { GrpcMetadataBuilder } from '../common/grpc-metadata/grpc-metadata.builder';
 import { RequestWithContext } from '../common/types/request-with-context';
 import { AcademicGrpcClientService } from '../grpc-clients/academic-grpc-client.service';
@@ -42,7 +43,7 @@ export class ClassroomsGatewayController {
   @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
   @ApiQuery({ name: 'courseId', required: false, format: 'uuid' })
   @ApiOkResponse({ description: 'Classes returned successfully' })
-  getClassrooms(@Query() query: any, @Req() req: RequestWithContext) {
+  getClassrooms(@Query() query: ClassroomQueryDto, @Req() req: RequestWithContext) {
     return lastValueFrom(
       this.academicGrpc.classrooms.getClassrooms(
         {
@@ -59,7 +60,7 @@ export class ClassroomsGatewayController {
   @ApiOperation({ summary: 'Create class' })
   @ApiBody({ schema: { type: 'object' } })
   @ApiCreatedResponse({ description: 'Class created successfully' })
-  createClassroom(@Body() body: any, @Req() req: RequestWithContext) {
+  createClassroom(@Body() body: CreateClassroomDto, @Req() req: RequestWithContext) {
     return lastValueFrom(
       this.academicGrpc.classrooms.createClassroom(
         {
@@ -97,7 +98,7 @@ export class ClassroomsGatewayController {
   @ApiOkResponse({ description: 'Classroom updated successfully' })
   updateClassroom(
     @Param('classroomId') classroomId: string,
-    @Body() body: any,
+    @Body() body: UpdateClassroomDto,
     @Req() req: RequestWithContext,
   ) {
     return lastValueFrom(
@@ -153,7 +154,7 @@ export class ClassroomsGatewayController {
   @ApiAcceptedResponse({ description: 'Invite job queued successfully' })
   inviteClassMembers(
     @Param('classId') classId: string,
-    @Body() body: any,
+    @Body() body: ClassInvitesDto,
     @Req() req: RequestWithContext,
   ) {
     return lastValueFrom(

@@ -1,12 +1,12 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { PageDto } from '../../../common/dto/page.dto';
+import { PageDto } from '@edtech/contracts';
 import { AppHttpException } from '../../../common/errors/app-http.exception';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import { Prisma } from '../../../generated/prisma/client';
-import { ClassInvitesDto } from './dto/class-invites.dto';
-import { ClassroomQueryDto } from './dto/classroom-query.dto';
-import { CreateClassroomDto } from './dto/create-classroom.dto';
-import { UpdateClassroomDto } from './dto/update-classroom.dto';
+import { ClassInvitesDto } from '@edtech/contracts';
+import { ClassroomQueryDto } from '@edtech/contracts';
+import { CreateClassroomDto } from '@edtech/contracts';
+import { UpdateClassroomDto } from '@edtech/contracts';
 
 @Injectable()
 export class ClassroomsService {

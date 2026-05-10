@@ -1,7 +1,7 @@
 import { Metadata } from '@grpc/grpc-js';
 import { Controller } from '@nestjs/common';
-import { GrpcMethod } from '@nestjs/microservices';
-import { toIsoString } from '../../../common/grpc/date.mapper';
+import { GrpcContractMethod, GrpcMethods, GrpcServices } from '@edtech/contracts';
+import { toIsoString } from '@edtech/contracts';
 import { runGrpc } from '../../../common/grpc/error-to-rpc-exception';
 import { assertServiceToken } from '../../../common/grpc/service-token';
 import { EnrollmentsService } from './enrollments.service';
@@ -10,7 +10,7 @@ import { EnrollmentsService } from './enrollments.service';
 export class EnrollmentsGrpcController {
   constructor(private readonly enrollmentsService: EnrollmentsService) {}
 
-  @GrpcMethod('AcademicEnrollmentsService', 'JoinClassroom')
+  @GrpcContractMethod(GrpcServices.academicEnrollments, GrpcMethods.academicEnrollments.joinClassroom)
   joinClassroom(payload: any, metadata: Metadata) {
     assertServiceToken(metadata);
     return runGrpc(async () =>
@@ -23,7 +23,7 @@ export class EnrollmentsGrpcController {
     );
   }
 
-  @GrpcMethod('AcademicEnrollmentsService', 'CreateEnrollment')
+  @GrpcContractMethod(GrpcServices.academicEnrollments, GrpcMethods.academicEnrollments.createEnrollment)
   createEnrollment(payload: any, metadata: Metadata) {
     assertServiceToken(metadata);
     return runGrpc(async () =>
@@ -37,7 +37,7 @@ export class EnrollmentsGrpcController {
     );
   }
 
-  @GrpcMethod('AcademicEnrollmentsService', 'GetClassroomStudents')
+  @GrpcContractMethod(GrpcServices.academicEnrollments, GrpcMethods.academicEnrollments.getClassroomStudents)
   getClassroomStudents(payload: any, metadata: Metadata) {
     assertServiceToken(metadata);
     return runGrpc(async () => ({
@@ -47,7 +47,7 @@ export class EnrollmentsGrpcController {
     }));
   }
 
-  @GrpcMethod('AcademicEnrollmentsService', 'UpdateEnrollmentRole')
+  @GrpcContractMethod(GrpcServices.academicEnrollments, GrpcMethods.academicEnrollments.updateEnrollmentRole)
   updateEnrollmentRole(payload: any, metadata: Metadata) {
     assertServiceToken(metadata);
     return runGrpc(async () =>
@@ -60,7 +60,7 @@ export class EnrollmentsGrpcController {
     );
   }
 
-  @GrpcMethod('AcademicEnrollmentsService', 'RemoveEnrollment')
+  @GrpcContractMethod(GrpcServices.academicEnrollments, GrpcMethods.academicEnrollments.removeEnrollment)
   removeEnrollment(payload: any, metadata: Metadata) {
     assertServiceToken(metadata);
     return runGrpc(() =>

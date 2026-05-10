@@ -19,9 +19,9 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
-import { CourseQueryDto } from './dto/course-query.dto';
-import { CreateCourseDto } from './dto/create-course.dto';
-import { UpdateCourseDto } from './dto/update-course.dto';
+import { CourseQueryDto } from '@edtech/contracts';
+import { CreateCourseDto } from '@edtech/contracts';
+import { UpdateCourseDto } from '@edtech/contracts';
 import { CoursesService } from './courses.service';
 
 @ApiTags('Academic - Courses')

@@ -19,12 +19,12 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
-import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
-import { ClassroomLessonsQueryDto } from './dto/classroom-lessons-query.dto';
-import { CreateLessonDto } from './dto/create-lesson.dto';
-import { PublishClassroomLessonDto } from './dto/publish-classroom-lesson.dto';
-import { UpdateClassroomLessonDto } from './dto/update-classroom-lesson.dto';
-import { UpdateLessonDto } from './dto/update-lesson.dto';
+import { PaginationQueryDto } from '@edtech/contracts';
+import { ClassroomLessonsQueryDto } from '@edtech/contracts';
+import { CreateLessonDto } from '@edtech/contracts';
+import { PublishClassroomLessonDto } from '@edtech/contracts';
+import { UpdateClassroomLessonDto } from '@edtech/contracts';
+import { UpdateLessonDto } from '@edtech/contracts';
 import { LessonsService } from './lessons.service';
 
 @ApiTags('Academic - Lessons')

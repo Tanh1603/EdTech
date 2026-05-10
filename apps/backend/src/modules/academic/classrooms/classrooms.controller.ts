@@ -23,10 +23,10 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { ClassroomsService } from './classrooms.service';
-import { ClassInvitesDto } from './dto/class-invites.dto';
-import { ClassroomQueryDto } from './dto/classroom-query.dto';
-import { CreateClassroomDto } from './dto/create-classroom.dto';
-import { UpdateClassroomDto } from './dto/update-classroom.dto';
+import { ClassInvitesDto } from '@edtech/contracts';
+import { ClassroomQueryDto } from '@edtech/contracts';
+import { CreateClassroomDto } from '@edtech/contracts';
+import { UpdateClassroomDto } from '@edtech/contracts';
 
 @ApiTags('Academic - Classrooms')
 @ApiBearerAuth()

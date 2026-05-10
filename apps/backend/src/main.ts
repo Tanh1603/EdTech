@@ -1,8 +1,8 @@
 import { Logger, ValidationPipe } from '@nestjs/common';
+import { AllGrpcPackages, getAllProtoPaths, getProtoRoot } from '@edtech/contracts';
 import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { getAllProtoPaths, getProtoRoot } from './common/grpc/proto-paths';
 import { AppModule } from './modules/app/app.module';
 
 async function bootstrap() {
@@ -12,7 +12,7 @@ async function bootstrap() {
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.GRPC,
     options: {
-      package: ['academic', 'assessments', 'chat', 'learning', 'storage', 'users'],
+      package: [...AllGrpcPackages],
       protoPath: getAllProtoPaths(),
       url: grpcUrl,
       loader: {

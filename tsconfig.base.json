@@ -14,7 +14,10 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
-    "paths": {}
+    "paths": {
+      "@ed-tech/contracts": ["libs/contracts/src/index.ts"],
+      "@edtech/contracts": ["libs/contracts/src/index.ts"]
+    }
   },
   "exclude": ["node_modules", "tmp"]
 }

@@ -2,9 +2,9 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { AppHttpException } from '../../../common/errors/app-http.exception';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import { ClassRole } from '../../../generated/prisma/client';
-import { CreateEnrollmentDto } from './dto/create-enrollment.dto';
-import { JoinClassroomDto } from './dto/join-classroom.dto';
-import { UpdateEnrollmentDto } from './dto/update-enrollment.dto';
+import { CreateEnrollmentDto } from '@edtech/contracts';
+import { JoinClassroomDto } from '@edtech/contracts';
+import { UpdateEnrollmentDto } from '@edtech/contracts';
 
 @Injectable()
 export class EnrollmentsService {

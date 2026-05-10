@@ -25,11 +25,11 @@ import {
 } from '@nestjs/swagger';
 import { memoryStorage } from 'multer';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
-import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { PaginationQueryDto } from '@edtech/contracts';
 import { CurrentUser as CurrentUserPayload } from '../../../common/types/current-user.type';
 import { MaterialStatus } from '../../../generated/prisma/client';
-import { MaterialQueryDto } from './dto/material-query.dto';
-import { UpdateMaterialDto } from './dto/update-material.dto';
+import { MaterialQueryDto } from '@edtech/contracts';
+import { UpdateMaterialDto } from '@edtech/contracts';
 import { MaterialsService } from './materials.service';
 
 @ApiTags('Learning - Materials')

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PageDto } from '../../../common/dto/page.dto';
+import { PageDto } from '@edtech/contracts';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import {
   ExamStatus,
@@ -7,10 +7,10 @@ import {
   QuestionType,
   SubmissionStatus,
 } from '../../../generated/prisma/client';
-import { CreateExamDto, UpdateExamDto } from './dto/exam.dto';
-import { ExamsQueryDto } from './dto/query.dto';
-import { CreateQuestionDto, ReorderQuestionsDto, UpdateQuestionDto } from './dto/question.dto';
-import { AnswersDto, ManualGradeDto } from './dto/submission.dto';
+import { CreateExamDto, UpdateExamDto } from '@edtech/contracts';
+import { ExamsQueryDto } from '@edtech/contracts';
+import { CreateQuestionDto, ReorderQuestionsDto, UpdateQuestionDto } from '@edtech/contracts';
+import { AnswersDto, ManualGradeDto } from '@edtech/contracts';
 
 @Injectable()
 export class AssessmentsSharedService {

@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { AssessmentsSharedService } from '../shared/assessments-shared.service';
-import { CreateQuestionDto, ReorderQuestionsDto, UpdateQuestionDto } from '../shared/dto/question.dto';
+import { CreateQuestionDto, ReorderQuestionsDto, UpdateQuestionDto } from '@edtech/contracts';
 
 @ApiTags('Assessments - Questions')
 @ApiBearerAuth()

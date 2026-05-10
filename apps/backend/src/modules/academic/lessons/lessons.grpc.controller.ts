@@ -1,9 +1,9 @@
 import { Metadata } from '@grpc/grpc-js';
 import { Controller } from '@nestjs/common';
-import { GrpcMethod } from '@nestjs/microservices';
-import { toIsoString } from '../../../common/grpc/date.mapper';
+import { GrpcContractMethod, GrpcMethods, GrpcServices } from '@edtech/contracts';
+import { toIsoString } from '@edtech/contracts';
 import { runGrpc } from '../../../common/grpc/error-to-rpc-exception';
-import { toGrpcPage } from '../../../common/grpc/page.mapper';
+import { toGrpcPage } from '@edtech/contracts';
 import { assertServiceToken } from '../../../common/grpc/service-token';
 import { LessonsService } from './lessons.service';
 
@@ -11,7 +11,7 @@ import { LessonsService } from './lessons.service';
 export class LessonsGrpcController {
   constructor(private readonly lessonsService: LessonsService) {}
 
-  @GrpcMethod('AcademicLessonsService', 'CreateLesson')
+  @GrpcContractMethod(GrpcServices.academicLessons, GrpcMethods.academicLessons.createLesson)
   createLesson(payload: any, metadata: Metadata) {
     assertServiceToken(metadata);
     return runGrpc(async () =>
@@ -26,7 +26,7 @@ export class LessonsGrpcController {
     );
   }
 
-  @GrpcMethod('AcademicLessonsService', 'GetLessonsByCourse')
+  @GrpcContractMethod(GrpcServices.academicLessons, GrpcMethods.academicLessons.getLessonsByCourse)
   getLessonsByCourse(payload: any, metadata: Metadata) {
     assertServiceToken(metadata);
     return runGrpc(async () => {
@@ -41,7 +41,7 @@ export class LessonsGrpcController {
     });
   }
 
-  @GrpcMethod('AcademicLessonsService', 'GetLessonDetail')
+  @GrpcContractMethod(GrpcServices.academicLessons, GrpcMethods.academicLessons.getLessonDetail)
   getLessonDetail(payload: any, metadata: Metadata) {
     assertServiceToken(metadata);
     return runGrpc(async () =>
@@ -51,7 +51,7 @@ export class LessonsGrpcController {
     );
   }
 
-  @GrpcMethod('AcademicLessonsService', 'UpdateLesson')
+  @GrpcContractMethod(GrpcServices.academicLessons, GrpcMethods.academicLessons.updateLesson)
   updateLesson(payload: any, metadata: Metadata) {
     assertServiceToken(metadata);
     return runGrpc(async () =>
@@ -65,13 +65,13 @@ export class LessonsGrpcController {
     );
   }
 
-  @GrpcMethod('AcademicLessonsService', 'DeleteLesson')
+  @GrpcContractMethod(GrpcServices.academicLessons, GrpcMethods.academicLessons.deleteLesson)
   deleteLesson(payload: any, metadata: Metadata) {
     assertServiceToken(metadata);
     return runGrpc(() => this.lessonsService.deleteLesson(payload.lessonId));
   }
 
-  @GrpcMethod('AcademicLessonsService', 'PublishLessonToClassroom')
+  @GrpcContractMethod(GrpcServices.academicLessons, GrpcMethods.academicLessons.publishLessonToClassroom)
   publishLessonToClassroom(payload: any, metadata: Metadata) {
     assertServiceToken(metadata);
     return runGrpc(async () =>
@@ -84,7 +84,7 @@ export class LessonsGrpcController {
     );
   }
 
-  @GrpcMethod('AcademicLessonsService', 'GetClassroomLessons')
+  @GrpcContractMethod(GrpcServices.academicLessons, GrpcMethods.academicLessons.getClassroomLessons)
   getClassroomLessons(payload: any, metadata: Metadata) {
     assertServiceToken(metadata);
     return runGrpc(async () => ({
@@ -103,7 +103,7 @@ export class LessonsGrpcController {
     }));
   }
 
-  @GrpcMethod('AcademicLessonsService', 'UpdateClassroomLesson')
+  @GrpcContractMethod(GrpcServices.academicLessons, GrpcMethods.academicLessons.updateClassroomLesson)
   updateClassroomLesson(payload: any, metadata: Metadata) {
     assertServiceToken(metadata);
     return runGrpc(async () =>
@@ -117,7 +117,7 @@ export class LessonsGrpcController {
     );
   }
 
-  @GrpcMethod('AcademicLessonsService', 'RemoveLessonFromClassroom')
+  @GrpcContractMethod(GrpcServices.academicLessons, GrpcMethods.academicLessons.removeLessonFromClassroom)
   removeLessonFromClassroom(payload: any, metadata: Metadata) {
     assertServiceToken(metadata);
     return runGrpc(() =>

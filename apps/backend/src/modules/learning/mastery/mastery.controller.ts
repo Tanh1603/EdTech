@@ -10,8 +10,8 @@ import {
 } from '@nestjs/swagger';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { CurrentUser as CurrentUserPayload } from '../../../common/types/current-user.type';
-import { BulkUpsertMasteryDto } from './dto/bulk-upsert-mastery.dto';
-import { UpsertMasteryDto } from './dto/upsert-mastery.dto';
+import { BulkUpsertMasteryDto } from '@edtech/contracts';
+import { UpsertMasteryDto } from '@edtech/contracts';
 import { MasteryService } from './mastery.service';
 
 @ApiTags('Learning - Mastery')

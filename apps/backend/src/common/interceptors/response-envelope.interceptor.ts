@@ -7,7 +7,7 @@ import {
 import { Request } from 'express';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { PageDto } from '../dto/page.dto';
+import { PageDto } from '@edtech/contracts';
 import { ApiEnvelope } from '../types/api-envelope.type';
 
 

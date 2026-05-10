@@ -3,6 +3,7 @@ syntax = "proto3";
 package chat;
 
 import "common/json.proto";
+import "common/envelope.proto";
 import "google/protobuf/struct.proto";
 
 service ChatMessagesService {

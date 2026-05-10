@@ -3,7 +3,7 @@ import {
   Get,
   Query
 } from '@nestjs/common';
-import { UserQueryDto } from '../dto/user-query.dto';
+import { UserQueryDto } from '@edtech/contracts';
 import { UsersService } from '../services/users.service';
 
 @Controller('users')

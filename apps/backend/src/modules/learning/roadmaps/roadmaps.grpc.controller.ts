@@ -1,11 +1,11 @@
 import { Metadata } from '@grpc/grpc-js';
 import { Controller } from '@nestjs/common';
-import { GrpcMethod } from '@nestjs/microservices';
+import { GrpcContractMethod, GrpcMethods, GrpcServices } from '@edtech/contracts';
 import {
   fromProtoStruct,
   toObjectResponse,
   toPageResponse,
-} from '../../../common/grpc/json.mapper';
+} from '@edtech/contracts';
 import { getGrpcUserId } from '../../../common/grpc/metadata.mapper';
 import { runGrpc } from '../../../common/grpc/error-to-rpc-exception';
 import { assertServiceToken } from '../../../common/grpc/service-token';
@@ -15,7 +15,7 @@ import { RoadmapsService } from './roadmaps.service';
 export class RoadmapsGrpcController {
   constructor(private readonly roadmapsService: RoadmapsService) {}
 
-  @GrpcMethod('LearningRoadmapsService', 'CreateRoadmap')
+  @GrpcContractMethod(GrpcServices.learningRoadmaps, GrpcMethods.learningRoadmaps.createRoadmap)
   createRoadmap(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.roadmapsService
@@ -24,7 +24,7 @@ export class RoadmapsGrpcController {
     );
   }
 
-  @GrpcMethod('LearningRoadmapsService', 'GetRoadmaps')
+  @GrpcContractMethod(GrpcServices.learningRoadmaps, GrpcMethods.learningRoadmaps.getRoadmaps)
   getRoadmaps(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.roadmapsService.getRoadmaps(
@@ -38,7 +38,7 @@ export class RoadmapsGrpcController {
     );
   }
 
-  @GrpcMethod('LearningRoadmapsService', 'GetNextRoadmapItem')
+  @GrpcContractMethod(GrpcServices.learningRoadmaps, GrpcMethods.learningRoadmaps.getNextRoadmapItem)
   getNextRoadmapItem(_: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.roadmapsService
@@ -47,7 +47,7 @@ export class RoadmapsGrpcController {
     );
   }
 
-  @GrpcMethod('LearningRoadmapsService', 'GetRoadmapDetail')
+  @GrpcContractMethod(GrpcServices.learningRoadmaps, GrpcMethods.learningRoadmaps.getRoadmapDetail)
   getRoadmapDetail(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.roadmapsService
@@ -56,7 +56,7 @@ export class RoadmapsGrpcController {
     );
   }
 
-  @GrpcMethod('LearningRoadmapsService', 'UpdateRoadmap')
+  @GrpcContractMethod(GrpcServices.learningRoadmaps, GrpcMethods.learningRoadmaps.updateRoadmap)
   updateRoadmap(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.roadmapsService
@@ -69,14 +69,14 @@ export class RoadmapsGrpcController {
     );
   }
 
-  @GrpcMethod('LearningRoadmapsService', 'DeleteRoadmap')
+  @GrpcContractMethod(GrpcServices.learningRoadmaps, GrpcMethods.learningRoadmaps.deleteRoadmap)
   deleteRoadmap(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.roadmapsService.deleteRoadmap(payload.roadmapId, getGrpcUserId(metadata)),
     );
   }
 
-  @GrpcMethod('LearningRoadmapsService', 'CreateRoadmapItem')
+  @GrpcContractMethod(GrpcServices.learningRoadmaps, GrpcMethods.learningRoadmaps.createRoadmapItem)
   createRoadmapItem(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.roadmapsService
@@ -89,7 +89,7 @@ export class RoadmapsGrpcController {
     );
   }
 
-  @GrpcMethod('LearningRoadmapsService', 'GetRoadmapProgress')
+  @GrpcContractMethod(GrpcServices.learningRoadmaps, GrpcMethods.learningRoadmaps.getRoadmapProgress)
   getRoadmapProgress(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.roadmapsService
@@ -98,7 +98,7 @@ export class RoadmapsGrpcController {
     );
   }
 
-  @GrpcMethod('LearningRoadmapsService', 'UpdateRoadmapItem')
+  @GrpcContractMethod(GrpcServices.learningRoadmaps, GrpcMethods.learningRoadmaps.updateRoadmapItem)
   updateRoadmapItem(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.roadmapsService
@@ -107,21 +107,21 @@ export class RoadmapsGrpcController {
     );
   }
 
-  @GrpcMethod('LearningRoadmapsService', 'DeleteRoadmapItem')
+  @GrpcContractMethod(GrpcServices.learningRoadmaps, GrpcMethods.learningRoadmaps.deleteRoadmapItem)
   deleteRoadmapItem(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.roadmapsService.deleteRoadmapItem(payload.itemId),
     );
   }
 
-  @GrpcMethod('LearningRoadmapsService', 'CompleteRoadmapItem')
+  @GrpcContractMethod(GrpcServices.learningRoadmaps, GrpcMethods.learningRoadmaps.completeRoadmapItem)
   completeRoadmapItem(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.roadmapsService.completeRoadmapItem(payload.itemId).then(toObjectResponse),
     );
   }
 
-  @GrpcMethod('LearningRoadmapsService', 'UncompleteRoadmapItem')
+  @GrpcContractMethod(GrpcServices.learningRoadmaps, GrpcMethods.learningRoadmaps.uncompleteRoadmapItem)
   uncompleteRoadmapItem(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.roadmapsService

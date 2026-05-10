@@ -1,14 +1,14 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { PageDto } from '../../../common/dto/page.dto';
-import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { PageDto } from '@edtech/contracts';
+import { PaginationQueryDto } from '@edtech/contracts';
 import { AppHttpException } from '../../../common/errors/app-http.exception';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import { Prisma } from '../../../generated/prisma/client';
-import { ClassroomLessonsQueryDto } from './dto/classroom-lessons-query.dto';
-import { CreateLessonDto } from './dto/create-lesson.dto';
-import { PublishClassroomLessonDto } from './dto/publish-classroom-lesson.dto';
-import { UpdateClassroomLessonDto } from './dto/update-classroom-lesson.dto';
-import { UpdateLessonDto } from './dto/update-lesson.dto';
+import { ClassroomLessonsQueryDto } from '@edtech/contracts';
+import { CreateLessonDto } from '@edtech/contracts';
+import { PublishClassroomLessonDto } from '@edtech/contracts';
+import { UpdateClassroomLessonDto } from '@edtech/contracts';
+import { UpdateLessonDto } from '@edtech/contracts';
 
 @Injectable()
 export class LessonsService {

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../common/prisma/prisma.service';
-import { BulkUpsertMasteryDto } from './dto/bulk-upsert-mastery.dto';
-import { UpsertMasteryDto } from './dto/upsert-mastery.dto';
+import { BulkUpsertMasteryDto } from '@edtech/contracts';
+import { UpsertMasteryDto } from '@edtech/contracts';
 
 @Injectable()
 export class MasteryService {

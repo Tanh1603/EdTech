@@ -9,6 +9,7 @@
     "gateway:serve": "npm exec nx serve api-gateway",
     "gateway:build": "npm exec nx build api-gateway",
     "gateway:test": "npm exec nx test api-gateway",
+    "contracts:test": "npm exec nx test contracts",
     "prisma:generate": "npx prisma generate --config apps/backend/prisma.config.ts",
     "prisma:migrate": "npx prisma migrate dev --config apps/backend/prisma.config.ts",
     "db:studio": "npx prisma studio --config apps/backend/prisma.config.ts",

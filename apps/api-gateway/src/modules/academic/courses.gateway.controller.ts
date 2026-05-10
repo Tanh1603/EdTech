@@ -20,6 +20,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { lastValueFrom } from 'rxjs';
+import { CourseQueryDto, CreateCourseDto, UpdateCourseDto } from '@edtech/contracts';
 import { GrpcMetadataBuilder } from '../common/grpc-metadata/grpc-metadata.builder';
 import { RequestWithContext } from '../common/types/request-with-context';
 import { AcademicGrpcClientService } from '../grpc-clients/academic-grpc-client.service';
@@ -40,7 +41,7 @@ export class CoursesGatewayController {
   @ApiQuery({ name: 'search', required: false, type: String, example: 'math' })
   @ApiQuery({ name: 'teacherId', required: false, type: String })
   @ApiOkResponse({ description: 'Courses returned successfully' })
-  getCourses(@Query() query: any, @Req() req: RequestWithContext) {
+  getCourses(@Query() query: CourseQueryDto, @Req() req: RequestWithContext) {
     return lastValueFrom(
       this.academicGrpc.courses.getCourses(
         {
@@ -58,7 +59,7 @@ export class CoursesGatewayController {
   @ApiOperation({ summary: 'Create course' })
   @ApiBody({ schema: { type: 'object' } })
   @ApiCreatedResponse({ description: 'Course created successfully' })
-  createCourse(@Body() body: any, @Req() req: RequestWithContext) {
+  createCourse(@Body() body: CreateCourseDto, @Req() req: RequestWithContext) {
     return lastValueFrom(
       this.academicGrpc.courses.createCourse(
         {
@@ -95,7 +96,7 @@ export class CoursesGatewayController {
   @ApiOkResponse({ description: 'Course updated successfully' })
   updateCourse(
     @Param('courseId') courseId: string,
-    @Body() body: any,
+    @Body() body: CreateCourseDto,
     @Req() req: RequestWithContext,
   ) {
     return lastValueFrom(

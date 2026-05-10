@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { PageDto } from '../../../common/dto/page.dto';
+import { PageDto } from '@edtech/contracts';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import { Prisma, RoadmapStatus } from '../../../generated/prisma/client';
-import { CreateRoadmapItemDto } from './dto/create-roadmap-item.dto';
-import { CreateRoadmapDto } from './dto/create-roadmap.dto';
-import { RoadmapQueryDto } from './dto/roadmap-query.dto';
-import { UpdateRoadmapItemDto } from './dto/update-roadmap-item.dto';
-import { UpdateRoadmapDto } from './dto/update-roadmap.dto';
+import { CreateRoadmapItemDto } from '@edtech/contracts';
+import { CreateRoadmapDto } from '@edtech/contracts';
+import { RoadmapQueryDto } from '@edtech/contracts';
+import { UpdateRoadmapItemDto } from '@edtech/contracts';
+import { UpdateRoadmapDto } from '@edtech/contracts';
 
 @Injectable()
 export class RoadmapsService {

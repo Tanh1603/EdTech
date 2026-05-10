@@ -487,13 +487,15 @@ Background processing queue.
 ## Job Types
 
 ```text
-ai_grade
-ai_analyze
-ai_generate_exam
-material_ingest
-rag_index
-notification_dispatch
+notification.dispatch
+ai.material.ingest
+ai.assessment.grade
+ai.roadmap.generate
+ai.recommendation.refresh
+ai.chat.title.generate
 ```
+
+`jobs` is the DB status/audit source. RabbitMQ dispatches execution through durable queues and DLQ.
 
 ---
 

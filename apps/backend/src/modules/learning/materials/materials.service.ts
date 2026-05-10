@@ -6,12 +6,15 @@ import { MaterialStatus, Prisma } from '../../../generated/prisma/client';
 import { StorageService } from '../../storage/storage.service';
 import { MaterialQueryDto } from '@edtech/contracts';
 import { UpdateMaterialDto } from '@edtech/contracts';
+import { JobTypes } from '@edtech/contracts';
+import { JobsService } from '../../jobs/jobs.service';
 
 @Injectable()
 export class MaterialsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly storageService: StorageService,
+    private readonly jobsService: JobsService,
   ) {}
 
   async uploadMaterial(
@@ -49,7 +52,7 @@ export class MaterialsService {
     },
     createdBy: string,
   ) {
-    return this.prisma.material.create({
+    const material = await this.prisma.material.create({
       data: {
         lessonId: payload.lessonId,
         title: payload.title,
@@ -61,6 +64,21 @@ export class MaterialsService {
         createdBy,
       },
     });
+
+    await this.jobsService.enqueue({
+      type: JobTypes.aiMaterialIngest,
+      payload: {
+        materialId: material.id,
+        lessonId: material.lessonId,
+        storageUrl: material.storageUrl,
+        mimeType: material.mimeType,
+      },
+      createdBy,
+      resourceType: 'material',
+      resourceId: material.id,
+    });
+
+    return material;
   }
 
   async getMaterials(query: MaterialQueryDto): Promise<PageDto<unknown>> {

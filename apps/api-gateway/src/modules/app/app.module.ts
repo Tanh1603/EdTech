@@ -10,6 +10,8 @@ import { GatewayErrorFilter } from '../common/error-mapping/gateway-error.filter
 import { ResponseEnvelopeInterceptor } from '../common/envelope/response-envelope.interceptor';
 import { RequestContextMiddleware } from '../common/request-context/request-context.middleware';
 import { LearningGatewayModule } from '../learning/learning-gateway.module';
+import { JobsGatewayModule } from '../jobs/jobs-gateway.module';
+import { NotificationsGatewayModule } from '../notifications/notifications-gateway.module';
 import { StorageGatewayModule } from '../storage/storage-gateway.module';
 import { UsersGatewayModule } from '../users/users-gateway.module';
 
@@ -33,6 +35,8 @@ import { UsersGatewayModule } from '../users/users-gateway.module';
     AssessmentsGatewayModule,
     ChatGatewayModule,
     LearningGatewayModule,
+    JobsGatewayModule,
+    NotificationsGatewayModule,
     StorageGatewayModule,
     UsersGatewayModule,
   ],

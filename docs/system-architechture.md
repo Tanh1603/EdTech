@@ -14,6 +14,7 @@ Current codebase baseline:
 - Storage: Cloudinary through the existing `storage` module.
 - API contracts: `docs/api-contract`. The current public Gateway route contract is `docs/api-contract/gateway.md`; module files are supporting domain notes.
 - AI service design docs already exist under `docs/ai-service`.
+- Architecture scan against `docs/architechture.webp`: `docs/architecture-scan.md`.
 
 The target architecture has three deployable services:
 
@@ -45,7 +46,7 @@ flowchart LR
   AIS --> LLM[LLM Provider]
   AIS --> VDB[(Qdrant Vector DB)]
   AIS --> CACHE[(Redis)]
-  AIS --> NATS[(NATS JetStream)]
+  AIS --> RABBIT[(RabbitMQ Jobs)]
   AIS --> BE
   AIS --> STORAGE
 
@@ -296,7 +297,7 @@ BE Core is the source of truth for LMS business data:
 | API docs | Swagger/OpenAPI | Already configured for dev/compatibility. API Gateway Swagger is the public client contract. |
 | Validation | `class-validator`, `class-transformer` | Already used in DTOs. |
 | Internal RPC | NestJS microservices gRPC transport + Protobuf contracts | Target protocol for service-to-service calls. |
-| Background jobs/events | NATS JetStream recommended, Redis Streams acceptable fallback | Schema `Job` can persist status, but dispatch should be event-driven. |
+| Background jobs/events | RabbitMQ + DB `jobs` | `jobs` persists status/audit; RabbitMQ dispatches durable work with retry/DLQ. |
 | Observability | Structured logs + request ID | Request middleware already exists. |
 
 ### BE Core Internal gRPC Service Layer
@@ -370,6 +371,10 @@ This matches the existing backend structure and should be preserved.
 
 ## 4. AI Service Architecture
 
+Detailed AI Service documentation now lives in `docs/ai-service/architecture.md`.
+
+Current repository status: `apps/ai-service/` exists as an empty application folder. The SuA Agent runtime shown in `docs/architechture.webp` is not implemented yet: there is no AI gRPC server, FastAPI health API, orchestrator, planner, reasoner, tool selector, MCP server, prompt registry, Redis memory, AI worker, Qdrant integration, or LLM provider adapter. The sections below describe the target architecture, not current runtime code.
+
 ### Responsibility
 
 AI Service implements the SuA Agent runtime:
@@ -400,7 +405,7 @@ AI Service implements the SuA Agent runtime:
 | LLM provider | OpenAI-compatible SDK abstraction | Keep provider swappable. |
 | Embeddings | OpenAI / local embedding model | Store provider/model metadata. |
 | Vector DB | Qdrant gRPC recommended, Chroma acceptable for local dev | Qdrant gRPC is the default production-like path. |
-| Queue/events | NATS JetStream recommended, Redis Streams acceptable fallback | Async work, retry, durable consumers, and dead-letter handling. |
+| Queue/events | RabbitMQ + BE Core DB `jobs` | Async work, retry, durable queues, dead-letter handling, and queryable job status. |
 | Cache/session memory | Redis | Short-lived execution context and rate/budget data. |
 | Persistence | BE Core internal gRPC services first | Direct PostgreSQL only for worker-owned tables if approved. |
 | Document parsing | `pypdf`, `python-docx`, `python-pptx`, optional Unstructured | Material ingestion pipeline. |
@@ -532,7 +537,7 @@ Core rule:
 Public APIs may use HTTP REST/GraphQL because browsers need HTTP compatibility.
 Internal service-to-service APIs should not use REST JSON.
 Internal synchronous APIs use gRPC + Protobuf by default.
-Internal asynchronous work uses NATS JetStream by default.
+Internal asynchronous work uses RabbitMQ plus BE Core DB `jobs` by default.
 ```
 
 ### Protocol Matrix
@@ -544,8 +549,8 @@ Internal asynchronous work uses NATS JetStream by default.
 | API Gateway | AI Service | gRPC unary/server-streaming | AI request/response and internal token streaming. |
 | BE Core | AI Service | gRPC unary/server-streaming | Start AI workflows after authorization. |
 | AI Service | BE Core internal gRPC services | gRPC unary + Protobuf | Read context and write AI outputs without JSON drift. |
-| BE Core / AI Service | Event bus | NATS JetStream | Async jobs/events, retry, durable consumers, DLQ. |
-| AI API | AI Workers | NATS JetStream work queue | Scale slow AI processing independently. |
+| BE Core / AI Service | Event/job bus | RabbitMQ + DB `jobs` | Async jobs/events, retry, durable queues, DLQ, queryable status. |
+| AI API | AI Workers | RabbitMQ work queue | Scale slow AI processing independently. |
 | BE Core | PostgreSQL | Prisma/PostgreSQL wire protocol | Domain persistence. |
 | AI Service | Vector DB | Qdrant gRPC | RAG indexing/search with typed binary protocol. |
 | Services | Object Storage | SDK/signed URL over HTTPS | File transfer without pushing binary through RPC. |
@@ -759,20 +764,19 @@ Reason:
 
 Direct database writes from AI Service should be avoided unless a table is explicitly assigned to AI Service ownership.
 
-### 5.6 BE Core / AI Service -> Event Bus
+### 5.6 BE Core / AI Service -> Event/Job Bus
 
 Protocol:
 
 ```txt
-NATS JetStream
-Redis Streams acceptable fallback for simpler local deployments
+RabbitMQ durable queues + BE Core DB jobs
 ```
 
-Use NATS JetStream for service events, job dispatch, durable consumers, retry, and dead-letter queues. Redis Streams is acceptable if the team wants fewer infrastructure components, but NATS JetStream is the recommended architecture default.
+Use BE Core DB `jobs` as the status/audit source and RabbitMQ as the dispatch mechanism for service events and async jobs. RabbitMQ is the recommended architecture default for this repository because AI workers may be Python, jobs are work-queue oriented, and Kafka would be too heavy for the current workload. BullMQ is acceptable only if the team intentionally standardizes on Redis and Node-only workers.
 
 Use cases:
 
-- Domain events such as `material.uploaded`, `submission.submitted`, `chat.message.created`.
+- Domain jobs such as `notification.dispatch`, `ai.material.ingest`, `ai.assessment.grade`.
 - Material ingestion.
 - Document parsing.
 - Embedding generation.
@@ -781,15 +785,16 @@ Use cases:
 - Recommendation refresh.
 - Mastery analysis.
 
-Event payloads should use Protobuf messages published on NATS subjects. Example:
+Job messages should be small JSON or Protobuf payloads published to RabbitMQ queues. Example:
 
 ```proto
 message MaterialIngestRequested {
   string job_id = 1;
-  string material_id = 2;
-  string requested_by = 3;
-  string request_id = 4;
-  string correlation_id = 5;
+  string type = 2;
+  string material_id = 3;
+  string requested_by = 4;
+  string request_id = 5;
+  string correlation_id = 6;
 }
 ```
 
@@ -799,19 +804,19 @@ Reason:
 - Retries and backoff are easier.
 - Workers can scale independently from the API.
 - Failed jobs can be inspected and retried.
-- Durable consumers and DLQ are first-class in NATS JetStream.
+- Durable queues, ack/nack, retry, and DLQ are first-class in RabbitMQ.
 
-The existing `jobs` table can persist job status and audit data. It should not be the primary dispatch mechanism once NATS JetStream is available.
+The `jobs` table is the primary query/audit surface. RabbitMQ is the delivery mechanism, not the source of truth.
 
 ### 5.7 AI Service API -> AI Workers
 
 Protocol:
 
 ```txt
-NATS JetStream work queue
+RabbitMQ work queue
 ```
 
-AI Service publishes work items, and AI workers consume them through durable consumer groups:
+BE Core and AI Service publish work items, and AI workers consume them from durable queues:
 
 ```txt
 ai.material.ingest
@@ -1079,7 +1084,7 @@ sequenceDiagram
   participant B as BE Core
   participant S as Storage
   participant A as AI Service
-  participant N as NATS JetStream
+  participant R as RabbitMQ
   participant V as Vector DB
 
   T->>G: POST /api/storage/upload multipart
@@ -1088,8 +1093,8 @@ sequenceDiagram
   T->>G: POST /api/learning/materials JSON metadata
   G->>B: gRPC CreateMaterial(url metadata)
   B->>B: Store material status=uploaded
-  B->>N: Publish material.uploaded
-  N->>A: Worker consumes material_ingest
+  B->>R: Publish edtech.ai.material.ingest
+  R->>A: Worker consumes material ingest job
   A->>S: Download source file
   A->>A: Parse and chunk
   A->>B: gRPC UpsertMaterialChunks
@@ -1130,7 +1135,7 @@ docker-compose or Kubernetes namespace
   ai-service
   ai-worker
   postgres
-  nats
+  rabbitmq
   redis
   qdrant
 ```
@@ -1142,7 +1147,7 @@ local
   API Gateway optional, BE Core and AI Service can run directly.
 
 staging
-  API Gateway required, service auth enabled, NATS JetStream, Redis, and Qdrant enabled.
+  API Gateway required, service auth enabled, RabbitMQ, Redis, and Qdrant enabled.
 
 production
   Gateway public only, BE Core and AI Service private network only.
@@ -1164,7 +1169,6 @@ CLOUDINARY_NAME
 CLOUDINARY_API_KEY
 CLOUDINARY_API_SECRET
 REDIS_URL
-NATS_URL
 SERVICE_TOKEN
 ```
 
@@ -1181,9 +1185,12 @@ CLOUDINARY_NAME
 CLOUDINARY_API_KEY
 CLOUDINARY_API_SECRET
 AI_SERVICE_GRPC_URL
-NATS_URL
+RABBITMQ_URL
+RABBITMQ_EXCHANGE
+RABBITMQ_PREFETCH
 SERVICE_TOKEN
 ENABLE_BE_HTTP_PUBLIC
+ENABLE_BE_WORKERS
 ```
 
 `SERVICE_TOKEN` is required in staging and production for BE Core gRPC. `ENABLE_BE_HTTP_PUBLIC=false` is a future hardening flag for disabling public BE Core REST exposure; REST controllers and Clerk auth remain during migration.
@@ -1194,7 +1201,9 @@ AI Service:
 PORT
 BE_CORE_GRPC_URL
 SERVICE_TOKEN
-NATS_URL
+RABBITMQ_URL
+RABBITMQ_EXCHANGE
+RABBITMQ_PREFETCH
 REDIS_URL
 QDRANT_URL
 LLM_PROVIDER
@@ -1238,7 +1247,7 @@ EMBEDDING_API_KEY
 ### Phase 5: Production Hardening
 
 - Add OpenTelemetry traces across Gateway, BE Core, AI Service.
-- Add NATS JetStream-backed queue workers and DLQ policies.
+- Add RabbitMQ-backed queue workers and DLQ policies.
 - Add vector DB backup/reindex procedure.
 - Add AI audit logging with token usage and model metadata.
 - Add service-to-service network isolation.
@@ -1263,9 +1272,9 @@ Gateway should route, protect, rate-limit, observe, and proxy streams. It should
 
 Public REST/GraphQL/SSE can remain at API Gateway for browser compatibility. Internal service-to-service calls should use gRPC + Protobuf by default, including server streaming for AI token streams.
 
-### ADR-005: Use NATS JetStream for Async Service Work
+### ADR-005: Use RabbitMQ + DB Jobs for Async Service Work
 
-The Prisma schema already contains `Job`. It can persist job status and audit data, but async dispatch should use NATS JetStream for durable consumers, retries, and dead-letter handling. Redis Streams remains an acceptable simpler fallback for local or early-stage deployments.
+The Prisma schema contains `Job`, and BE Core owns job status persistence. Async dispatch uses RabbitMQ for durable work queues, retries, and dead-letter handling. Kafka is reserved for future analytics/event streaming scale, and BullMQ is acceptable only if workers stay Node/Redis-centric.
 
 ---
 

@@ -7,10 +7,15 @@ import { ClassInvitesDto } from '@edtech/contracts';
 import { ClassroomQueryDto } from '@edtech/contracts';
 import { CreateClassroomDto } from '@edtech/contracts';
 import { UpdateClassroomDto } from '@edtech/contracts';
+import { JobTypes } from '@edtech/contracts';
+import { JobsService } from '../../jobs/jobs.service';
 
 @Injectable()
 export class ClassroomsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jobsService: JobsService,
+  ) {}
 
   async getClassrooms(query: ClassroomQueryDto): Promise<PageDto<unknown>> {
     const page = query.page ?? 1;
@@ -125,15 +130,25 @@ export class ClassroomsService {
   async inviteClassMembers(classId: string, payload: ClassInvitesDto) {
     await this.prisma.classroom.findUniqueOrThrow({ where: { id: classId } });
 
-    const job = await this.prisma.job.create({
-      data: {
-        type: 'notification_dispatch',
-        status: 'queued',
-        payload: { classId, emails: payload.emails },
+    const job = await this.jobsService.enqueue({
+      type: JobTypes.notificationDispatch,
+      payload: {
+        title: 'Class invitation',
+        body: 'You were invited to join a class.',
+        emails: payload.emails,
+        resourceType: 'classroom',
+        resourceId: classId,
       },
+      resourceType: 'classroom',
+      resourceId: classId,
     });
 
-    return { jobId: job.id, status: 'queued' };
+    return {
+      jobId: job.jobId,
+      status: job.status,
+      type: job.type,
+      resourceId: job.resourceId,
+    };
   }
 
   private async createClassroomWithUniqueInviteCode(

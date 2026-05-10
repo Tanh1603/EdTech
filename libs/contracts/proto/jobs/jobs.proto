@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package jobs;
+
+import "common/json.proto";
+import "google/protobuf/struct.proto";
+
+service JobsService {
+  rpc GetJobStatus (JobIdRequest) returns (common.ObjectResponse);
+  rpc CreateJob (CreateJobRequest) returns (common.ObjectResponse);
+  rpc UpdateJobStatus (UpdateJobStatusRequest) returns (common.ObjectResponse);
+  rpc MarkJobRunning (JobIdRequest) returns (common.ObjectResponse);
+  rpc MarkJobSucceeded (CompleteJobRequest) returns (common.ObjectResponse);
+  rpc MarkJobFailed (FailJobRequest) returns (common.ObjectResponse);
+}
+
+message JobIdRequest {
+  string job_id = 1;
+}
+
+message CreateJobRequest {
+  string type = 1;
+  google.protobuf.Struct payload = 2;
+  int32 priority = 3;
+  int32 max_attempts = 4;
+  string request_id = 5;
+  string correlation_id = 6;
+  string created_by = 7;
+  string resource_type = 8;
+  string resource_id = 9;
+}
+
+message UpdateJobStatusRequest {
+  string job_id = 1;
+  string status = 2;
+  google.protobuf.Struct result = 3;
+  google.protobuf.Struct error = 4;
+}
+
+message CompleteJobRequest {
+  string job_id = 1;
+  google.protobuf.Struct result = 2;
+}
+
+message FailJobRequest {
+  string job_id = 1;
+  google.protobuf.Struct error = 2;
+}

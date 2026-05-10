@@ -48,6 +48,16 @@ enum RoadmapStatus {
   paused
 }
 
+enum JobStatus {
+  queued
+  running
+  retrying
+  succeeded
+  failed
+  dead_lettered
+  cancelled
+}
+
 //////////////////////////////////////////////////////
 //////////////////// ACADEMIC ////////////////////////
 //////////////////////////////////////////////////////
@@ -341,11 +351,27 @@ model Notification {
 //////////////////////////////////////////////////////
 
 model Job {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  type      String
-  payload   Json?
-  status    String
-  createdAt DateTime @default(now()) @map("created_at")
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type          String
+  status        JobStatus @default(queued)
+  priority      Int       @default(0)
+  payload       Json?
+  result        Json?
+  error         Json?
+  attempts      Int       @default(0)
+  maxAttempts   Int       @default(3) @map("max_attempts")
+  requestId     String?   @map("request_id")
+  correlationId String?   @map("correlation_id")
+  createdBy     String?   @map("created_by")
+  resourceType  String?   @map("resource_type")
+  resourceId    String?   @map("resource_id")
+  availableAt   DateTime  @default(now()) @map("available_at")
+  startedAt     DateTime? @map("started_at")
+  finishedAt    DateTime? @map("finished_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
 
+  @@index([type, status, availableAt])
+  @@index([resourceType, resourceId])
   @@map("jobs")
 }

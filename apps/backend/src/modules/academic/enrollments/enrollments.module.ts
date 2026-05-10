@@ -3,9 +3,10 @@ import { Module } from '@nestjs/common';
 import { EnrollmentsController } from './enrollments.controller';
 import { EnrollmentsGrpcController } from './enrollments.grpc.controller';
 import { EnrollmentsService } from './enrollments.service';
+import { NotificationsModule } from '../../notifications/notifications.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, NotificationsModule],
   controllers: [EnrollmentsController, EnrollmentsGrpcController],
   providers: [EnrollmentsService],
 })

@@ -120,4 +120,19 @@ export const GrpcMethods = {
   users: {
     getUsers: 'GetUsers',
   },
+  jobs: {
+    getJobStatus: 'GetJobStatus',
+    createJob: 'CreateJob',
+    updateJobStatus: 'UpdateJobStatus',
+    markJobRunning: 'MarkJobRunning',
+    markJobSucceeded: 'MarkJobSucceeded',
+    markJobFailed: 'MarkJobFailed',
+  },
+  notifications: {
+    createNotification: 'CreateNotification',
+    listMyNotifications: 'ListMyNotifications',
+    getUnreadCount: 'GetUnreadCount',
+    markNotificationRead: 'MarkNotificationRead',
+    markAllNotificationsRead: 'MarkAllNotificationsRead',
+  },
 } as const;

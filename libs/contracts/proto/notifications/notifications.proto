@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package notifications;
+
+import "common/json.proto";
+
+service NotificationsService {
+  rpc CreateNotification (CreateNotificationRequest) returns (common.ObjectResponse);
+  rpc ListMyNotifications (ListNotificationsRequest) returns (common.PageResponse);
+  rpc GetUnreadCount (EmptyNotificationRequest) returns (common.ObjectResponse);
+  rpc MarkNotificationRead (NotificationIdRequest) returns (common.ObjectResponse);
+  rpc MarkAllNotificationsRead (EmptyNotificationRequest) returns (common.ObjectResponse);
+}
+
+message EmptyNotificationRequest {}
+
+message CreateNotificationRequest {
+  string title = 1;
+  string body = 2;
+  string audience_type = 3;
+  repeated string audience_values = 4;
+  string resource_type = 5;
+  string resource_id = 6;
+}
+
+message ListNotificationsRequest {
+  int32 page = 1;
+  int32 limit = 2;
+  optional bool is_read = 3;
+}
+
+message NotificationIdRequest {
+  string notification_id = 1;
+}
+

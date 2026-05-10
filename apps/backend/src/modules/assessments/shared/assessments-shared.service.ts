@@ -11,10 +11,17 @@ import { CreateExamDto, UpdateExamDto } from '@edtech/contracts';
 import { ExamsQueryDto } from '@edtech/contracts';
 import { CreateQuestionDto, ReorderQuestionsDto, UpdateQuestionDto } from '@edtech/contracts';
 import { AnswersDto, ManualGradeDto } from '@edtech/contracts';
+import { JobTypes } from '@edtech/contracts';
+import { JobsService } from '../../jobs/jobs.service';
+import { NotificationsService } from '../../notifications/notifications.service';
 
 @Injectable()
 export class AssessmentsSharedService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jobsService: JobsService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   async createExam(payload: CreateExamDto, userId: string) {
     return this.prisma.exam.create({
@@ -71,8 +78,14 @@ export class AssessmentsSharedService {
     const exam = await this.prisma.exam.update({
       where: { id: examId },
       data: { status: ExamStatus.published },
-      select: { id: true, status: true },
+      select: { id: true, status: true, title: true, classId: true },
     });
+    await this.notificationsService.createForClass(
+      exam.classId,
+      'New exam published',
+      `${exam.title} is now available.`,
+      { resourceType: 'exam', resourceId: exam.id },
+    );
     return { examId: exam.id, status: exam.status };
   }
 
@@ -80,8 +93,14 @@ export class AssessmentsSharedService {
     const exam = await this.prisma.exam.update({
       where: { id: examId },
       data: { status: ExamStatus.archived },
-      select: { id: true },
+      select: { id: true, title: true, createdBy: true },
     });
+    await this.notificationsService.createForUser(
+      exam.createdBy,
+      'Exam closed',
+      `${exam.title} has been closed.`,
+      { resourceType: 'exam', resourceId: exam.id },
+    );
     return { examId: exam.id, status: 'closed' };
   }
 
@@ -169,9 +188,42 @@ export class AssessmentsSharedService {
     const submission = await this.prisma.submission.update({
       where: { id: submissionId },
       data: { status: SubmissionStatus.submitted, submittedAt: new Date() },
-      select: { id: true, status: true },
+      select: { id: true, status: true, examId: true, studentId: true },
     });
-    return { submissionId: submission.id, status: submission.status };
+    const gradingJob = await this.jobsService.enqueue({
+      type: JobTypes.aiAssessmentGrade,
+      payload: {
+        submissionId: submission.id,
+        examId: submission.examId,
+        studentId: submission.studentId,
+      },
+      createdBy: submission.studentId,
+      resourceType: 'submission',
+      resourceId: submission.id,
+    });
+
+    const exam = await this.prisma.exam.findUnique({
+      where: { id: submission.examId },
+      select: { title: true, createdBy: true },
+    });
+    if (exam?.createdBy) {
+      await this.notificationsService.createForUser(
+        exam.createdBy,
+        'New submission received',
+        `A student submitted ${exam.title}.`,
+        { resourceType: 'submission', resourceId: submission.id },
+      );
+    }
+
+    return {
+      submissionId: submission.id,
+      status: submission.status,
+      gradingJob: {
+        jobId: gradingJob.jobId,
+        status: gradingJob.status,
+        type: gradingJob.type,
+      },
+    };
   }
 
   getResult(submissionId: string) {
@@ -179,7 +231,7 @@ export class AssessmentsSharedService {
   }
 
   async manualGrade(submissionId: string, payload: ManualGradeDto) {
-    return this.prisma.result.upsert({
+    const result = await this.prisma.result.upsert({
       where: { submissionId },
       create: {
         submissionId,
@@ -195,6 +247,19 @@ export class AssessmentsSharedService {
         gradedAt: new Date(),
       },
     });
+    const submission = await this.prisma.submission.findUnique({
+      where: { id: submissionId },
+      select: { studentId: true, exam: { select: { title: true } } },
+    });
+    if (submission?.studentId) {
+      await this.notificationsService.createForUser(
+        submission.studentId,
+        'Assessment graded',
+        `Your result for ${submission.exam.title} is ready.`,
+        { resourceType: 'submission', resourceId: submissionId },
+      );
+    }
+    return result;
   }
 
   async getExamAnalytics(examId: string) {

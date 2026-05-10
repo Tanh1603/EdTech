@@ -16,4 +16,6 @@ export const GrpcServices = {
   learningMastery: 'LearningMasteryService',
   storage: 'StorageService',
   users: 'UsersService',
+  jobs: 'JobsService',
+  notifications: 'NotificationsService',
 } as const;

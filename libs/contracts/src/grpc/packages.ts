@@ -5,6 +5,8 @@ export const GrpcPackages = {
   learning: 'learning',
   storage: 'storage',
   users: 'users',
+  jobs: 'jobs',
+  notifications: 'notifications',
 } as const;
 
 export const AllGrpcPackages = [
@@ -14,4 +16,6 @@ export const AllGrpcPackages = [
   GrpcPackages.learning,
   GrpcPackages.storage,
   GrpcPackages.users,
+  GrpcPackages.jobs,
+  GrpcPackages.notifications,
 ] as const;

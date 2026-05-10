@@ -140,3 +140,20 @@ export interface StorageGrpc {
 export interface UsersGrpc {
   getUsers: GrpcCall;
 }
+
+export interface JobsGrpc {
+  getJobStatus: GrpcCall;
+  createJob: GrpcCall;
+  updateJobStatus: GrpcCall;
+  markJobRunning: GrpcCall;
+  markJobSucceeded: GrpcCall;
+  markJobFailed: GrpcCall;
+}
+
+export interface NotificationsGrpc {
+  createNotification: GrpcCall;
+  listMyNotifications: GrpcCall;
+  getUnreadCount: GrpcCall;
+  markNotificationRead: GrpcCall;
+  markAllNotificationsRead: GrpcCall;
+}

@@ -7,14 +7,12 @@ Project EdTechAI {
 //////////////////////
 
 Enum job_type {
-  ai_grade
-  ai_analyze
-  ai_generate_exam
-  analytics_aggregate
-  analytics_export
   notification_dispatch
-  material_ingest
-  rag_index
+  ai_material_ingest
+  ai_assessment_grade
+  ai_roadmap_generate
+  ai_recommendation_refresh
+  ai_chat_title_generate
 }
 
 Enum user_status {
@@ -78,9 +76,11 @@ Enum notify_status {
 Enum job_status {
   queued
   running
+  retrying
   succeeded
   failed
-  dead_letter
+  dead_lettered
+  cancelled
 }
 
 //////////////////////
@@ -487,12 +487,22 @@ Table jobs {
 
   payload jsonb
   result jsonb
+  error jsonb
 
   attempts int
   max_attempts int
 
+  request_id varchar
+  correlation_id varchar
+  created_by varchar
+  resource_type varchar
+  resource_id uuid
+
   available_at timestamptz
+  started_at timestamptz
+  finished_at timestamptz
   created_at timestamptz [default: `now()`]
+  updated_at timestamptz
 }
 
 //////////////////////

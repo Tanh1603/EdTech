@@ -3,9 +3,10 @@ import { Module } from '@nestjs/common';
 import { ClassroomsController } from './classrooms.controller';
 import { ClassroomsGrpcController } from './classrooms.grpc.controller';
 import { ClassroomsService } from './classrooms.service';
+import { JobsModule } from '../../jobs/jobs.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, JobsModule],
   controllers: [ClassroomsController, ClassroomsGrpcController],
   providers: [ClassroomsService],
 })

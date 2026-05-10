@@ -14,7 +14,9 @@ import { AuthModule } from '../auth/auth.module';
 import { ChatModule } from '../chat/chat.module';
 import { ClerkAuthGuard } from '../auth/guards/clerk-auth.guard';
 import { HealthModule } from '../health/health.module';
+import { JobsModule } from '../jobs/jobs.module';
 import { LearningModule } from '../learning/learning.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { StorageModule } from '../storage/storage.module';
 import { UsersModule } from '../users/users.module';
 
@@ -29,6 +31,8 @@ import { UsersModule } from '../users/users.module';
     LearningModule,
     ChatModule,
     StorageModule,
+    JobsModule,
+    NotificationsModule,
     ConfigModule.forRoot({
       envFilePath: 'apps/backend/.env',
       validationSchema: Joi.object({
@@ -41,6 +45,10 @@ import { UsersModule } from '../users/users.module';
         BACKEND_GRPC_URL: Joi.string().optional(),
         SERVICE_TOKEN: Joi.string().optional(),
         ENABLE_BE_HTTP_PUBLIC: Joi.boolean().optional(),
+        ENABLE_BE_WORKERS: Joi.boolean().optional(),
+        RABBITMQ_URL: Joi.string().optional(),
+        RABBITMQ_EXCHANGE: Joi.string().default('edtech.jobs'),
+        RABBITMQ_PREFETCH: Joi.number().default(10),
       }),
       isGlobal: true,
     }),

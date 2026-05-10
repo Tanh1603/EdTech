@@ -431,13 +431,10 @@ Get students at learning risk.
 
 | Job                    | Purpose                 |
 | ---------------------- | ----------------------- |
-| material_ingest        | parse uploaded files    |
-| material_chunking      | split chunks            |
-| rag_embedding          | generate embeddings     |
-| vector_index_sync      | sync vector db          |
-| ai_roadmap_generation  | generate roadmap        |
-| mastery_analysis       | calculate mastery       |
-| recommendation_refresh | refresh recommendations |
+| ai.material.ingest        | parse/chunk/embed uploaded files |
+| ai.roadmap.generate       | generate roadmap                 |
+| ai.recommendation.refresh | refresh recommendations          |
+| ai.assessment.grade       | grade submitted assessments      |
 
 ---
 

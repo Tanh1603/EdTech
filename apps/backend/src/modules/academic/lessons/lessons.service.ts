@@ -9,10 +9,14 @@ import { CreateLessonDto } from '@edtech/contracts';
 import { PublishClassroomLessonDto } from '@edtech/contracts';
 import { UpdateClassroomLessonDto } from '@edtech/contracts';
 import { UpdateLessonDto } from '@edtech/contracts';
+import { NotificationsService } from '../../notifications/notifications.service';
 
 @Injectable()
 export class LessonsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   async createLesson(payload: CreateLessonDto) {
     return this.prisma.lesson.create({ data: payload });
@@ -82,6 +86,10 @@ export class LessonsService {
       },
     });
 
+    if (isPublished) {
+      await this.notifyLessonPublished(classroomId, payload.lessonId);
+    }
+
     return this.toClassroomLessonResponse(classroomLesson);
   }
 
@@ -130,7 +138,24 @@ export class LessonsService {
       },
     });
 
+    if (payload.isPublished) {
+      await this.notifyLessonPublished(classroomId, lessonId);
+    }
+
     return this.toClassroomLessonResponse(classroomLesson);
+  }
+
+  private async notifyLessonPublished(classroomId: string, lessonId: string) {
+    const lesson = await this.prisma.lesson.findUnique({
+      where: { id: lessonId },
+      select: { title: true },
+    });
+    await this.notificationsService.createForClass(
+      classroomId,
+      'New lesson published',
+      `${lesson?.title ?? 'A lesson'} is now available.`,
+      { resourceType: 'lesson', resourceId: lessonId },
+    );
   }
 
   async removeLessonFromClassroom(classroomId: string, lessonId: string) {

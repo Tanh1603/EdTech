@@ -7,5 +7,9 @@ describe('grpc constants', () => {
     expect(GrpcMethods.learningRoadmaps.createRoadmap).toBe('CreateRoadmap');
     expect(GrpcServices.academicCourses).toBe('AcademicCoursesService');
     expect(GrpcMethods.academicCourses.getCourses).toBe('GetCourses');
+    expect(GrpcServices.jobs).toBe('JobsService');
+    expect(GrpcMethods.jobs.getJobStatus).toBe('GetJobStatus');
+    expect(GrpcServices.notifications).toBe('NotificationsService');
+    expect(GrpcMethods.notifications.listMyNotifications).toBe('ListMyNotifications');
   });
 });

@@ -17,6 +17,8 @@ import {
   LearningMasteryGrpc,
   LearningMaterialsGrpc,
   LearningRoadmapsGrpc,
+  JobsGrpc,
+  NotificationsGrpc,
   StorageGrpc,
   UsersGrpc,
 } from './be-core-grpc.types';
@@ -42,6 +44,8 @@ export class BeCoreGrpcClientService implements OnModuleInit {
   learningMastery!: LearningMasteryGrpc;
   storage!: StorageGrpc;
   users!: UsersGrpc;
+  jobs!: JobsGrpc;
+  notifications!: NotificationsGrpc;
 
   constructor(@Inject(BE_CORE_GRPC_CLIENT) private readonly client: ClientGrpc) {}
 
@@ -63,5 +67,7 @@ export class BeCoreGrpcClientService implements OnModuleInit {
     this.learningMastery = this.client.getService(GrpcServices.learningMastery);
     this.storage = this.client.getService(GrpcServices.storage);
     this.users = this.client.getService(GrpcServices.users);
+    this.jobs = this.client.getService(GrpcServices.jobs);
+    this.notifications = this.client.getService(GrpcServices.notifications);
   }
 }

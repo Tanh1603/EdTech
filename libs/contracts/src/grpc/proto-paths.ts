@@ -56,5 +56,7 @@ export function getAllProtoPaths(): string[] {
     join(root, 'learning/mastery.proto'),
     join(root, 'storage/storage.proto'),
     join(root, 'users/users.proto'),
+    join(root, 'jobs/jobs.proto'),
+    join(root, 'notifications/notifications.proto'),
   ];
 }

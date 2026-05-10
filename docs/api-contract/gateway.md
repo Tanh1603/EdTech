@@ -164,3 +164,23 @@ Do not send file bytes to `/api/learning/materials`; it stores URL and metadata 
 | Method | Path | Body DTO |
 | --- | --- | --- |
 | GET | `/api/users` | query `UserQueryDto` |
+
+## Jobs
+
+Async domain workflows return a `jobId` when work is accepted. Clients should poll the Gateway, not BE Core REST directly.
+
+| Method | Path | Body DTO |
+| --- | --- | --- |
+| GET | `/api/jobs/:jobId` | none |
+
+## Notifications
+
+Notifications are in-app only in V1. Manual/batch notification creation returns a job because recipient resolution and dispatch run asynchronously.
+
+| Method | Path | Body DTO |
+| --- | --- | --- |
+| POST | `/api/notifications` | `CreateNotificationDto` |
+| GET | `/api/notifications` | query `NotificationQueryDto` |
+| GET | `/api/notifications/unread-count` | none |
+| PATCH | `/api/notifications/:notificationId/read` | none |
+| PATCH | `/api/notifications/read-all` | none |

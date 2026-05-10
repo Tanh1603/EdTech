@@ -1,0 +1,96 @@
+syntax = "proto3";
+
+package academic;
+
+import "common/pagination.proto";
+import "common/envelope.proto";
+
+service AcademicClassroomsService {
+  rpc GetClassrooms (ClassroomQuery) returns (ClassroomPage);
+  rpc CreateClassroom (CreateClassroomRequest) returns (Classroom);
+  rpc GetClassroomDetail (ClassroomIdRequest) returns (ClassroomDetail);
+  rpc UpdateClassroom (UpdateClassroomRequest) returns (Classroom);
+  rpc DeleteClassroom (ClassroomIdRequest) returns (common.DeleteResponse);
+  rpc RegenerateInviteCode (ClassroomIdRequest) returns (InviteCodeResponse);
+  rpc InviteClassMembers (ClassInvitesRequest) returns (common.JobQueuedResponse);
+}
+
+message ClassroomQuery {
+  int32 page = 1;
+  int32 limit = 2;
+  string course_id = 3;
+}
+
+message ClassroomIdRequest {
+  string classroom_id = 1;
+}
+
+message CreateClassroomRequest {
+  string course_id = 1;
+  string name = 2;
+  string invite_code = 3;
+  string start_at = 4;
+  string end_at = 5;
+}
+
+message UpdateClassroomRequest {
+  string classroom_id = 1;
+  optional string name = 2;
+  optional string start_at = 3;
+  optional string end_at = 4;
+}
+
+message ClassInvitesRequest {
+  string class_id = 1;
+  repeated string emails = 2;
+}
+
+message InviteCodeResponse {
+  string invite_code = 1;
+}
+
+message Classroom {
+  string id = 1;
+  string course_id = 2;
+  string teacher_id = 3;
+  string name = 4;
+  string invite_code = 5;
+  string start_at = 6;
+  string end_at = 7;
+  string created_at = 8;
+}
+
+message ClassroomDetail {
+  string id = 1;
+  string course_id = 2;
+  string teacher_id = 3;
+  string name = 4;
+  string invite_code = 5;
+  string start_at = 6;
+  string end_at = 7;
+  string created_at = 8;
+  repeated EnrollmentSummary enrollments = 9;
+  repeated ClassroomLessonSummary classroom_lessons = 10;
+}
+
+message EnrollmentSummary {
+  string id = 1;
+  string class_id = 2;
+  string user_id = 3;
+  string role = 4;
+  string joined_at = 5;
+}
+
+message ClassroomLessonSummary {
+  string id = 1;
+  string class_id = 2;
+  string lesson_id = 3;
+  bool is_published = 4;
+  string published_at = 5;
+  string created_at = 6;
+}
+
+message ClassroomPage {
+  repeated Classroom items = 1;
+  common.PaginationMeta pagination = 2;
+}

@@ -26,7 +26,7 @@ export class LessonsService {
     const limit = query.limit ?? 20;
     const where: Prisma.LessonWhereInput = { courseId };
 
-    const [items, total] = await this.prisma.$transaction([
+    const [items, total] = await Promise.all([
       this.prisma.lesson.findMany({
         where,
         skip: (page - 1) * limit,

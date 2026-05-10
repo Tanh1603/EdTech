@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package academic;
+
+import "common/pagination.proto";
+import "common/envelope.proto";
+
+service AcademicCoursesService {
+  rpc GetCourses (CourseQuery) returns (CoursePage);
+  rpc CreateCourse (CreateCourseRequest) returns (Course);
+  rpc GetCourseDetail (CourseIdRequest) returns (CourseDetail);
+  rpc UpdateCourse (UpdateCourseRequest) returns (Course);
+  rpc DeleteCourse (CourseIdRequest) returns (common.DeleteResponse);
+}
+
+message CourseQuery {
+  int32 page = 1;
+  int32 limit = 2;
+  string search = 3;
+  string teacher_id = 4;
+}
+
+message CourseIdRequest {
+  string course_id = 1;
+}
+
+message CreateCourseRequest {
+  string teacher_id = 1;
+  string name = 2;
+  string description = 3;
+  string thumbnail_url = 4;
+}
+
+message UpdateCourseRequest {
+  string course_id = 1;
+  optional string name = 2;
+  optional string description = 3;
+  optional string thumbnail_url = 4;
+}
+
+message Course {
+  string id = 1;
+  string teacher_id = 2;
+  string name = 3;
+  string description = 4;
+  string thumbnail_url = 5;
+  string created_at = 6;
+  string updated_at = 7;
+}
+
+message CourseDetail {
+  string id = 1;
+  string teacher_id = 2;
+  string name = 3;
+  string description = 4;
+  string thumbnail_url = 5;
+  string created_at = 6;
+  string updated_at = 7;
+  repeated ClassroomSummary classrooms = 8;
+  repeated LessonSummary lessons = 9;
+}
+
+message ClassroomSummary {
+  string id = 1;
+  string course_id = 2;
+  string name = 3;
+  string invite_code = 4;
+  string start_at = 5;
+  string end_at = 6;
+  string created_at = 7;
+}
+
+message LessonSummary {
+  string id = 1;
+  string course_id = 2;
+  string title = 3;
+  string description = 4;
+  int32 order_no = 5;
+  string created_at = 6;
+  string updated_at = 7;
+}
+
+message CoursePage {
+  repeated Course items = 1;
+  common.PaginationMeta pagination = 2;
+}

@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package academic;
+
+import "common/envelope.proto";
+
+service AcademicEnrollmentsService {
+  rpc JoinClassroom (JoinClassroomRequest) returns (Enrollment);
+  rpc CreateEnrollment (CreateEnrollmentRequest) returns (Enrollment);
+  rpc GetClassroomStudents (EnrollmentClassroomIdRequest) returns (StudentEnrollmentList);
+  rpc UpdateEnrollmentRole (UpdateEnrollmentRoleRequest) returns (Enrollment);
+  rpc RemoveEnrollment (EnrollmentIdRequest) returns (common.DeleteResponse);
+}
+
+message JoinClassroomRequest {
+  string invite_code = 1;
+  string user_id = 2;
+}
+
+message CreateEnrollmentRequest {
+  string class_id = 1;
+  string user_id = 2;
+  string role = 3;
+}
+
+message EnrollmentClassroomIdRequest {
+  string classroom_id = 1;
+}
+
+message EnrollmentIdRequest {
+  string enrollment_id = 1;
+}
+
+message UpdateEnrollmentRoleRequest {
+  string enrollment_id = 1;
+  string role = 2;
+}
+
+message Enrollment {
+  string id = 1;
+  string class_id = 2;
+  string user_id = 3;
+  string role = 4;
+  string joined_at = 5;
+}
+
+message StudentEnrollment {
+  string id = 1;
+  string user_id = 2;
+  string role = 3;
+  string joined_at = 4;
+}
+
+message StudentEnrollmentList {
+  repeated StudentEnrollment items = 1;
+}

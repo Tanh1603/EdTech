@@ -1,0 +1,130 @@
+syntax = "proto3";
+
+package academic;
+
+import "common/pagination.proto";
+import "common/envelope.proto";
+
+service AcademicLessonsService {
+  rpc CreateLesson (CreateLessonRequest) returns (Lesson);
+  rpc GetLessonsByCourse (CourseLessonsQuery) returns (LessonPage);
+  rpc GetLessonDetail (LessonIdRequest) returns (LessonDetail);
+  rpc UpdateLesson (UpdateLessonRequest) returns (Lesson);
+  rpc DeleteLesson (LessonIdRequest) returns (common.DeleteResponse);
+  rpc PublishLessonToClassroom (PublishClassroomLessonRequest) returns (ClassroomLesson);
+  rpc GetClassroomLessons (ClassroomLessonsQuery) returns (ClassroomLessonList);
+  rpc UpdateClassroomLesson (UpdateClassroomLessonRequest) returns (ClassroomLesson);
+  rpc RemoveLessonFromClassroom (RemoveClassroomLessonRequest) returns (RemoveClassroomLessonResponse);
+}
+
+message CreateLessonRequest {
+  string course_id = 1;
+  string title = 2;
+  string description = 3;
+  int32 order_no = 4;
+}
+
+message CourseLessonsQuery {
+  string course_id = 1;
+  int32 page = 2;
+  int32 limit = 3;
+}
+
+message LessonIdRequest {
+  string lesson_id = 1;
+}
+
+message UpdateLessonRequest {
+  string lesson_id = 1;
+  optional string title = 2;
+  optional string description = 3;
+  optional int32 order_no = 4;
+}
+
+message PublishClassroomLessonRequest {
+  string classroom_id = 1;
+  string lesson_id = 2;
+  optional bool is_published = 3;
+}
+
+message ClassroomLessonsQuery {
+  string classroom_id = 1;
+  bool published_only = 2;
+}
+
+message UpdateClassroomLessonRequest {
+  string classroom_id = 1;
+  string lesson_id = 2;
+  bool is_published = 3;
+}
+
+message RemoveClassroomLessonRequest {
+  string classroom_id = 1;
+  string lesson_id = 2;
+}
+
+message Lesson {
+  string id = 1;
+  string course_id = 2;
+  string title = 3;
+  string description = 4;
+  int32 order_no = 5;
+  string created_at = 6;
+  string updated_at = 7;
+}
+
+message LessonDetail {
+  string id = 1;
+  string course_id = 2;
+  string title = 3;
+  string description = 4;
+  int32 order_no = 5;
+  string created_at = 6;
+  string updated_at = 7;
+  repeated MaterialSummary materials = 8;
+  repeated ClassroomLesson classroom_lessons = 9;
+}
+
+message MaterialSummary {
+  string id = 1;
+  string lesson_id = 2;
+  string title = 3;
+  string storage_url = 4;
+  string public_id = 5;
+  string mime_type = 6;
+  int32 size = 7;
+  string status = 8;
+  string created_by = 9;
+  string created_at = 10;
+}
+
+message ClassroomLesson {
+  string classroom_id = 1;
+  string lesson_id = 2;
+  bool is_published = 3;
+  string published_at = 4;
+}
+
+message ClassroomLessonItem {
+  string lesson_id = 1;
+  string title = 2;
+  string description = 3;
+  int32 order_no = 4;
+  bool is_published = 5;
+  string published_at = 6;
+}
+
+message ClassroomLessonList {
+  repeated ClassroomLessonItem items = 1;
+}
+
+message RemoveClassroomLessonResponse {
+  string classroom_id = 1;
+  string lesson_id = 2;
+  bool deleted = 3;
+}
+
+message LessonPage {
+  repeated Lesson items = 1;
+  common.PaginationMeta pagination = 2;
+}

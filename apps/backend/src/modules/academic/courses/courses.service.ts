@@ -11,32 +11,26 @@ export class CoursesService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getCourses(query: CourseQueryDto): Promise<PageDto<unknown>> {
-    try {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const where: Prisma.CourseWhereInput = {
+      ...(query.teacherId ? { teacherId: query.teacherId } : {}),
+      ...(query.search
+        ? { name: { contains: query.search, mode: 'insensitive' } }
+        : {}),
+    };
 
-      const page = query.page ?? 1;
-      const limit = query.limit ?? 20;
-      const where: Prisma.CourseWhereInput = {
-        ...(query.teacherId ? { teacherId: query.teacherId } : {}),
-        ...(query.search
-          ? { name: { contains: query.search, mode: 'insensitive' } }
-          : {}),
-      };
+    const [items, total] = await Promise.all([
+      this.prisma.course.findMany({
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.course.count({ where }),
+    ]);
 
-      const [items, total] = await this.prisma.$transaction([
-        this.prisma.course.findMany({
-          where,
-          skip: (page - 1) * limit,
-          take: limit,
-          orderBy: { createdAt: 'desc' },
-        }),
-        this.prisma.course.count({ where }),
-      ]);
-
-      return this.toPage(items, page, limit, total);
-    } catch (error) {
-console.log(error);
-
-    }
+    return this.toPage(items, page, limit, total);
   }
 
   async createCourse(payload: CreateCourseDto) {

@@ -23,7 +23,7 @@ API Gateway
   -> AI Service
 ```
 
-BE Core remains the system of record. AI Service owns orchestration, prompt execution, RAG, tool calling, and model interaction. API Gateway owns public ingress, routing, authentication boundary enforcement, and cross-service policies.
+BE Core remains the system of record. AI Service owns orchestration, prompt execution, RAG, tool calling, and model interaction. API Gateway owns public ingress, routing, authentication boundary enforcement, and cross-service policies. In staging and production, client applications should enter through API Gateway; BE Core HTTP REST is retained for development and transition compatibility only.
 
 ---
 
@@ -84,7 +84,7 @@ Client
 
 | Area | API Gateway | BE Core | AI Service |
 | --- | --- | --- | --- |
-| Public ingress | Yes | No direct public requirement in production | No direct public requirement in production |
+| Public ingress | Yes | No. HTTP REST is compatibility/dev only | No direct public requirement in production |
 | Auth token extraction | Yes | Yes, validates delegated user context | Service token / delegated user verification |
 | Domain authorization | Route-level coarse policy | Source of truth | Reads authorization context, does not bypass BE |
 | Courses/classes/lessons | Route only | Owns CRUD | Reads context |
@@ -111,6 +111,7 @@ API Gateway is the organization-facing ingress shown in the diagram. It should b
 - Protect internal service routes from browser access.
 - Proxy streaming AI responses using SSE or WebSocket.
 - Centralize CORS, request size limits, timeout budgets, and audit logs.
+- Own public Swagger/OpenAPI documentation at `/api/docs`.
 
 ### Recommended Tech Stack
 
@@ -217,6 +218,8 @@ It is a NestJS application with global prefix:
 /api
 ```
 
+BE Core HTTP REST remains available during migration, but it should be treated as development and compatibility surface only. Production clients should call API Gateway, which forwards internal requests to BE Core gRPC.
+
 Main runtime features already present:
 
 - `ValidationPipe` with whitelist and transform.
@@ -227,6 +230,8 @@ Main runtime features already present:
 - Request ID and request logging middleware.
 - Prisma module as database access layer.
 - Cloudinary-backed storage module.
+
+BE Core Swagger is useful for backend development while REST controllers remain. Public client documentation should use API Gateway Swagger at `/api/docs`.
 
 ### Current Domain Modules
 
@@ -283,7 +288,7 @@ BE Core is the source of truth for LMS business data:
 | Database | PostgreSQL | Source of truth. |
 | Auth | Clerk | Already wired through global guard. |
 | Storage | Cloudinary now, S3/R2 compatible later | Current module uses Cloudinary. |
-| API docs | Swagger/OpenAPI | Already configured. |
+| API docs | Swagger/OpenAPI | Already configured for dev/compatibility. API Gateway Swagger is the public client contract. |
 | Validation | `class-validator`, `class-transformer` | Already used in DTOs. |
 | Internal RPC | NestJS microservices gRPC transport + Protobuf contracts | Target protocol for service-to-service calls. |
 | Background jobs/events | NATS JetStream recommended, Redis Streams acceptable fallback | Schema `Job` can persist status, but dispatch should be event-driven. |
@@ -1125,6 +1130,8 @@ staging
 
 production
   Gateway public only, BE Core and AI Service private network only.
+  SERVICE_TOKEN is required for all internal gRPC calls.
+  BE Core HTTP REST should be private or disabled when ENABLE_BE_HTTP_PUBLIC=false is implemented.
 ```
 
 ### Environment Variables
@@ -1142,6 +1149,8 @@ NATS_URL
 SERVICE_TOKEN
 ```
 
+`SERVICE_TOKEN` is required in staging and production. It must match BE Core `SERVICE_TOKEN` so Gateway can call BE Core gRPC.
+
 BE Core:
 
 ```txt
@@ -1155,7 +1164,10 @@ CLOUDINARY_API_SECRET
 AI_SERVICE_GRPC_URL
 NATS_URL
 SERVICE_TOKEN
+ENABLE_BE_HTTP_PUBLIC
 ```
+
+`SERVICE_TOKEN` is required in staging and production for BE Core gRPC. `ENABLE_BE_HTTP_PUBLIC=false` is a future hardening flag for disabling public BE Core REST exposure; REST controllers and Clerk auth remain during migration.
 
 AI Service:
 

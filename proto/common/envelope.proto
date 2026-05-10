@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package common;
+
+message Empty {}
+
+message DeleteResponse {
+  string id = 1;
+  bool deleted = 2;
+}
+
+message JobQueuedResponse {
+  string job_id = 1;
+  string status = 2;
+}

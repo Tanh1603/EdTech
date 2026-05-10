@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package storage;
+
+import "common/json.proto";
+
+service StorageService {
+  rpc DeleteFile(DeleteFileRequest) returns (common.ObjectResponse);
+}
+
+message DeleteFileRequest {
+  string public_id = 1;
+}

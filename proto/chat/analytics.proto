@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package chat;
+
+import "common/json.proto";
+
+service ChatAnalyticsService {
+  rpc GetMyAnalytics(common.EmptyRequest) returns (common.ObjectResponse);
+  rpc GetClassroomAnalytics(ClassIdRequest) returns (common.ObjectResponse);
+}
+
+message ClassIdRequest {
+  string class_id = 1;
+}

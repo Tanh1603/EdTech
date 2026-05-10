@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package assessments;
+
+import "common/json.proto";
+import "google/protobuf/struct.proto";
+
+service AssessmentResultsService {
+  rpc GetResult(ResultSubmissionIdRequest) returns (common.ObjectResponse);
+  rpc ManualGrade(ManualGradeRequest) returns (common.ObjectResponse);
+}
+
+message ResultSubmissionIdRequest {
+  string submission_id = 1;
+}
+
+message ManualGradeRequest {
+  string submission_id = 1;
+  google.protobuf.Struct body = 2;
+}

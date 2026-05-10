@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package users;
+
+import "common/json.proto";
+
+service UsersService {
+  rpc GetUsers(UserQuery) returns (common.PageResponse);
+}
+
+message UserQuery {
+  string search = 1;
+  string role = 2;
+  int32 page = 3;
+  int32 limit = 4;
+}

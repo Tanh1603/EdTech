@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package assessments;
+
+import "common/json.proto";
+import "google/protobuf/struct.proto";
+
+service AssessmentQuestionsService {
+  rpc CreateQuestion(QuestionCreateRequest) returns (common.ObjectResponse);
+  rpc GetExamQuestions(QuestionsExamIdRequest) returns (common.ListResponse);
+  rpc GetQuestionDetail(QuestionIdRequest) returns (common.ObjectResponse);
+  rpc UpdateQuestion(QuestionUpdateRequest) returns (common.ObjectResponse);
+  rpc DeleteQuestion(QuestionIdRequest) returns (common.DeleteResponse);
+  rpc ReorderQuestions(QuestionBodyRequest) returns (common.ObjectResponse);
+}
+
+message QuestionsExamIdRequest {
+  string exam_id = 1;
+}
+
+message QuestionIdRequest {
+  string question_id = 1;
+}
+
+message QuestionCreateRequest {
+  string exam_id = 1;
+  google.protobuf.Struct body = 2;
+}
+
+message QuestionUpdateRequest {
+  string question_id = 1;
+  google.protobuf.Struct body = 2;
+}
+
+message QuestionBodyRequest {
+  google.protobuf.Struct body = 1;
+}

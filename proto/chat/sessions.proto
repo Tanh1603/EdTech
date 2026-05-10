@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package chat;
+
+import "common/json.proto";
+import "google/protobuf/struct.proto";
+
+service ChatSessionsService {
+  rpc CreateSession(SessionBodyRequest) returns (common.ObjectResponse);
+  rpc GetSessions(SessionQuery) returns (common.PageResponse);
+  rpc GetSessionDetail(SessionIdRequest) returns (common.ObjectResponse);
+  rpc UpdateSession(SessionUpdateRequest) returns (common.ObjectResponse);
+  rpc DeleteSession(SessionIdRequest) returns (common.DeleteResponse);
+}
+
+message SessionIdRequest {
+  string session_id = 1;
+}
+
+message SessionQuery {
+  string class_id = 1;
+  int32 page = 2;
+  int32 limit = 3;
+  string search = 4;
+}
+
+message SessionBodyRequest {
+  google.protobuf.Struct body = 1;
+}
+
+message SessionUpdateRequest {
+  string session_id = 1;
+  google.protobuf.Struct body = 2;
+}

@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package assessments;
+
+import "common/json.proto";
+import "google/protobuf/struct.proto";
+
+service AssessmentExamsService {
+  rpc CreateExam(ExamBodyRequest) returns (common.ObjectResponse);
+  rpc GetExams(ExamQuery) returns (common.PageResponse);
+  rpc GetExamDetail(ExamIdRequest) returns (common.ObjectResponse);
+  rpc UpdateExam(ExamUpdateRequest) returns (common.ObjectResponse);
+  rpc DeleteExam(ExamIdRequest) returns (common.DeleteResponse);
+  rpc PublishExam(ExamIdRequest) returns (common.ObjectResponse);
+  rpc CloseExam(ExamIdRequest) returns (common.ObjectResponse);
+}
+
+message ExamIdRequest {
+  string exam_id = 1;
+}
+
+message ExamQuery {
+  string class_id = 1;
+  string status = 2;
+  int32 page = 3;
+  int32 limit = 4;
+  string search = 5;
+}
+
+message ExamBodyRequest {
+  google.protobuf.Struct body = 1;
+}
+
+message ExamUpdateRequest {
+  string exam_id = 1;
+  google.protobuf.Struct body = 2;
+}

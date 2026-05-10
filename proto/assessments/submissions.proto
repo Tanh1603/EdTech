@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package assessments;
+
+import "common/json.proto";
+import "google/protobuf/struct.proto";
+
+service AssessmentSubmissionsService {
+  rpc StartExam(SubmissionExamIdRequest) returns (common.ObjectResponse);
+  rpc GetSubmissionDetail(SubmissionIdRequest) returns (common.ObjectResponse);
+  rpc AutosaveAnswers(SubmissionBodyRequest) returns (common.ObjectResponse);
+  rpc SubmitSubmission(SubmissionIdRequest) returns (common.ObjectResponse);
+}
+
+message SubmissionExamIdRequest {
+  string exam_id = 1;
+}
+
+message SubmissionIdRequest {
+  string submission_id = 1;
+}
+
+message SubmissionBodyRequest {
+  string submission_id = 1;
+  google.protobuf.Struct body = 2;
+}

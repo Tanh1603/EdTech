@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package learning;
+
+import "common/json.proto";
+import "google/protobuf/struct.proto";
+
+service LearningMaterialsService {
+  rpc CreateMaterial(MaterialAssetRequest) returns (common.ObjectResponse);
+  rpc GetMaterials(MaterialQuery) returns (common.PageResponse);
+  rpc GetMaterialDetail(MaterialIdRequest) returns (common.ObjectResponse);
+  rpc UpdateMaterial(MaterialUpdateRequest) returns (common.ObjectResponse);
+  rpc DeleteMaterial(MaterialIdRequest) returns (common.DeleteResponse);
+  rpc GetMaterialChunks(MaterialChunksQuery) returns (common.PageResponse);
+  rpc GetChunkDetail(MaterialChunkIdRequest) returns (common.ObjectResponse);
+}
+
+message MaterialIdRequest {
+  string material_id = 1;
+}
+
+message MaterialQuery {
+  string lesson_id = 1;
+  string status = 2;
+  int32 page = 3;
+  int32 limit = 4;
+  string search = 5;
+}
+
+message MaterialAssetRequest {
+  string lesson_id = 1;
+  string title = 2;
+  string storage_url = 3;
+  string public_id = 4;
+  string mime_type = 5;
+  int32 size = 6;
+}
+
+message MaterialUpdateRequest {
+  string material_id = 1;
+  google.protobuf.Struct body = 2;
+}
+
+message MaterialChunksQuery {
+  string material_id = 1;
+  int32 page = 2;
+  int32 limit = 3;
+}
+
+message MaterialChunkIdRequest {
+  string material_id = 1;
+  string chunk_id = 2;
+}

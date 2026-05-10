@@ -38,6 +38,31 @@ export class MaterialsService {
     });
   }
 
+  async createMaterial(
+    payload: {
+      lessonId: string;
+      title: string;
+      storageUrl: string;
+      publicId?: string;
+      mimeType?: string;
+      size?: number;
+    },
+    createdBy: string,
+  ) {
+    return this.prisma.material.create({
+      data: {
+        lessonId: payload.lessonId,
+        title: payload.title,
+        storageUrl: payload.storageUrl,
+        publicId: payload.publicId,
+        mimeType: payload.mimeType,
+        size: payload.size,
+        status: MaterialStatus.uploaded,
+        createdBy,
+      },
+    });
+  }
+
   async getMaterials(query: MaterialQueryDto): Promise<PageDto<unknown>> {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;

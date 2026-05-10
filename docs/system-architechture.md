@@ -1068,10 +1068,12 @@ sequenceDiagram
   participant N as NATS JetStream
   participant V as Vector DB
 
-  T->>G: POST /api/learning/materials
-  G->>B: gRPC CreateMaterial
-  B->>S: Upload file
-  B->>B: Create material status=uploaded
+  T->>G: POST /api/storage/upload multipart
+  G->>S: Upload file
+  G-->>T: secure_url, public_id, mime_type, size
+  T->>G: POST /api/learning/materials JSON metadata
+  G->>B: gRPC CreateMaterial(url metadata)
+  B->>B: Store material status=uploaded
   B->>N: Publish material.uploaded
   N->>A: Worker consumes material_ingest
   A->>S: Download source file
@@ -1144,12 +1146,15 @@ BE_CORE_GRPC_URL
 AI_SERVICE_GRPC_URL
 CLERK_PUBLISHABLE_KEY
 CLERK_SECRET_KEY
+CLOUDINARY_NAME
+CLOUDINARY_API_KEY
+CLOUDINARY_API_SECRET
 REDIS_URL
 NATS_URL
 SERVICE_TOKEN
 ```
 
-`SERVICE_TOKEN` is required in staging and production. It must match BE Core `SERVICE_TOKEN` so Gateway can call BE Core gRPC.
+`SERVICE_TOKEN` is required in staging and production. It must match BE Core `SERVICE_TOKEN` so Gateway can call BE Core gRPC. `CLOUDINARY_*` is required for Gateway `/api/storage/upload`; material creation receives JSON metadata with the uploaded file URL instead of multipart bytes.
 
 BE Core:
 

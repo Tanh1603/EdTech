@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package learning;
+
+import "common/json.proto";
+import "google/protobuf/struct.proto";
+
+service LearningRoadmapsService {
+  rpc CreateRoadmap(RoadmapBodyRequest) returns (common.ObjectResponse);
+  rpc GetRoadmaps(RoadmapQuery) returns (common.PageResponse);
+  rpc GetNextRoadmapItem(common.EmptyRequest) returns (common.ObjectResponse);
+  rpc GetRoadmapDetail(RoadmapIdRequest) returns (common.ObjectResponse);
+  rpc UpdateRoadmap(RoadmapUpdateRequest) returns (common.ObjectResponse);
+  rpc DeleteRoadmap(RoadmapIdRequest) returns (common.DeleteResponse);
+  rpc CreateRoadmapItem(RoadmapItemCreateRequest) returns (common.ObjectResponse);
+  rpc GetRoadmapProgress(RoadmapIdRequest) returns (common.ObjectResponse);
+  rpc UpdateRoadmapItem(RoadmapItemUpdateRequest) returns (common.ObjectResponse);
+  rpc DeleteRoadmapItem(RoadmapItemIdRequest) returns (common.DeleteResponse);
+  rpc CompleteRoadmapItem(RoadmapItemIdRequest) returns (common.ObjectResponse);
+  rpc UncompleteRoadmapItem(RoadmapItemIdRequest) returns (common.ObjectResponse);
+}
+
+message RoadmapIdRequest {
+  string roadmap_id = 1;
+}
+
+message RoadmapItemIdRequest {
+  string item_id = 1;
+}
+
+message RoadmapQuery {
+  string status = 1;
+  int32 page = 2;
+  int32 limit = 3;
+}
+
+message RoadmapBodyRequest {
+  google.protobuf.Struct body = 1;
+}
+
+message RoadmapUpdateRequest {
+  string roadmap_id = 1;
+  google.protobuf.Struct body = 2;
+}
+
+message RoadmapItemCreateRequest {
+  string roadmap_id = 1;
+  google.protobuf.Struct body = 2;
+}
+
+message RoadmapItemUpdateRequest {
+  string item_id = 1;
+  google.protobuf.Struct body = 2;
+}

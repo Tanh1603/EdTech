@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package learning;
+
+import "common/json.proto";
+import "google/protobuf/struct.proto";
+
+service LearningMasteryService {
+  rpc GetMyMastery(common.EmptyRequest) returns (common.ListResponse);
+  rpc GetMasteryByClass(ClassIdRequest) returns (common.ListResponse);
+  rpc GetMasteryByTopic(TopicRequest) returns (common.ListResponse);
+  rpc GetMasteryAnalytics(common.EmptyRequest) returns (common.ObjectResponse);
+  rpc UpsertMastery(MasteryBodyRequest) returns (common.ObjectResponse);
+  rpc BulkUpsertMastery(MasteryBodyRequest) returns (common.ObjectResponse);
+  rpc GetRiskStudents(common.EmptyRequest) returns (common.ObjectResponse);
+}
+
+message ClassIdRequest {
+  string class_id = 1;
+}
+
+message TopicRequest {
+  string topic = 1;
+}
+
+message MasteryBodyRequest {
+  google.protobuf.Struct body = 1;
+}

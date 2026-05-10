@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package assessments;
+
+import "common/json.proto";
+
+service AssessmentAnalyticsService {
+  rpc GetExamAnalytics(AnalyticsExamIdRequest) returns (common.ObjectResponse);
+  rpc GetQuestionAnalytics(AnalyticsExamIdRequest) returns (common.ObjectResponse);
+  rpc GetStudentAnalytics(StudentIdRequest) returns (common.ObjectResponse);
+}
+
+message AnalyticsExamIdRequest {
+  string exam_id = 1;
+}
+
+message StudentIdRequest {
+  string student_id = 1;
+}

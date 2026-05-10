@@ -3,10 +3,15 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import Joi from 'joi';
 import { AcademicGatewayModule } from '../academic/academic-gateway.module';
+import { AssessmentsGatewayModule } from '../assessments/assessments-gateway.module';
 import { GatewayAuthGuard } from '../auth/gateway-auth.guard';
+import { ChatGatewayModule } from '../chat/chat-gateway.module';
 import { GatewayErrorFilter } from '../common/error-mapping/gateway-error.filter';
 import { ResponseEnvelopeInterceptor } from '../common/envelope/response-envelope.interceptor';
 import { RequestContextMiddleware } from '../common/request-context/request-context.middleware';
+import { LearningGatewayModule } from '../learning/learning-gateway.module';
+import { StorageGatewayModule } from '../storage/storage-gateway.module';
+import { UsersGatewayModule } from '../users/users-gateway.module';
 
 @Module({
   imports: [
@@ -18,10 +23,18 @@ import { RequestContextMiddleware } from '../common/request-context/request-cont
         CLERK_PUBLISHABLE_KEY: Joi.string().optional(),
         CLERK_SECRET_KEY: Joi.string().required(),
         SERVICE_TOKEN: Joi.string().optional(),
+        CLOUDINARY_NAME: Joi.string().required(),
+        CLOUDINARY_API_KEY: Joi.string().required(),
+        CLOUDINARY_API_SECRET: Joi.string().required(),
       }),
       isGlobal: true,
     }),
     AcademicGatewayModule,
+    AssessmentsGatewayModule,
+    ChatGatewayModule,
+    LearningGatewayModule,
+    StorageGatewayModule,
+    UsersGatewayModule,
   ],
   providers: [
     {

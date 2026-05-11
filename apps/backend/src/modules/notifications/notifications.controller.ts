@@ -25,7 +25,7 @@ export class NotificationsController {
     @Body() body: CreateNotificationDto,
     @CurrentUser() user: CurrentUserPayload,
   ) {
-    return this.notificationsService.enqueueNotification(body, user.id);
+    return this.notificationsService.createNotification(body, user.id);
   }
 
   @Get()

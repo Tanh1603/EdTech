@@ -21,7 +21,12 @@ describe('NotificationDispatchWorker', () => {
       markFailed: jest.fn().mockResolvedValue(undefined),
     };
     const notificationsService = {
-      dispatch: jest.fn().mockResolvedValue({ recipients: 2, created: 2 }),
+      dispatch: jest.fn().mockResolvedValue({
+        recipients: 2,
+        created: 2,
+        notificationIds: ['notification-1', 'notification-2'],
+        precreated: true,
+      }),
     };
     const worker = new NotificationDispatchWorker(
       { get: jest.fn().mockReturnValue('true') } as any,
@@ -48,7 +53,12 @@ describe('NotificationDispatchWorker', () => {
     expect(notificationsService.dispatch).toHaveBeenCalled();
     expect(jobsService.markSucceeded).toHaveBeenCalledWith(
       'job-1',
-      expect.objectContaining({ recipients: 2, created: 2 }),
+      expect.objectContaining({
+        recipients: 2,
+        created: 2,
+        notificationIds: ['notification-1', 'notification-2'],
+        precreated: true,
+      }),
     );
   });
 

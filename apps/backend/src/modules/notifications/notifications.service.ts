@@ -23,13 +23,27 @@ export class NotificationsService {
     private readonly jobsService: JobsService,
   ) {}
 
-  async enqueueNotification(payload: CreateNotificationDto, createdBy: string) {
+  async createNotification(payload: CreateNotificationDto, createdBy: string) {
+    const userIds = await this.resolveAudience(payload.audience);
+    const created = await this.createForUsers(
+      userIds,
+      payload.title,
+      payload.body,
+      {
+        createdBy,
+        resourceType: payload.resourceType,
+        resourceId: payload.resourceId,
+      },
+    );
     const job = await this.jobsService.enqueue({
       type: JobTypes.notificationDispatch,
       payload: {
         title: payload.title,
         body: payload.body,
         audience: payload.audience,
+        notificationIds: created.notificationIds,
+        recipients: userIds.length,
+        created: created.count,
         createdBy,
         resourceType: payload.resourceType,
         resourceId: payload.resourceId,
@@ -44,6 +58,9 @@ export class NotificationsService {
       status: job.status,
       type: job.type,
       resourceId: job.resourceId,
+      recipients: userIds.length,
+      created: created.count,
+      notificationIds: created.notificationIds,
     };
   }
 
@@ -69,24 +86,34 @@ export class NotificationsService {
       return { count: 0 };
     }
 
-    return this.prisma.notification.createMany({
-      data: uniqueUserIds.map((userId) => ({ userId, title, body })),
-      skipDuplicates: false,
-    });
+    const notifications = await this.prisma.$transaction(
+      uniqueUserIds.map((userId) =>
+        this.prisma.notification.create({
+          data: { userId, title, body },
+          select: { id: true },
+        }),
+      ),
+    );
+
+    return {
+      count: notifications.length,
+      notificationIds: notifications.map((notification) => notification.id),
+    };
   }
 
-  async createForClass(
-    classId: string,
-    title: string,
-    body: string,
-    metadata: NotificationMetadata = {},
-  ) {
-    const userIds = await this.getClassStudentUserIds(classId);
-    return this.createForUsers(userIds, title, body, {
-      ...metadata,
-      resourceType: metadata.resourceType ?? 'classroom',
-      resourceId: metadata.resourceId ?? classId,
-    });
+  async markPrecreatedDispatchSucceeded(payload: {
+    notificationIds?: string[];
+    recipients?: number;
+    created?: number;
+  }) {
+    const notificationIds = payload.notificationIds ?? [];
+
+    return {
+      recipients: payload.recipients ?? notificationIds.length,
+      created: payload.created ?? notificationIds.length,
+      notificationIds,
+      precreated: true,
+    };
   }
 
   async dispatch(payload: {
@@ -97,7 +124,18 @@ export class NotificationsService {
     createdBy?: string;
     resourceType?: string;
     resourceId?: string;
+    notificationIds?: string[];
+    recipients?: number;
+    created?: number;
   }) {
+    if (payload.notificationIds?.length) {
+      return this.markPrecreatedDispatchSucceeded({
+        notificationIds: payload.notificationIds,
+        recipients: payload.recipients,
+        created: payload.created,
+      });
+    }
+
     if (!payload.audience && payload.emails?.length) {
       return {
         recipients: 0,
@@ -120,7 +158,26 @@ export class NotificationsService {
       resourceType: payload.resourceType,
       resourceId: payload.resourceId,
     });
-    return { recipients: userIds.length, created: result.count };
+
+    return {
+      recipients: userIds.length,
+      created: result.count,
+      notificationIds: result.notificationIds,
+    };
+  }
+
+  async createForClass(
+    classId: string,
+    title: string,
+    body: string,
+    metadata: NotificationMetadata = {},
+  ) {
+    const userIds = await this.getClassStudentUserIds(classId);
+    return this.createForUsers(userIds, title, body, {
+      ...metadata,
+      resourceType: metadata.resourceType ?? 'classroom',
+      resourceId: metadata.resourceId ?? classId,
+    });
   }
 
   async listMyNotifications(

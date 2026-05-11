@@ -41,8 +41,12 @@ describe('NotificationsService', () => {
         ]),
       },
       notification: {
-        createMany: jest.fn().mockResolvedValue({ count: 2 }),
+        create: jest
+          .fn()
+          .mockResolvedValueOnce({ id: 'notification-1' })
+          .mockResolvedValueOnce({ id: 'notification-2' }),
       },
+      $transaction: jest.fn((operations) => Promise.all(operations)),
     };
     const service = new NotificationsService(prisma as any, {} as any);
 
@@ -59,14 +63,15 @@ describe('NotificationsService', () => {
       where: { classId: 'class-1', role: 'student' },
       select: { userId: true },
     });
-    expect(prisma.notification.createMany).toHaveBeenCalledWith({
-      data: [
-        { userId: 'student-1', title: 'Exam', body: 'New exam' },
-        { userId: 'student-2', title: 'Exam', body: 'New exam' },
-      ],
-      skipDuplicates: false,
+    expect(prisma.notification.create).toHaveBeenCalledWith({
+      data: { userId: 'student-1', title: 'Exam', body: 'New exam' },
+      select: { id: true },
     });
-    expect(result).toEqual({ recipients: 2, created: 2 });
+    expect(result).toEqual({
+      recipients: 2,
+      created: 2,
+      notificationIds: ['notification-1', 'notification-2'],
+    });
   });
 
   it('marks only current user notification as read', async () => {
@@ -95,7 +100,7 @@ describe('NotificationsService', () => {
     });
   });
 
-  it('enqueues manual notification dispatch jobs', async () => {
+  it('creates notifications immediately and enqueues dispatch jobs', async () => {
     const jobsService = {
       enqueue: jest.fn().mockResolvedValue({
         jobId: 'job-1',
@@ -104,9 +109,18 @@ describe('NotificationsService', () => {
         resourceId: 'class-1',
       }),
     };
-    const service = new NotificationsService({} as any, jobsService as any);
+    const prisma = {
+      enrollment: {
+        findMany: jest.fn().mockResolvedValue([{ userId: 'student-1' }]),
+      },
+      notification: {
+        create: jest.fn().mockResolvedValue({ id: 'notification-1' }),
+      },
+      $transaction: jest.fn((operations) => Promise.all(operations)),
+    };
+    const service = new NotificationsService(prisma as any, jobsService as any);
 
-    const result = await service.enqueueNotification(
+    const result = await service.createNotification(
       {
         title: 'Announcement',
         body: 'Read this',
@@ -124,9 +138,43 @@ describe('NotificationsService', () => {
       expect.objectContaining({
         type: JobTypes.notificationDispatch,
         createdBy: 'teacher-1',
+        payload: expect.objectContaining({
+          notificationIds: ['notification-1'],
+          recipients: 1,
+          created: 1,
+        }),
       }),
     );
-    expect(result).toMatchObject({ jobId: 'job-1', status: 'queued' });
+    expect(result).toMatchObject({
+      jobId: 'job-1',
+      status: 'queued',
+      recipients: 1,
+      created: 1,
+      notificationIds: ['notification-1'],
+    });
+  });
+
+  it('does not create duplicate notifications for precreated dispatch payloads', async () => {
+    const service = new NotificationsService({} as any, {} as any);
+
+    await expect(
+      service.dispatch({
+        title: 'Announcement',
+        body: 'Read this',
+        audience: {
+          type: NotificationAudienceTypes.userIds,
+          values: ['student-1'],
+        },
+        notificationIds: ['notification-1'],
+        recipients: 1,
+        created: 1,
+      }),
+    ).resolves.toEqual({
+      recipients: 1,
+      created: 1,
+      notificationIds: ['notification-1'],
+      precreated: true,
+    });
   });
 });
 

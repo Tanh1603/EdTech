@@ -20,7 +20,7 @@ export class NotificationsGrpcController {
   createNotification(payload: any, metadata: Metadata) {
     return this.authenticated(metadata, () =>
       this.notificationsService
-        .enqueueNotification(
+        .createNotification(
           {
             title: payload.title,
             body: payload.body,

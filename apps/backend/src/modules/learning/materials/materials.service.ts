@@ -52,33 +52,39 @@ export class MaterialsService {
     },
     createdBy: string,
   ) {
-    const material = await this.prisma.material.create({
-      data: {
-        lessonId: payload.lessonId,
-        title: payload.title,
-        storageUrl: payload.storageUrl,
-        publicId: payload.publicId,
-        mimeType: payload.mimeType,
-        size: payload.size,
-        status: MaterialStatus.uploaded,
+    try {
+
+      const material = await this.prisma.material.create({
+        data: {
+          lessonId: payload.lessonId,
+          title: payload.title,
+          storageUrl: payload.storageUrl,
+          publicId: payload.publicId,
+          mimeType: payload.mimeType,
+          size: payload.size,
+          status: MaterialStatus.uploaded,
+          createdBy,
+        },
+      });
+
+      await this.jobsService.enqueue({
+        type: JobTypes.aiMaterialIngest,
+        payload: {
+          materialId: material.id,
+          lessonId: material.lessonId,
+          storageUrl: material.storageUrl,
+          mimeType: material.mimeType,
+        },
         createdBy,
-      },
-    });
+        resourceType: 'material',
+        resourceId: material.id,
+      });
 
-    await this.jobsService.enqueue({
-      type: JobTypes.aiMaterialIngest,
-      payload: {
-        materialId: material.id,
-        lessonId: material.lessonId,
-        storageUrl: material.storageUrl,
-        mimeType: material.mimeType,
-      },
-      createdBy,
-      resourceType: 'material',
-      resourceId: material.id,
-    });
+      return material;
+    } catch (error) {
+      console.log(error);
 
-    return material;
+    }
   }
 
   async getMaterials(query: MaterialQueryDto): Promise<PageDto<unknown>> {

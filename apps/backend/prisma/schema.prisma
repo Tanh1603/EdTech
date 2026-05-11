@@ -222,7 +222,7 @@ model Exam {
   description String?
   duration    Int
   status      ExamStatus @default(draft)
-  createdBy   String     @map("created_by") @db.Uuid
+  createdBy   String     @map("created_by")
   createdAt   DateTime   @default(now()) @map("created_at")
   updatedAt   DateTime   @updatedAt @map("updated_at")
 

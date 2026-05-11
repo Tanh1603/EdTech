@@ -1,0 +1,1541 @@
+{
+  "info": {
+    "_postman_id": "1c728334-5782-4c83-8116-acc362843767",
+    "name": "EdTech Real Flow Tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "48240608",
+    "_collection_link": "https://go.postman.co/collection/48240608-1c728334-5782-4c83-8116-acc362843767?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "00 Clerk Tokens",
+      "item": [
+        {
+          "name": "Teacher - Create Session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "const sessionId = response.id;",
+                  "pm.environment.set(\"TEACHER_SESSION_ID\", sessionId);",
+                  "console.log(\"SESSION_ID saved:\", sessionId);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{CLERK_KEY}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{clerkSecretKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"{{teacherUserId}}\"\n}"
+            },
+            "url": {
+              "raw": "https://api.clerk.com/v1/sessions",
+              "protocol": "https",
+              "host": [
+                "api",
+                "clerk",
+                "com"
+              ],
+              "path": [
+                "v1",
+                "sessions"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Teacher - Create JWT",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "const token = response.jwt;",
+                  "pm.environment.set(\"JWT_TEACHER_TOKEN\", token);",
+                  "console.log(\"Token saved:\", token);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{CLERK_KEY}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{clerkSecretKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expires_in_seconds\": 604800\n}"
+            },
+            "url": {
+              "raw": "https://api.clerk.com/v1/sessions/{{TEACHER_SESSION_ID}}/tokens",
+              "protocol": "https",
+              "host": [
+                "api",
+                "clerk",
+                "com"
+              ],
+              "path": [
+                "v1",
+                "sessions",
+                "{{TEACHER_SESSION_ID}}",
+                "tokens"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Student - Create Session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "const sessionId = response.id;",
+                  "pm.environment.set(\"USER_SESSION_ID\", sessionId);",
+                  "console.log(\"SESSION_ID saved:\", sessionId);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{CLERK_KEY}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{clerkSecretKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"{{studentUserId}}\"\n}"
+            },
+            "url": {
+              "raw": "https://api.clerk.com/v1/sessions",
+              "protocol": "https",
+              "host": [
+                "api",
+                "clerk",
+                "com"
+              ],
+              "path": [
+                "v1",
+                "sessions"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Student - Create JWT",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "const token = response.jwt;",
+                  "pm.environment.set(\"JWT_STUDENT_TOKEN\", token);",
+                  "console.log(\"Token saved:\", token);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{CLERK_KEY}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{clerkSecretKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expires_in_seconds\": 604800\n}"
+            },
+            "url": {
+              "raw": "https://api.clerk.com/v1/sessions/{{USER_SESSION_ID}}/tokens",
+              "protocol": "https",
+              "host": [
+                "api",
+                "clerk",
+                "com"
+              ],
+              "path": [
+                "v1",
+                "sessions",
+                "{{USER_SESSION_ID}}",
+                "tokens"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "01 Smoke",
+      "item": [
+        {
+          "name": "Swagger HTML",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiBaseUrl}}/docs",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "docs"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Courses",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{teacherJwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiBaseUrl}}/courses?page=1&limit=5",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "courses"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 Academic",
+      "item": [
+        {
+          "name": "Create Course",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('created', () => pm.response.to.have.status(201));",
+                  "const data = pm.response.json().data;",
+                  "pm.collectionVariables.set('courseId', data.id);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{JWT_TEACHER_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{teacherJwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"teacherId\": \"{{teacherUserId}}\",\n  \"name\": \"Postman Math Course\",\n  \"description\": \"Created by Postman flow\",\n  \"thumbnailUrl\": \"https://cdn.example.com/math.png\"\n}"
+            },
+            "url": {
+              "raw": "{{apiBaseUrl}}/courses",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "courses"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Classroom",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('created', () => pm.response.to.have.status(201));",
+                  "const data = pm.response.json().data;",
+                  "pm.collectionVariables.set('classroomId', data.id);",
+                  "pm.collectionVariables.set('inviteCode', data.inviteCode);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{JWT_TEACHER_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{teacherJwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseId\": \"{{courseId}}\",\n  \"name\": \"Postman Math Class\",\n  \"startAt\": \"2026-06-01T00:00:00.000Z\",\n  \"endAt\": \"2027-01-01T00:00:00.000Z\"\n}"
+            },
+            "url": {
+              "raw": "{{apiBaseUrl}}/classes",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "classes"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Lesson",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('lessonId', pm.response.json().data.id);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{JWT_TEACHER_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{teacherJwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseId\": \"{{courseId}}\",\n  \"title\": \"Postman Derivatives\",\n  \"description\": \"Intro\",\n  \"orderNo\": 1\n}"
+            },
+            "url": {
+              "raw": "{{apiBaseUrl}}/lessons",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "lessons"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Publish Lesson",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{JWT_TEACHER_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{teacherJwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lessonId\": \"{{lessonId}}\",\n  \"isPublished\": true\n}"
+            },
+            "url": {
+              "raw": "{{apiBaseUrl}}/classes/{{classroomId}}/lessons",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "classes",
+                "{{classroomId}}",
+                "lessons"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Student Join Classroom",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{JWT_TEACHER_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentJwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"inviteCode\": \"{{inviteCode}}\"\n}"
+            },
+            "url": {
+              "raw": "{{apiBaseUrl}}/enrollments/join",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "enrollments",
+                "join"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Student List Classroom Lessons",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{JWT_STUDENT_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentJwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiBaseUrl}}/classes/{{classroomId}}/lessons?publishedOnly=true",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "classes",
+                "{{classroomId}}",
+                "lessons"
+              ],
+              "query": [
+                {
+                  "key": "publishedOnly",
+                  "value": "true"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03 Learning",
+      "item": [
+        {
+          "name": "Create Material Metadata",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const data = pm.response.json().data;",
+                  "if (data && data.id) pm.collectionVariables.set('materialId', data.id);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{JWT_TEACHER_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{teacherJwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lessonId\": \"{{lessonId}}\",\n  \"title\": \"Postman Material\",\n  \"storageUrl\": \"https://cdn.example.com/postman/material.pdf\",\n  \"publicId\": \"postman/material\",\n  \"mimeType\": \"application/pdf\",\n  \"size\": 1024\n}"
+            },
+            "url": {
+              "raw": "{{apiBaseUrl}}/learning/materials",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "learning",
+                "materials"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Roadmap",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.collectionVariables.set('roadmapId', pm.response.json().data.id);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{JWT_TEACHER_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentJwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Postman Roadmap\",\n  \"targetGoal\": \"Improve calculus\"\n}"
+            },
+            "url": {
+              "raw": "{{apiBaseUrl}}/learning/roadmaps",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "learning",
+                "roadmaps"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Roadmap Progress",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{JWT_TEACHER_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentJwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiBaseUrl}}/learning/roadmaps/{{roadmapId}}/progress",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "learning",
+                "roadmaps",
+                "{{roadmapId}}",
+                "progress"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04 Chat",
+      "item": [
+        {
+          "name": "Create Chat Session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.collectionVariables.set('sessionId', pm.response.json().data.id);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{JWT_TEACHER_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentJwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"classId\": \"{{classroomId}}\",\n  \"title\": \"Postman Chat\"\n}"
+            },
+            "url": {
+              "raw": "{{apiBaseUrl}}/chat/sessions",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "chat",
+                "sessions"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Send Chat Message",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{JWT_TEACHER_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentJwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Explain derivatives\",\n  \"role\": \"user\"\n}"
+            },
+            "url": {
+              "raw": "{{apiBaseUrl}}/chat/sessions/{{sessionId}}/messages",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "chat",
+                "sessions",
+                "{{sessionId}}",
+                "messages"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Chat Messages",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{JWT_TEACHER_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentJwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiBaseUrl}}/chat/sessions/{{sessionId}}/messages",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "chat",
+                "sessions",
+                "{{sessionId}}",
+                "messages"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "05 Assessment",
+      "item": [
+        {
+          "name": "Create Exam",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.collectionVariables.set('examId', pm.response.json().data.id);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{JWT_STUDENT_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{teacherJwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"classId\": \"{{classroomId}}\",\n  \"title\": \"Postman Exam\",\n  \"description\": \"Flow exam\",\n  \"duration\": 30\n}"
+            },
+            "url": {
+              "raw": "{{apiBaseUrl}}/assessments/exams",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "assessments",
+                "exams"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Question",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.collectionVariables.set('questionId', pm.response.json().data.id);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{JWT_STUDENT_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{teacherJwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"single_choice\",\n  \"prompt\": \"What is derivative of x^2?\",\n  \"options\": [\"2x\", \"x\", \"x^2\"],\n  \"answerKey\": { \"correctOption\": 0 },\n  \"points\": 1,\n  \"orderNo\": 1\n}"
+            },
+            "url": {
+              "raw": "{{apiBaseUrl}}/assessments/exams/{{examId}}/questions",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "assessments",
+                "exams",
+                "{{examId}}",
+                "questions"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Publish Exam",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{JWT_STUDENT_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{teacherJwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiBaseUrl}}/assessments/exams/{{examId}}/publish",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "assessments",
+                "exams",
+                "{{examId}}",
+                "publish"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Start Exam",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const data = pm.response.json().data;",
+                  "pm.collectionVariables.set('submissionId', data.submissionId || data.id);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{JWT_STUDENT_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentJwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiBaseUrl}}/assessments/exams/{{examId}}/start",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "assessments",
+                "exams",
+                "{{examId}}",
+                "start"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Autosave Answers",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{JWT_STUDENT_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentJwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"answers\": [{ \"questionId\": \"{{questionId}}\", \"answer\": \"2x\" }]\n}"
+            },
+            "url": {
+              "raw": "{{apiBaseUrl}}/assessments/submissions/{{submissionId}}/answers",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "assessments",
+                "submissions",
+                "{{submissionId}}",
+                "answers"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Exam",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{JWT_STUDENT_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentJwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiBaseUrl}}/assessments/submissions/{{submissionId}}/submit",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "assessments",
+                "submissions",
+                "{{submissionId}}",
+                "submit"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Manual Grade",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{JWT_STUDENT_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{teacherJwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"score\": 1,\n  \"feedback\": { \"comment\": \"Correct\" }\n}"
+            },
+            "url": {
+              "raw": "{{apiBaseUrl}}/assessments/results/{{submissionId}}/manual-grade",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "assessments",
+                "results",
+                "{{submissionId}}",
+                "manual-grade"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "06 Notifications Jobs Users",
+      "item": [
+        {
+          "name": "Create Notification",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const data = pm.response.json().data || {};",
+                  "if (data.id) pm.collectionVariables.set('notificationId', data.id);",
+                  "if (data.jobId) pm.collectionVariables.set('jobId', data.jobId);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{JWT_STUDENT_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{teacherJwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Postman Reminder\",\n  \"body\": \"Assessment starts soon\",\n  \"audience\": { \"type\": \"user_ids\", \"values\": [\"{{studentUserId}}\"] },\n  \"resourceType\": \"exam\",\n  \"resourceId\": \"{{examId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{apiBaseUrl}}/notifications",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "notifications"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Unread Count",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{JWT_STUDENT_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentJwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiBaseUrl}}/notifications/unread-count",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "notifications",
+                "unread-count"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Notifications",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{JWT_STUDENT_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentJwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiBaseUrl}}/notifications",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "notifications"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Read All",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{JWT_STUDENT_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentJwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiBaseUrl}}/notifications/read-all",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "notifications",
+                "read-all"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Users",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{JWT_STUDENT_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{teacherJwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiBaseUrl}}/users?page=1&limit=20",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "apiBaseUrl",
+      "value": "http://localhost:8080/api"
+    },
+    {
+      "key": "clerkSecretKey",
+      "value": ""
+    },
+    {
+      "key": "teacherUserId",
+      "value": "user_3Da1r4qpBmJOOnK1gb6UGneHSRb"
+    },
+    {
+      "key": "studentUserId",
+      "value": "user_3Da1k90Lr822gW1H91NGKUOGKXg"
+    },
+    {
+      "key": "otherStudentUserId",
+      "value": "user_3Da1nLNH0o4OCeNiZhCLeFLtrBB"
+    },
+    {
+      "key": "teacherSessionId",
+      "value": ""
+    },
+    {
+      "key": "studentSessionId",
+      "value": ""
+    },
+    {
+      "key": "otherStudentSessionId",
+      "value": ""
+    },
+    {
+      "key": "teacherJwt",
+      "value": ""
+    },
+    {
+      "key": "studentJwt",
+      "value": ""
+    },
+    {
+      "key": "otherStudentJwt",
+      "value": ""
+    },
+    {
+      "key": "courseId",
+      "value": ""
+    },
+    {
+      "key": "classroomId",
+      "value": ""
+    },
+    {
+      "key": "inviteCode",
+      "value": ""
+    },
+    {
+      "key": "lessonId",
+      "value": ""
+    },
+    {
+      "key": "enrollmentId",
+      "value": ""
+    },
+    {
+      "key": "materialId",
+      "value": ""
+    },
+    {
+      "key": "roadmapId",
+      "value": ""
+    },
+    {
+      "key": "roadmapItemId",
+      "value": ""
+    },
+    {
+      "key": "examId",
+      "value": ""
+    },
+    {
+      "key": "questionId",
+      "value": ""
+    },
+    {
+      "key": "submissionId",
+      "value": ""
+    },
+    {
+      "key": "sessionId",
+      "value": ""
+    },
+    {
+      "key": "messageId",
+      "value": ""
+    },
+    {
+      "key": "notificationId",
+      "value": ""
+    },
+    {
+      "key": "jobId",
+      "value": ""
+    }
+  ]
+}

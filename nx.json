@@ -40,6 +40,19 @@
         "targetName": "test"
       },
       "exclude": ["apps/backend-e2e/**/*", "apps/api-gateway-e2e/**/*"]
+    },
+    {
+      "plugin": "@nx/docker",
+      "options": {
+        "buildTarget": {
+          "name": "docker:build",
+          "cwd": ".",
+          "args": ["-f {projectRoot}/Dockerfile"]
+        },
+        "runTarget": {
+          "name": "docker:run"
+        }
+      }
     }
   ]
 }

@@ -79,6 +79,49 @@ npx nx g ci-workflow
 
 [Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
 
+## CI/CD
+
+This repository uses GitHub Actions for CI and container publishing.
+
+- `.github/workflows/ci.yml` runs on pull requests and pushes to `master`. It installs dependencies with `npm ci`, generates the Prisma client, then runs Nx lint, test, and build gates. Its PostgreSQL-backed e2e/database smoke job is available through manual workflow dispatch while the current scaffold e2e specs are brought in line with the live routes.
+- `.github/workflows/docker-publish.yml` runs on pushes to `master` and manual dispatch. It builds the Nx applications and pushes Docker images to GitHub Container Registry. Each image installs runtime dependencies from the generated `dist/apps/<app>/package.json` and `package-lock.json`.
+- Published images:
+  - `ghcr.io/<owner>/<repo>/backend`
+  - `ghcr.io/<owner>/<repo>/api-gateway`
+- Required repository permissions for the Docker workflow: `contents: read` and `packages: write`. The workflow uses the built-in `GITHUB_TOKEN`.
+- Runtime environment is still provided by deployment infrastructure, not by CI. `backend` requires `DATABASE_URL`, Clerk keys, Cloudinary keys, and optional RabbitMQ worker variables. `api-gateway` requires Clerk and Cloudinary keys.
+
+## Docker Compose
+
+The root `docker-compose.yml` provides the local runtime dependencies:
+
+- PostgreSQL: `localhost:5432`
+- Redis: `localhost:6379`
+- RabbitMQ: `localhost:5672`
+- RabbitMQ Management UI: `http://localhost:15672` with `edtech` / `edtech`
+
+Run the infrastructure services:
+
+```sh
+npm run compose:infra:up
+```
+
+Run the full local container stack after building the Nx apps:
+
+```sh
+npm run prisma:generate
+npm exec nx run-many -t build -p backend api-gateway
+npm run compose:app:up
+```
+
+RabbitMQ is available to the backend at `amqp://edtech:edtech@rabbitmq:5672/`. The current backend loads `amqplib` as an optional runtime dependency, so install it before relying on RabbitMQ publishing/consuming in production app images.
+
+Stop the stack:
+
+```sh
+npm run compose:down
+```
+
 ## Install Nx Console
 
 Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.

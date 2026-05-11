@@ -1,0 +1,102 @@
+name: edtech
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: edtech-postgres
+    restart: always
+    shm_size: 128mb
+    mem_limit: 512m
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-edtech}
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-edtech}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: edtech-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: edtech-rabbitmq
+    restart: unless-stopped
+    mem_limit: 512m
+    environment:
+      RABBITMQ_DEFAULT_USER: edtech
+      RABBITMQ_DEFAULT_PASS: edtech
+      RABBITMQ_DEFAULT_VHOST: /
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    profiles: ["app"]
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    image: edtech/backend:local
+    container_name: edtech-backend
+    restart: unless-stopped
+    mem_limit: 512m
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - apps/backend/.env
+    ports:
+      - "3000:3000"
+      - "50051:50051"
+
+  api-gateway:
+    profiles: ["app"]
+    build:
+      context: .
+      dockerfile: apps/api-gateway/Dockerfile
+    image: edtech/api-gateway:local
+    container_name: edtech-api-gateway
+    restart: unless-stopped
+    mem_limit: 512m
+    depends_on:
+      backend:
+        condition: service_started
+    env_file:
+      - apps/api-gateway/.env
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres-data:
+  redis-data:
+  rabbitmq-data:

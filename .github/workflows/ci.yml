@@ -1,0 +1,102 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Lint, test, and build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npm run prisma:generate
+
+      - name: Run affected quality gates
+        if: github.event_name == 'pull_request'
+        run: npx nx affected -t lint,test,build --base=origin/${{ github.base_ref }} --head=${{ github.sha }}
+
+      - name: Run full quality gates
+        if: github.event_name != 'pull_request'
+        run: npx nx run-many -t lint,test,build --all
+
+  e2e:
+    name: E2E and database smoke tests
+    runs-on: ubuntu-latest
+    needs: quality
+    if: github.event_name == 'workflow_dispatch'
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: edtech_test
+          POSTGRES_USER: edtech
+          POSTGRES_PASSWORD: edtech
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U edtech -d edtech_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://edtech:edtech@localhost:5432/edtech_test
+      CLERK_PUBLISHABLE_KEY: pk_test_ci
+      CLERK_SECRET_KEY: sk_test_ci
+      CLOUDINARY_NAME: ci
+      CLOUDINARY_API_KEY: ci
+      CLOUDINARY_API_SECRET: ci
+      ENABLE_BE_WORKERS: "false"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npm run prisma:generate
+
+      - name: Verify database connectivity
+        run: npm run db:test
+
+      - name: Run affected e2e tests
+        if: github.event_name == 'pull_request'
+        run: npx nx affected -t e2e --base=origin/${{ github.base_ref }} --head=${{ github.sha }}
+
+      - name: Run all e2e tests
+        if: github.event_name != 'pull_request'
+        run: npx nx run-many -t e2e --all

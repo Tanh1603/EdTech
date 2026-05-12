@@ -118,7 +118,7 @@ all
 Import:
 
 ```txt
-postman/edtech-real-flow.postman_collection.json
+postman/EdTech Real Flow Tests.postman_collection.json
 ```
 
 Set collection variables:
@@ -135,22 +135,43 @@ Run folders in this order:
 
 1. `00 Clerk Tokens`
 2. `01 Smoke`
-3. `02 Academic`
-4. `03 Learning`
-5. `04 Assessment`
-6. `05 Chat`
-7. `06 Notifications Jobs Users`
+3. `02 Academic Full Flow`
+4. `03 Learning Storage Full Flow`
+5. `04 Assessment Full Flow`
+6. `05 Chat Full Flow`
+7. `06 Notifications Jobs Users Full Flow`
+8. `07 Future Runtime Missing Coverage`
+
+Every request logs failures to Postman Console with:
+
+- step name
+- HTTP method and URL
+- status code
+- request body
+- response body
+- Gateway `requestId`, `error.code`, and `error.message`
+- current flow state such as `courseId`, `classroomId`, `lessonId`, `examId`, `submissionId`, `sessionId`, `notificationId`, and `jobId`
+
+The notification create step stores:
+
+```txt
+notificationId = data.notificationIds[0] || data.id
+jobId = data.jobId
+```
+
+This matches the current create-notification behavior where the API creates notification records immediately and also returns a dispatch job.
 
 ## Flow Coverage
 
 | Flow | What it validates |
 | --- | --- |
-| Smoke | Swagger, authenticated `/courses` request reaches Gateway |
-| Academic | Teacher creates course/class/lesson, publishes lesson, student joins and reads classroom lessons |
-| Learning | Teacher creates material metadata, student creates roadmap/item and checks progress |
-| Assessment | Teacher creates exam/question/publishes, student starts/autosaves/submits, teacher grades |
-| Chat | Student creates session, sends message, reads history, second student cannot read session |
-| Notifications | Teacher sends notification, student reads unread/list/read-all, job/users endpoints checked where available |
+| Smoke | Swagger, missing-auth failure, authenticated `/courses`, unknown route error shape |
+| Academic | Course/class/lesson CRUD reads, invite regeneration, publish/unpublish, join, duplicate conflict, manual enrollment |
+| Learning | Optional storage upload, material metadata CRUD reads, chunks, roadmap/item/progress, mastery/risk endpoints |
+| Assessment | Exam CRUD reads, question CRUD/reorder, draft start rejection, publish/start/autosave/submit/manual-grade/result/analytics/close |
+| Chat | Session lifecycle, message lifecycle, empty message validation, cross-user isolation, analytics |
+| Notifications | User and class notification creation, `notificationIds[0]` capture, unread/list/read-one/read-all, jobs, users auth check |
+| Future Coverage | Documents user stories blocked by missing runtime: AI orchestrator, RAG citations, placement, proctoring, dashboards, export, admin metrics |
 
 ## Expected Failure Causes
 
@@ -161,4 +182,3 @@ Run folders in this order:
 | `14 UNAVAILABLE` / `500` | API Gateway cannot reach BE Core gRPC |
 | `404` resource in later flow step | Seed IDs are missing or previous create step failed |
 | Upload/material flow fails | Storage/Cloudinary or BE material module not configured |
-

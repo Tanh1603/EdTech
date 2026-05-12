@@ -1,0 +1,1274 @@
+{
+  "info": {
+    "_postman_id": "7c9f8908-6d6f-44f7-9d8d-main-flows",
+    "name": "EdTech Main API Flows",
+    "description": "Main business flows only. This collection is intentionally smaller than the full CRUD collection and runs through API Gateway with Clerk-generated Bearer JWTs.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "00 Clerk Tokens",
+      "item": [
+        {
+          "name": "Teacher - Create Session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Clerk created teacher session', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.collectionVariables.set('teacherSessionId', data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{clerkSecretKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"{{teacherUserId}}\"\n}"
+            },
+            "url": {
+              "raw": "https://api.clerk.com/v1/sessions",
+              "protocol": "https",
+              "host": ["api", "clerk", "com"],
+              "path": ["v1", "sessions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Teacher - Create JWT",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Clerk created teacher JWT', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.collectionVariables.set('teacherJwt', data.jwt);",
+                  "console.log('Teacher JWT saved:', data.jwt.slice(0, 12) + '...' + data.jwt.slice(-8));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{clerkSecretKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expires_in_seconds\": 604800\n}"
+            },
+            "url": {
+              "raw": "https://api.clerk.com/v1/sessions/{{teacherSessionId}}/tokens",
+              "protocol": "https",
+              "host": ["api", "clerk", "com"],
+              "path": ["v1", "sessions", "{{teacherSessionId}}", "tokens"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Student - Create Session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Clerk created student session', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.collectionVariables.set('studentSessionId', data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{clerkSecretKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"{{studentUserId}}\"\n}"
+            },
+            "url": {
+              "raw": "https://api.clerk.com/v1/sessions",
+              "protocol": "https",
+              "host": ["api", "clerk", "com"],
+              "path": ["v1", "sessions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Student - Create JWT",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Clerk created student JWT', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.collectionVariables.set('studentJwt', data.jwt);",
+                  "console.log('Student JWT saved:', data.jwt.slice(0, 12) + '...' + data.jwt.slice(-8));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{clerkSecretKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expires_in_seconds\": 604800\n}"
+            },
+            "url": {
+              "raw": "https://api.clerk.com/v1/sessions/{{studentSessionId}}/tokens",
+              "protocol": "https",
+              "host": ["api", "clerk", "com"],
+              "path": ["v1", "sessions", "{{studentSessionId}}", "tokens"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "01 Course Classroom Lesson Flow",
+      "item": [
+        {
+          "name": "Teacher Creates Course",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "assertSuccess([201]);",
+                  "saveDataVar('courseId', 'id');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{teacherJwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"teacherId\": \"{{teacherUserId}}\",\n  \"name\": \"Main Flow Course {{$timestamp}}\",\n  \"description\": \"Main business flow course\",\n  \"thumbnailUrl\": \"https://cdn.example.com/math.png\"\n}"
+            },
+            "url": {
+              "raw": "{{apiBaseUrl}}/courses",
+              "host": ["{{apiBaseUrl}}"],
+              "path": ["courses"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Teacher Creates Classroom",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "assertSuccess([201]);",
+                  "saveDataVar('classroomId', 'id');",
+                  "saveDataVar('inviteCode', 'inviteCode');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{teacherJwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseId\": \"{{courseId}}\",\n  \"name\": \"Main Flow Class {{$timestamp}}\",\n  \"startAt\": \"2026-06-01T00:00:00.000Z\",\n  \"endAt\": \"2027-01-01T00:00:00.000Z\"\n}"
+            },
+            "url": {
+              "raw": "{{apiBaseUrl}}/classes",
+              "host": ["{{apiBaseUrl}}"],
+              "path": ["classes"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Teacher Creates Lesson",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "assertSuccess([201]);",
+                  "saveDataVar('lessonId', 'id');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{teacherJwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseId\": \"{{courseId}}\",\n  \"title\": \"Derivatives Main Flow {{$timestamp}}\",\n  \"description\": \"Intro to derivatives\",\n  \"orderNo\": 1\n}"
+            },
+            "url": {
+              "raw": "{{apiBaseUrl}}/lessons",
+              "host": ["{{apiBaseUrl}}"],
+              "path": ["lessons"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Teacher Publishes Lesson To Classroom",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["assertSuccess([201]);"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{teacherJwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lessonId\": \"{{lessonId}}\",\n  \"isPublished\": true\n}"
+            },
+            "url": {
+              "raw": "{{apiBaseUrl}}/classes/{{classroomId}}/lessons",
+              "host": ["{{apiBaseUrl}}"],
+              "path": ["classes", "{{classroomId}}", "lessons"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Student Joins Classroom",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "assertSuccess([201]);",
+                  "saveDataVar('enrollmentId', 'id');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentJwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"inviteCode\": \"{{inviteCode}}\"\n}"
+            },
+            "url": {
+              "raw": "{{apiBaseUrl}}/enrollments/join",
+              "host": ["{{apiBaseUrl}}"],
+              "path": ["enrollments", "join"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Student Reads Published Lessons",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["assertSuccess([200]);"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentJwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiBaseUrl}}/classes/{{classroomId}}/lessons?publishedOnly=true",
+              "host": ["{{apiBaseUrl}}"],
+              "path": ["classes", "{{classroomId}}", "lessons"],
+              "query": [
+                {
+                  "key": "publishedOnly",
+                  "value": "true"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 Learning Flow",
+      "item": [
+        {
+          "name": "Teacher Creates Material Metadata",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "assertSuccess([201]);",
+                  "saveDataVar('materialId', 'id');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{teacherJwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lessonId\": \"{{lessonId}}\",\n  \"title\": \"Main Flow Material {{$timestamp}}\",\n  \"storageUrl\": \"https://cdn.example.com/main-flow/material.pdf\",\n  \"publicId\": \"main-flow/material-{{$timestamp}}\",\n  \"mimeType\": \"application/pdf\",\n  \"size\": 1024\n}"
+            },
+            "url": {
+              "raw": "{{apiBaseUrl}}/learning/materials",
+              "host": ["{{apiBaseUrl}}"],
+              "path": ["learning", "materials"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Student Creates Roadmap",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "assertSuccess([201]);",
+                  "saveDataVar('roadmapId', 'id');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentJwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Main Flow Roadmap {{$timestamp}}\",\n  \"targetGoal\": \"Improve calculus mastery\"\n}"
+            },
+            "url": {
+              "raw": "{{apiBaseUrl}}/learning/roadmaps",
+              "host": ["{{apiBaseUrl}}"],
+              "path": ["learning", "roadmaps"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Student Adds Roadmap Item",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "assertSuccess([201]);",
+                  "saveDataVar('roadmapItemId', 'id');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentJwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Review derivatives\",\n  \"topic\": \"Derivative\",\n  \"orderNo\": 1\n}"
+            },
+            "url": {
+              "raw": "{{apiBaseUrl}}/learning/roadmaps/{{roadmapId}}/items",
+              "host": ["{{apiBaseUrl}}"],
+              "path": ["learning", "roadmaps", "{{roadmapId}}", "items"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Student Completes Roadmap Item",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["assertSuccess([200, 201]);"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentJwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiBaseUrl}}/learning/roadmaps/items/{{roadmapItemId}}/complete",
+              "host": ["{{apiBaseUrl}}"],
+              "path": ["learning", "roadmaps", "items", "{{roadmapItemId}}", "complete"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Student Checks Roadmap Progress",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["assertSuccess([200]);"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentJwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiBaseUrl}}/learning/roadmaps/{{roadmapId}}/progress",
+              "host": ["{{apiBaseUrl}}"],
+              "path": ["learning", "roadmaps", "{{roadmapId}}", "progress"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03 Assessment Flow",
+      "item": [
+        {
+          "name": "Teacher Creates Exam",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "assertSuccess([201]);",
+                  "saveDataVar('examId', 'id');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{teacherJwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"classId\": \"{{classroomId}}\",\n  \"title\": \"Main Flow Exam {{$timestamp}}\",\n  \"description\": \"Main flow assessment\",\n  \"duration\": 30\n}"
+            },
+            "url": {
+              "raw": "{{apiBaseUrl}}/assessments/exams",
+              "host": ["{{apiBaseUrl}}"],
+              "path": ["assessments", "exams"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Teacher Adds Question",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "assertSuccess([201]);",
+                  "saveDataVar('questionId', 'id');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{teacherJwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"single_choice\",\n  \"prompt\": \"What is derivative of x^2?\",\n  \"options\": [\"2x\", \"x\", \"x^2\"],\n  \"answerKey\": {\n    \"correctOption\": 0\n  },\n  \"points\": 1,\n  \"orderNo\": 1\n}"
+            },
+            "url": {
+              "raw": "{{apiBaseUrl}}/assessments/exams/{{examId}}/questions",
+              "host": ["{{apiBaseUrl}}"],
+              "path": ["assessments", "exams", "{{examId}}", "questions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Teacher Publishes Exam",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["assertSuccess([201]);"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{teacherJwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiBaseUrl}}/assessments/exams/{{examId}}/publish",
+              "host": ["{{apiBaseUrl}}"],
+              "path": ["assessments", "exams", "{{examId}}", "publish"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Student Starts Exam",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "assertSuccess([201]);",
+                  "const data = responseData();",
+                  "pm.collectionVariables.set('submissionId', data.submissionId || data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentJwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiBaseUrl}}/assessments/exams/{{examId}}/start",
+              "host": ["{{apiBaseUrl}}"],
+              "path": ["assessments", "exams", "{{examId}}", "start"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Student Autosaves Answers",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["assertSuccess([200]);"]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentJwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"answers\": [\n    {\n      \"questionId\": \"{{questionId}}\",\n      \"answer\": \"2x\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{apiBaseUrl}}/assessments/submissions/{{submissionId}}/answers",
+              "host": ["{{apiBaseUrl}}"],
+              "path": ["assessments", "submissions", "{{submissionId}}", "answers"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Student Submits Exam",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["assertSuccess([201]);"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentJwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiBaseUrl}}/assessments/submissions/{{submissionId}}/submit",
+              "host": ["{{apiBaseUrl}}"],
+              "path": ["assessments", "submissions", "{{submissionId}}", "submit"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Teacher Manual Grades",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["assertSuccess([201]);"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{teacherJwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"score\": 1,\n  \"feedback\": {\n    \"comment\": \"Correct\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{apiBaseUrl}}/assessments/results/{{submissionId}}/manual-grade",
+              "host": ["{{apiBaseUrl}}"],
+              "path": ["assessments", "results", "{{submissionId}}", "manual-grade"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Student Gets Result",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["assertSuccess([200]);"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentJwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiBaseUrl}}/assessments/results/{{submissionId}}",
+              "host": ["{{apiBaseUrl}}"],
+              "path": ["assessments", "results", "{{submissionId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04 Chat Flow",
+      "item": [
+        {
+          "name": "Student Creates Chat Session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "assertSuccess([201]);",
+                  "saveDataVar('sessionId', 'id');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentJwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"classId\": \"{{classroomId}}\",\n  \"title\": \"Main Flow Chat {{$timestamp}}\"\n}"
+            },
+            "url": {
+              "raw": "{{apiBaseUrl}}/chat/sessions",
+              "host": ["{{apiBaseUrl}}"],
+              "path": ["chat", "sessions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Student Sends Chat Message",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "assertSuccess([201]);",
+                  "const data = responseData();",
+                  "pm.collectionVariables.set('messageId', data.userMessage && data.userMessage.id ? data.userMessage.id : data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentJwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Explain derivatives in simple words\"\n}"
+            },
+            "url": {
+              "raw": "{{apiBaseUrl}}/chat/sessions/{{sessionId}}/messages",
+              "host": ["{{apiBaseUrl}}"],
+              "path": ["chat", "sessions", "{{sessionId}}", "messages"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Student Lists Chat Messages",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["assertSuccess([200]);"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentJwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiBaseUrl}}/chat/sessions/{{sessionId}}/messages?page=1&limit=20",
+              "host": ["{{apiBaseUrl}}"],
+              "path": ["chat", "sessions", "{{sessionId}}", "messages"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "05 Notification Flow",
+      "item": [
+        {
+          "name": "Teacher Creates Notification",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "assertSuccess([201]);",
+                  "const data = responseData();",
+                  "pm.collectionVariables.set('notificationId', (data.notificationIds && data.notificationIds[0]) || data.id);",
+                  "if (data.jobId) pm.collectionVariables.set('jobId', data.jobId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{teacherJwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Main Flow Reminder {{$timestamp}}\",\n  \"body\": \"Assessment starts soon\",\n  \"audience\": {\n    \"type\": \"users\",\n    \"values\": [\"{{studentUserId}}\"]\n  },\n  \"resourceType\": \"exam\",\n  \"resourceId\": \"{{examId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{apiBaseUrl}}/notifications",
+              "host": ["{{apiBaseUrl}}"],
+              "path": ["notifications"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Student Gets Unread Count",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["assertSuccess([200]);"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentJwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiBaseUrl}}/notifications/unread-count",
+              "host": ["{{apiBaseUrl}}"],
+              "path": ["notifications", "unread-count"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Student Lists Notifications",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["assertSuccess([200]);"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentJwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiBaseUrl}}/notifications?page=1&limit=20",
+              "host": ["{{apiBaseUrl}}"],
+              "path": ["notifications"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Student Marks Notification Read",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["assertSuccess([200]);"]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentJwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiBaseUrl}}/notifications/{{notificationId}}/read",
+              "host": ["{{apiBaseUrl}}"],
+              "path": ["notifications", "{{notificationId}}", "read"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Teacher Gets Notification Job",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["assertSuccess([200, 404]);"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{teacherJwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiBaseUrl}}/jobs/{{jobId}}",
+              "host": ["{{apiBaseUrl}}"],
+              "path": ["jobs", "{{jobId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "function responseJson() {",
+          "  try { return pm.response.json(); } catch (error) { return null; }",
+          "}",
+          "",
+          "function responseData() {",
+          "  const json = responseJson();",
+          "  if (!json) return {};",
+          "  return json.data !== undefined ? json.data : json;",
+          "}",
+          "",
+          "function logFailure(reason) {",
+          "  const json = responseJson();",
+          "  console.log('[MAIN FLOW FAIL]', {",
+          "    step: pm.info.requestName,",
+          "    reason,",
+          "    method: pm.request.method,",
+          "    url: pm.request.url.toString(),",
+          "    status: pm.response.code,",
+          "    requestBody: pm.request.body ? pm.request.body.toString() : undefined,",
+          "    responseBody: pm.response.text(),",
+          "    requestId: json && json.meta && json.meta.requestId,",
+          "    errorCode: json && json.error && json.error.code,",
+          "    errorMessage: json && json.error && json.error.message,",
+          "    state: {",
+          "      courseId: pm.collectionVariables.get('courseId'),",
+          "      classroomId: pm.collectionVariables.get('classroomId'),",
+          "      lessonId: pm.collectionVariables.get('lessonId'),",
+          "      roadmapId: pm.collectionVariables.get('roadmapId'),",
+          "      examId: pm.collectionVariables.get('examId'),",
+          "      submissionId: pm.collectionVariables.get('submissionId'),",
+          "      sessionId: pm.collectionVariables.get('sessionId'),",
+          "      notificationId: pm.collectionVariables.get('notificationId'),",
+          "      jobId: pm.collectionVariables.get('jobId')",
+          "    }",
+          "  });",
+          "}",
+          "",
+          "function assertSuccess(expectedStatuses) {",
+          "  const json = responseJson();",
+          "  if (!expectedStatuses.includes(pm.response.code)) logFailure('unexpected_status');",
+          "  if (json && json.success === false) logFailure('gateway_success_false');",
+          "  pm.test('status is expected', () => pm.expect(expectedStatuses).to.include(pm.response.code));",
+          "  pm.test('gateway envelope did not fail', () => { if (json) pm.expect(json.success).to.not.eql(false); });",
+          "}",
+          "",
+          "function saveDataVar(varName, key) {",
+          "  const data = responseData();",
+          "  if (data && data[key]) pm.collectionVariables.set(varName, data[key]);",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "apiBaseUrl",
+      "value": "http://localhost:8080/api"
+    },
+    {
+      "key": "clerkSecretKey",
+      "value": ""
+    },
+    {
+      "key": "teacherUserId",
+      "value": "user_3Da1r4qpBmJOOnK1gb6UGneHSRb"
+    },
+    {
+      "key": "studentUserId",
+      "value": "user_3Da1k90Lr822gW1H91NGKUOGKXg"
+    },
+    {
+      "key": "teacherSessionId",
+      "value": ""
+    },
+    {
+      "key": "studentSessionId",
+      "value": ""
+    },
+    {
+      "key": "teacherJwt",
+      "value": ""
+    },
+    {
+      "key": "studentJwt",
+      "value": ""
+    },
+    {
+      "key": "courseId",
+      "value": ""
+    },
+    {
+      "key": "classroomId",
+      "value": ""
+    },
+    {
+      "key": "inviteCode",
+      "value": ""
+    },
+    {
+      "key": "lessonId",
+      "value": ""
+    },
+    {
+      "key": "enrollmentId",
+      "value": ""
+    },
+    {
+      "key": "materialId",
+      "value": ""
+    },
+    {
+      "key": "roadmapId",
+      "value": ""
+    },
+    {
+      "key": "roadmapItemId",
+      "value": ""
+    },
+    {
+      "key": "examId",
+      "value": ""
+    },
+    {
+      "key": "questionId",
+      "value": ""
+    },
+    {
+      "key": "submissionId",
+      "value": ""
+    },
+    {
+      "key": "sessionId",
+      "value": ""
+    },
+    {
+      "key": "messageId",
+      "value": ""
+    },
+    {
+      "key": "notificationId",
+      "value": ""
+    },
+    {
+      "key": "jobId",
+      "value": ""
+    }
+  ]
+}

@@ -10,6 +10,11 @@ import {
 import { Server } from 'socket.io';
 import { createGatewayCorsOptions } from '../common/cors/gateway-cors.config';
 import { RealtimeAuthGuard } from './guards/realtime-auth.guard';
+import {
+  RealtimeGatewayNamespace,
+  RealtimeSocketEvents,
+} from './realtime.constants';
+import { RealtimeAccessService, RealtimeAccessResult } from './realtime-access.service';
 import { RealtimePublisher } from './realtime.publisher';
 import { RealtimeRooms } from './realtime.rooms';
 import {
@@ -18,7 +23,7 @@ import {
 } from './realtime.types';
 
 @WebSocketGateway({
-  namespace: '/realtime',
+  namespace: RealtimeGatewayNamespace,
   cors: createGatewayCorsOptions(),
 })
 export class RealtimeGateway implements OnGatewayConnection {
@@ -29,6 +34,7 @@ export class RealtimeGateway implements OnGatewayConnection {
 
   constructor(
     private readonly authGuard: RealtimeAuthGuard,
+    private readonly accessService: RealtimeAccessService,
     private readonly publisher: RealtimePublisher,
   ) {}
 
@@ -40,7 +46,7 @@ export class RealtimeGateway implements OnGatewayConnection {
     try {
       const authenticatedSocket = await this.authGuard.authenticate(socket);
       await authenticatedSocket.join(RealtimeRooms.user(authenticatedSocket.data.userId));
-      authenticatedSocket.emit('realtime.connected', {
+      authenticatedSocket.emit(RealtimeSocketEvents.connected, {
         userId: authenticatedSocket.data.userId,
       });
     } catch (error) {
@@ -53,15 +59,21 @@ export class RealtimeGateway implements OnGatewayConnection {
     }
   }
 
-  @SubscribeMessage('subscribe.chatSession')
+  @SubscribeMessage(RealtimeSocketEvents.subscribeChatSession)
   subscribeChatSession(
     @ConnectedSocket() socket: AuthenticatedRealtimeSocket,
     @MessageBody() payload: RealtimeSubscribePayload,
   ) {
-    return this.joinRoom(socket, payload.sessionId, RealtimeRooms.chatSession);
+    return this.joinRoom(
+      socket,
+      RealtimeSocketEvents.subscribeChatSession,
+      payload.sessionId,
+      RealtimeRooms.chatSession,
+      (id) => this.accessService.validateChatSession(socket, id),
+    );
   }
 
-  @SubscribeMessage('unsubscribe.chatSession')
+  @SubscribeMessage(RealtimeSocketEvents.unsubscribeChatSession)
   unsubscribeChatSession(
     @ConnectedSocket() socket: AuthenticatedRealtimeSocket,
     @MessageBody() payload: RealtimeSubscribePayload,
@@ -69,15 +81,21 @@ export class RealtimeGateway implements OnGatewayConnection {
     return this.leaveRoom(socket, payload.sessionId, RealtimeRooms.chatSession);
   }
 
-  @SubscribeMessage('subscribe.class')
+  @SubscribeMessage(RealtimeSocketEvents.subscribeClass)
   subscribeClass(
     @ConnectedSocket() socket: AuthenticatedRealtimeSocket,
     @MessageBody() payload: RealtimeSubscribePayload,
   ) {
-    return this.joinRoom(socket, payload.classId, RealtimeRooms.class);
+    return this.joinRoom(
+      socket,
+      RealtimeSocketEvents.subscribeClass,
+      payload.classId,
+      RealtimeRooms.class,
+      (id) => this.accessService.validateClass(socket, id),
+    );
   }
 
-  @SubscribeMessage('unsubscribe.class')
+  @SubscribeMessage(RealtimeSocketEvents.unsubscribeClass)
   unsubscribeClass(
     @ConnectedSocket() socket: AuthenticatedRealtimeSocket,
     @MessageBody() payload: RealtimeSubscribePayload,
@@ -85,15 +103,21 @@ export class RealtimeGateway implements OnGatewayConnection {
     return this.leaveRoom(socket, payload.classId, RealtimeRooms.class);
   }
 
-  @SubscribeMessage('subscribe.exam')
+  @SubscribeMessage(RealtimeSocketEvents.subscribeExam)
   subscribeExam(
     @ConnectedSocket() socket: AuthenticatedRealtimeSocket,
     @MessageBody() payload: RealtimeSubscribePayload,
   ) {
-    return this.joinRoom(socket, payload.examId, RealtimeRooms.exam);
+    return this.joinRoom(
+      socket,
+      RealtimeSocketEvents.subscribeExam,
+      payload.examId,
+      RealtimeRooms.exam,
+      (id) => this.accessService.validateExam(socket, id),
+    );
   }
 
-  @SubscribeMessage('unsubscribe.exam')
+  @SubscribeMessage(RealtimeSocketEvents.unsubscribeExam)
   unsubscribeExam(
     @ConnectedSocket() socket: AuthenticatedRealtimeSocket,
     @MessageBody() payload: RealtimeSubscribePayload,
@@ -101,15 +125,21 @@ export class RealtimeGateway implements OnGatewayConnection {
     return this.leaveRoom(socket, payload.examId, RealtimeRooms.exam);
   }
 
-  @SubscribeMessage('subscribe.submission')
+  @SubscribeMessage(RealtimeSocketEvents.subscribeSubmission)
   subscribeSubmission(
     @ConnectedSocket() socket: AuthenticatedRealtimeSocket,
     @MessageBody() payload: RealtimeSubscribePayload,
   ) {
-    return this.joinRoom(socket, payload.submissionId, RealtimeRooms.submission);
+    return this.joinRoom(
+      socket,
+      RealtimeSocketEvents.subscribeSubmission,
+      payload.submissionId,
+      RealtimeRooms.submission,
+      (id) => this.accessService.validateSubmission(socket, id),
+    );
   }
 
-  @SubscribeMessage('unsubscribe.submission')
+  @SubscribeMessage(RealtimeSocketEvents.unsubscribeSubmission)
   unsubscribeSubmission(
     @ConnectedSocket() socket: AuthenticatedRealtimeSocket,
     @MessageBody() payload: RealtimeSubscribePayload,
@@ -117,31 +147,31 @@ export class RealtimeGateway implements OnGatewayConnection {
     return this.leaveRoom(socket, payload.submissionId, RealtimeRooms.submission);
   }
 
-  @SubscribeMessage('subscribe.aiJob')
-  subscribeAiJob(
-    @ConnectedSocket() socket: AuthenticatedRealtimeSocket,
-    @MessageBody() payload: RealtimeSubscribePayload,
-  ) {
-    return this.joinRoom(socket, payload.jobId, RealtimeRooms.aiJob);
+  @SubscribeMessage(RealtimeSocketEvents.subscribeAiJob)
+  subscribeAiJob() {
+    return this.notImplemented();
   }
 
-  @SubscribeMessage('unsubscribe.aiJob')
-  unsubscribeAiJob(
-    @ConnectedSocket() socket: AuthenticatedRealtimeSocket,
-    @MessageBody() payload: RealtimeSubscribePayload,
-  ) {
-    return this.leaveRoom(socket, payload.jobId, RealtimeRooms.aiJob);
+  @SubscribeMessage(RealtimeSocketEvents.unsubscribeAiJob)
+  unsubscribeAiJob() {
+    return this.notImplemented();
   }
 
-  @SubscribeMessage('subscribe.aiChat')
+  @SubscribeMessage(RealtimeSocketEvents.subscribeAiChat)
   subscribeAiChat(
     @ConnectedSocket() socket: AuthenticatedRealtimeSocket,
     @MessageBody() payload: RealtimeSubscribePayload,
   ) {
-    return this.joinRoom(socket, payload.sessionId, RealtimeRooms.aiChat);
+    return this.joinRoom(
+      socket,
+      RealtimeSocketEvents.subscribeAiChat,
+      payload.sessionId,
+      RealtimeRooms.aiChat,
+      (id) => this.accessService.validateAiChat(socket, id),
+    );
   }
 
-  @SubscribeMessage('unsubscribe.aiChat')
+  @SubscribeMessage(RealtimeSocketEvents.unsubscribeAiChat)
   unsubscribeAiChat(
     @ConnectedSocket() socket: AuthenticatedRealtimeSocket,
     @MessageBody() payload: RealtimeSubscribePayload,
@@ -151,15 +181,25 @@ export class RealtimeGateway implements OnGatewayConnection {
 
   private async joinRoom(
     socket: AuthenticatedRealtimeSocket,
+    event: string,
     id: string | undefined,
     toRoom: (id: string) => string,
+    canJoin: (id: string) => Promise<RealtimeAccessResult>,
   ) {
     const room = this.resolveRoom(id, toRoom);
     if (!room) {
       return this.invalidSubscription();
     }
 
+    const access = await canJoin(id as string);
+    if (!access.ok) {
+      return access;
+    }
+
     await socket.join(room);
+    this.logger.log(
+      `realtime.subscribe.ok socketId=${socket.id} user=${socket.data.userId} event=${event} room=${room} resourceId=${id} requestId=${socket.data.requestId} correlationId=${socket.data.correlationId}`,
+    );
     return { ok: true, room, subscribed: true };
   }
 
@@ -174,6 +214,9 @@ export class RealtimeGateway implements OnGatewayConnection {
     }
 
     await socket.leave(room);
+    this.logger.log(
+      `realtime.unsubscribe.ok socketId=${socket.id} user=${socket.data.userId} room=${room} resourceId=${id} requestId=${socket.data.requestId} correlationId=${socket.data.correlationId}`,
+    );
     return { ok: true, room, subscribed: false };
   }
 
@@ -194,6 +237,10 @@ export class RealtimeGateway implements OnGatewayConnection {
       error: 'VALIDATION_ERROR',
       message: 'A valid UUID is required.',
     };
+  }
+
+  private notImplemented() {
+    return this.accessService.rejectAiJob();
   }
 
   private isUuid(value: string): boolean {

@@ -27,8 +27,7 @@ async function bootstrap() {
     }),
   );
 
-  app.enableCors();
-
+  app.enableCors(createGatewayCorsOptions());
 
   const config = new DocumentBuilder()
     .setTitle('EdTech API Gateway')

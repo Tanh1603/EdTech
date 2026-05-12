@@ -22,22 +22,32 @@ export class SubmissionsController {
   @ApiOperation({ summary: 'Get submission detail' })
   @ApiParam({ name: 'submissionId', format: 'uuid' })
   @ApiOkResponse({ description: 'Submission detail returned successfully' })
-  getSubmissionDetail(@Param('submissionId', ParseUUIDPipe) submissionId: string) {
-    return this.assessmentsService.getSubmissionDetail(submissionId);
+  getSubmissionDetail(
+    @Param('submissionId', ParseUUIDPipe) submissionId: string,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
+    return this.assessmentsService.getSubmissionDetail(submissionId, user.id);
   }
 
   @Patch('submissions/:submissionId/answers')
   @ApiOperation({ summary: 'Autosave answers' })
   @ApiParam({ name: 'submissionId', format: 'uuid' })
   @ApiBody({ type: AnswersDto })
-  autosaveAnswers(@Param('submissionId', ParseUUIDPipe) submissionId: string, @Body() body: AnswersDto) {
-    return this.assessmentsService.autosaveAnswers(submissionId, body);
+  autosaveAnswers(
+    @Param('submissionId', ParseUUIDPipe) submissionId: string,
+    @Body() body: AnswersDto,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
+    return this.assessmentsService.autosaveAnswers(submissionId, body, user.id);
   }
 
   @Post('submissions/:submissionId/submit')
   @ApiOperation({ summary: 'Submit exam' })
   @ApiParam({ name: 'submissionId', format: 'uuid' })
-  submitSubmission(@Param('submissionId', ParseUUIDPipe) submissionId: string) {
-    return this.assessmentsService.submitSubmission(submissionId);
+  submitSubmission(
+    @Param('submissionId', ParseUUIDPipe) submissionId: string,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
+    return this.assessmentsService.submitSubmission(submissionId, user.id);
   }
 }

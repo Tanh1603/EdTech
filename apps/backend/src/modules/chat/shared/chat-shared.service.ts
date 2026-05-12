@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PageDto } from '@edtech/contracts';
+import { AccessPolicyService } from '../../../common/access/access-policy.service';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import { Prisma } from '../../../generated/prisma/client';
 import {
@@ -12,9 +13,16 @@ import {
 
 @Injectable()
 export class ChatSharedService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly accessPolicy: AccessPolicyService,
+    private readonly prisma: PrismaService,
+  ) {}
 
-  createSession(payload: CreateChatSessionDto, userId: string) {
+  async createSession(payload: CreateChatSessionDto, userId: string) {
+    if (payload.classId) {
+      await this.accessPolicy.assertClassroomAccess(payload.classId, userId);
+    }
+
     return this.prisma.chatSession.create({
       data: {
         userId,
@@ -131,14 +139,18 @@ export class ChatSharedService {
     });
   }
 
-  getMessageDetail(messageId: string) {
-    return this.prisma.chatMessage.findUniqueOrThrow({
-      where: { id: messageId },
+  getMessageDetail(messageId: string, userId: string) {
+    return this.prisma.chatMessage.findFirstOrThrow({
+      where: { id: messageId, session: { userId } },
     });
   }
 
-  async deleteMessage(messageId: string) {
-    await this.prisma.chatMessage.delete({ where: { id: messageId } });
+  async deleteMessage(messageId: string, userId: string) {
+    const message = await this.prisma.chatMessage.findFirstOrThrow({
+      where: { id: messageId, session: { userId } },
+      select: { id: true },
+    });
+    await this.prisma.chatMessage.delete({ where: { id: message.id } });
     return { id: messageId, deleted: true };
   }
 
@@ -150,7 +162,9 @@ export class ChatSharedService {
     return { totalSessions, totalMessages, favoriteTopics: [] };
   }
 
-  async getClassroomAnalytics(classId: string) {
+  async getClassroomAnalytics(classId: string, userId: string) {
+    await this.accessPolicy.assertClassroomAccess(classId, userId);
+
     const sessions = await this.prisma.chatSession.findMany({
       where: { classId },
       select: { userId: true, _count: { select: { messages: true } } },

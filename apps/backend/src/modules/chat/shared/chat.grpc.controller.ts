@@ -6,7 +6,7 @@ import {
   toObjectResponse,
   toPageResponse,
 } from '@edtech/contracts';
-import { getGrpcUserId } from '../../../common/grpc/metadata.mapper';
+import { getAuthenticatedGrpcUserId } from '../../../common/grpc/metadata.mapper';
 import { runGrpc } from '../../../common/grpc/error-to-rpc-exception';
 import { assertServiceToken } from '../../../common/grpc/service-token';
 import { ChatSharedService } from './chat-shared.service';
@@ -17,19 +17,20 @@ export class ChatGrpcController {
 
   @GrpcContractMethod(GrpcServices.chatSessions, GrpcMethods.chatSessions.createSession)
   createSession(payload: any, metadata: Metadata) {
-    return this.authenticated(metadata, () =>
-      Promise.resolve(
+    return this.authenticated(metadata, async () => {
+      const userId = await getAuthenticatedGrpcUserId(metadata);
+      return Promise.resolve(
         this.chatService.createSession(
           fromProtoStruct(payload.body) as any,
-          getGrpcUserId(metadata),
+          userId,
         ),
-      ).then(toObjectResponse),
-    );
+      ).then(toObjectResponse);
+    });
   }
 
   @GrpcContractMethod(GrpcServices.chatSessions, GrpcMethods.chatSessions.getSessions)
   getSessions(payload: any, metadata: Metadata) {
-    return this.authenticated(metadata, () =>
+    return this.authenticated(metadata, async () =>
       this.chatService.getSessions(
         {
           classId: payload.classId || undefined,
@@ -37,28 +38,31 @@ export class ChatGrpcController {
           limit: payload.limit || undefined,
           search: payload.search || undefined,
         },
-        getGrpcUserId(metadata),
+        await getAuthenticatedGrpcUserId(metadata),
       ).then((page) => toPageResponse(page as any)),
     );
   }
 
   @GrpcContractMethod(GrpcServices.chatSessions, GrpcMethods.chatSessions.getSessionDetail)
   getSessionDetail(payload: any, metadata: Metadata) {
-    return this.authenticated(metadata, () =>
+    return this.authenticated(metadata, async () =>
       Promise.resolve(
-        this.chatService.getSessionDetail(payload.sessionId, getGrpcUserId(metadata)),
+        this.chatService.getSessionDetail(
+          payload.sessionId,
+          await getAuthenticatedGrpcUserId(metadata),
+        ),
       ).then(toObjectResponse),
     );
   }
 
   @GrpcContractMethod(GrpcServices.chatSessions, GrpcMethods.chatSessions.updateSession)
   updateSession(payload: any, metadata: Metadata) {
-    return this.authenticated(metadata, () =>
+    return this.authenticated(metadata, async () =>
       this.chatService
         .updateSession(
           payload.sessionId,
           fromProtoStruct(payload.body) as any,
-          getGrpcUserId(metadata),
+          await getAuthenticatedGrpcUserId(metadata),
         )
         .then(toObjectResponse),
     );
@@ -66,14 +70,17 @@ export class ChatGrpcController {
 
   @GrpcContractMethod(GrpcServices.chatSessions, GrpcMethods.chatSessions.deleteSession)
   deleteSession(payload: any, metadata: Metadata) {
-    return this.authenticated(metadata, () =>
-      this.chatService.deleteSession(payload.sessionId, getGrpcUserId(metadata)),
+    return this.authenticated(metadata, async () =>
+      this.chatService.deleteSession(
+        payload.sessionId,
+        await getAuthenticatedGrpcUserId(metadata),
+      ),
     );
   }
 
   @GrpcContractMethod(GrpcServices.chatMessages, GrpcMethods.chatMessages.getMessages)
   getMessages(payload: any, metadata: Metadata) {
-    return this.authenticated(metadata, () =>
+    return this.authenticated(metadata, async () =>
       this.chatService.getMessages(
         payload.sessionId,
         {
@@ -81,19 +88,19 @@ export class ChatGrpcController {
           limit: payload.limit || undefined,
           before: payload.before || undefined,
         },
-        getGrpcUserId(metadata),
+        await getAuthenticatedGrpcUserId(metadata),
       ).then((page) => toPageResponse(page as any)),
     );
   }
 
   @GrpcContractMethod(GrpcServices.chatMessages, GrpcMethods.chatMessages.createMessage)
   createMessage(payload: any, metadata: Metadata) {
-    return this.authenticated(metadata, () =>
+    return this.authenticated(metadata, async () =>
       this.chatService
         .createMessage(
           payload.sessionId,
           fromProtoStruct(payload.body) as any,
-          getGrpcUserId(metadata),
+          await getAuthenticatedGrpcUserId(metadata),
         )
         .then(toObjectResponse),
     );
@@ -101,32 +108,43 @@ export class ChatGrpcController {
 
   @GrpcContractMethod(GrpcServices.chatMessages, GrpcMethods.chatMessages.getMessageDetail)
   getMessageDetail(payload: any, metadata: Metadata) {
-    return this.authenticated(metadata, () =>
-      Promise.resolve(this.chatService.getMessageDetail(payload.messageId)).then(
-        toObjectResponse,
-      ),
+    return this.authenticated(metadata, async () =>
+      Promise.resolve(
+        this.chatService.getMessageDetail(
+          payload.messageId,
+          await getAuthenticatedGrpcUserId(metadata),
+        ),
+      ).then(toObjectResponse),
     );
   }
 
   @GrpcContractMethod(GrpcServices.chatMessages, GrpcMethods.chatMessages.deleteMessage)
   deleteMessage(payload: any, metadata: Metadata) {
-    return this.authenticated(metadata, () =>
-      this.chatService.deleteMessage(payload.messageId),
+    return this.authenticated(metadata, async () =>
+      this.chatService.deleteMessage(
+        payload.messageId,
+        await getAuthenticatedGrpcUserId(metadata),
+      ),
     );
   }
 
   @GrpcContractMethod(GrpcServices.chatAnalytics, GrpcMethods.chatAnalytics.getMyAnalytics)
   getMyAnalytics(_: any, metadata: Metadata) {
-    return this.authenticated(metadata, () =>
-      this.chatService.getMyAnalytics(getGrpcUserId(metadata)).then(toObjectResponse),
+    return this.authenticated(metadata, async () =>
+      this.chatService
+        .getMyAnalytics(await getAuthenticatedGrpcUserId(metadata))
+        .then(toObjectResponse),
     );
   }
 
   @GrpcContractMethod(GrpcServices.chatAnalytics, GrpcMethods.chatAnalytics.getClassroomAnalytics)
   getClassroomAnalytics(payload: any, metadata: Metadata) {
-    return this.authenticated(metadata, () =>
+    return this.authenticated(metadata, async () =>
       this.chatService
-        .getClassroomAnalytics(payload.classId)
+        .getClassroomAnalytics(
+          payload.classId,
+          await getAuthenticatedGrpcUserId(metadata),
+        )
         .then(toObjectResponse),
     );
   }

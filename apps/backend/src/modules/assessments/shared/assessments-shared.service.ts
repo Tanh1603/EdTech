@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PageDto } from '@edtech/contracts';
+import { AccessPolicyService } from '../../../common/access/access-policy.service';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import {
   ExamStatus,
@@ -18,24 +19,45 @@ import { NotificationsService } from '../../notifications/notifications.service'
 @Injectable()
 export class AssessmentsSharedService {
   constructor(
+    private readonly accessPolicy: AccessPolicyService,
     private readonly prisma: PrismaService,
     private readonly jobsService: JobsService,
     private readonly notificationsService: NotificationsService,
   ) {}
 
   async createExam(payload: CreateExamDto, userId: string) {
+    await this.accessPolicy.assertClassroomAccess(payload.classId, userId);
+
     return this.prisma.exam.create({
       data: { ...payload, createdBy: userId },
       select: { id: true, title: true, status: true },
     });
   }
 
-  async getExams(query: ExamsQueryDto): Promise<PageDto<unknown>> {
+  async getExams(query: ExamsQueryDto, userId: string): Promise<PageDto<unknown>> {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
     const status = this.toExamStatus(query.status);
+    if (query.classId) {
+      await this.accessPolicy.assertClassroomAccess(query.classId, userId);
+    }
+
     const where: Prisma.ExamWhereInput = {
-      ...(query.classId ? { classId: query.classId } : {}),
+      ...(query.classId
+        ? { classId: query.classId }
+        : {
+            OR: [
+              { createdBy: userId },
+              {
+                classroom: {
+                  OR: [
+                    { course: { teacherId: userId } },
+                    { enrollments: { some: { userId } } },
+                  ],
+                },
+              },
+            ],
+          }),
       ...(status ? { status } : {}),
       ...(query.search ? { title: { contains: query.search, mode: 'insensitive' } } : {}),
     };
@@ -51,7 +73,9 @@ export class AssessmentsSharedService {
     return this.toPage(items, page, limit, total);
   }
 
-  async getExamDetail(examId: string) {
+  async getExamDetail(examId: string, userId: string) {
+    await this.accessPolicy.assertExamAccess(examId, userId);
+
     const exam = await this.prisma.exam.findUniqueOrThrow({
       where: { id: examId },
       include: { _count: { select: { questions: true } } },
@@ -60,11 +84,15 @@ export class AssessmentsSharedService {
     return { ...rest, questionsCount: _count.questions };
   }
 
-  updateExam(examId: string, payload: UpdateExamDto) {
+  async updateExam(examId: string, payload: UpdateExamDto, userId: string) {
+    await this.accessPolicy.assertExamAccess(examId, userId);
+
     return this.prisma.exam.update({ where: { id: examId }, data: payload });
   }
 
-  async deleteExam(examId: string) {
+  async deleteExam(examId: string, userId: string) {
+    await this.accessPolicy.assertExamAccess(examId, userId);
+
     await this.prisma.$transaction([
       this.prisma.result.deleteMany({ where: { submission: { examId } } }),
       this.prisma.submission.deleteMany({ where: { examId } }),
@@ -74,7 +102,9 @@ export class AssessmentsSharedService {
     return { id: examId, deleted: true };
   }
 
-  async publishExam(examId: string) {
+  async publishExam(examId: string, userId: string) {
+    await this.accessPolicy.assertExamAccess(examId, userId);
+
     const exam = await this.prisma.exam.update({
       where: { id: examId },
       data: { status: ExamStatus.published },
@@ -89,7 +119,9 @@ export class AssessmentsSharedService {
     return { examId: exam.id, status: exam.status };
   }
 
-  async closeExam(examId: string) {
+  async closeExam(examId: string, userId: string) {
+    await this.accessPolicy.assertExamAccess(examId, userId);
+
     const exam = await this.prisma.exam.update({
       where: { id: examId },
       data: { status: ExamStatus.archived },
@@ -104,7 +136,9 @@ export class AssessmentsSharedService {
     return { examId: exam.id, status: 'closed' };
   }
 
-  createQuestion(examId: string, payload: CreateQuestionDto) {
+  async createQuestion(examId: string, payload: CreateQuestionDto, userId: string) {
+    await this.accessPolicy.assertExamAccess(examId, userId);
+
     return this.prisma.question.create({
       data: {
         examId,
@@ -119,15 +153,21 @@ export class AssessmentsSharedService {
     });
   }
 
-  getExamQuestions(examId: string) {
+  async getExamQuestions(examId: string, userId: string) {
+    await this.accessPolicy.assertExamAccess(examId, userId);
+
     return this.prisma.question.findMany({ where: { examId }, orderBy: { orderNo: 'asc' } });
   }
 
-  getQuestionDetail(questionId: string) {
+  async getQuestionDetail(questionId: string, userId: string) {
+    await this.assertQuestionExamAccess(questionId, userId);
+
     return this.prisma.question.findUniqueOrThrow({ where: { id: questionId } });
   }
 
-  updateQuestion(questionId: string, payload: UpdateQuestionDto) {
+  async updateQuestion(questionId: string, payload: UpdateQuestionDto, userId: string) {
+    await this.assertQuestionExamAccess(questionId, userId);
+
     return this.prisma.question.update({
       where: { id: questionId },
       data: {
@@ -140,12 +180,19 @@ export class AssessmentsSharedService {
     });
   }
 
-  async deleteQuestion(questionId: string) {
+  async deleteQuestion(questionId: string, userId: string) {
+    await this.assertQuestionExamAccess(questionId, userId);
+
     await this.prisma.question.delete({ where: { id: questionId } });
     return { id: questionId, deleted: true };
   }
 
-  async reorderQuestions(payload: ReorderQuestionsDto) {
+  async reorderQuestions(payload: ReorderQuestionsDto, userId: string) {
+    const firstQuestionId = payload.items[0]?.questionId;
+    if (firstQuestionId) {
+      await this.assertQuestionExamAccess(firstQuestionId, userId);
+    }
+
     const items = await this.prisma.$transaction(
       payload.items.map((item) =>
         this.prisma.question.update({
@@ -158,6 +205,8 @@ export class AssessmentsSharedService {
   }
 
   async startExam(examId: string, userId: string) {
+    await this.accessPolicy.assertExamAccess(examId, userId);
+
     const submission = await this.prisma.submission.upsert({
       where: { examId_studentId: { examId, studentId: userId } },
       create: { examId, studentId: userId },
@@ -170,21 +219,27 @@ export class AssessmentsSharedService {
     };
   }
 
-  getSubmissionDetail(submissionId: string) {
+  async getSubmissionDetail(submissionId: string, userId: string) {
+    await this.accessPolicy.assertSubmissionAccess(submissionId, userId);
+
     return this.prisma.submission.findUniqueOrThrow({
       where: { id: submissionId },
       include: { result: true, exam: true },
     });
   }
 
-  autosaveAnswers(submissionId: string, payload: AnswersDto) {
+  async autosaveAnswers(submissionId: string, payload: AnswersDto, userId: string) {
+    await this.accessPolicy.assertSubmissionOwner(submissionId, userId);
+
     return this.prisma.submission.update({
       where: { id: submissionId },
       data: { answers: payload.answers as Prisma.InputJsonValue },
     });
   }
 
-  async submitSubmission(submissionId: string) {
+  async submitSubmission(submissionId: string, userId: string) {
+    await this.accessPolicy.assertSubmissionOwner(submissionId, userId);
+
     const submission = await this.prisma.submission.update({
       where: { id: submissionId },
       data: { status: SubmissionStatus.submitted, submittedAt: new Date() },
@@ -226,11 +281,15 @@ export class AssessmentsSharedService {
     };
   }
 
-  getResult(submissionId: string) {
+  async getResult(submissionId: string, userId: string) {
+    await this.accessPolicy.assertSubmissionAccess(submissionId, userId);
+
     return this.prisma.result.findUniqueOrThrow({ where: { submissionId } });
   }
 
-  async manualGrade(submissionId: string, payload: ManualGradeDto) {
+  async manualGrade(submissionId: string, payload: ManualGradeDto, userId: string) {
+    await this.accessPolicy.assertSubmissionAccess(submissionId, userId);
+
     const result = await this.prisma.result.upsert({
       where: { submissionId },
       create: {
@@ -262,7 +321,9 @@ export class AssessmentsSharedService {
     return result;
   }
 
-  async getExamAnalytics(examId: string) {
+  async getExamAnalytics(examId: string, userId: string) {
+    await this.accessPolicy.assertExamAccess(examId, userId);
+
     const aggregate = await this.prisma.result.aggregate({
       where: { submission: { examId } },
       _avg: { score: true },
@@ -278,7 +339,9 @@ export class AssessmentsSharedService {
     };
   }
 
-  async getQuestionAnalytics(examId: string) {
+  async getQuestionAnalytics(examId: string, userId: string) {
+    await this.accessPolicy.assertExamAccess(examId, userId);
+
     const questions = await this.prisma.question.findMany({
       where: { examId },
       orderBy: { orderNo: 'asc' },
@@ -292,7 +355,22 @@ export class AssessmentsSharedService {
     };
   }
 
-  async getStudentAnalytics(studentId: string) {
+  async getStudentAnalytics(studentId: string, userId: string) {
+    if (studentId !== userId) {
+      await this.prisma.enrollment.findFirstOrThrow({
+        where: {
+          userId: studentId,
+          classroom: {
+            OR: [
+              { course: { teacherId: userId } },
+              { enrollments: { some: { userId } } },
+            ],
+          },
+        },
+        select: { id: true },
+      });
+    }
+
     const aggregate = await this.prisma.result.aggregate({
       where: { submission: { studentId } },
       _avg: { score: true },
@@ -310,6 +388,14 @@ export class AssessmentsSharedService {
     if (status === 'closed') return ExamStatus.archived;
     if (status in ExamStatus) return status as ExamStatus;
     return undefined;
+  }
+
+  private async assertQuestionExamAccess(questionId: string, userId: string) {
+    const question = await this.prisma.question.findUniqueOrThrow({
+      where: { id: questionId },
+      select: { examId: true },
+    });
+    await this.accessPolicy.assertExamAccess(question.examId, userId);
   }
 
   private toQuestionType(type: string): QuestionType {

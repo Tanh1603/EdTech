@@ -20,7 +20,10 @@ export class ChatAnalyticsController {
   @Get('classrooms/:classId')
   @ApiOperation({ summary: 'Get classroom AI usage analytics' })
   @ApiParam({ name: 'classId', format: 'uuid' })
-  getClassroomAnalytics(@Param('classId', ParseUUIDPipe) classId: string) {
-    return this.chatService.getClassroomAnalytics(classId);
+  getClassroomAnalytics(
+    @Param('classId', ParseUUIDPipe) classId: string,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
+    return this.chatService.getClassroomAnalytics(classId, user.id);
   }
 }

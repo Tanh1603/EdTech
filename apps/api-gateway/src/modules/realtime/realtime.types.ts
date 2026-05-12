@@ -2,6 +2,9 @@ import { Socket } from 'socket.io';
 
 export interface RealtimeSocketData {
   userId: string;
+  authorization: string;
+  requestId: string;
+  correlationId: string;
 }
 
 export type AuthenticatedRealtimeSocket = Socket & {
@@ -20,4 +23,3 @@ export interface RealtimePublishContext {
   requestId?: string;
   correlationId?: string;
 }
-

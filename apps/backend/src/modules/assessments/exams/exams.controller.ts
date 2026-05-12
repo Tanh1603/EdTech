@@ -28,16 +28,19 @@ export class ExamsController {
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'search', required: false, type: String })
   @ApiOkResponse({ description: 'Exams returned successfully' })
-  getExams(@Query() query: ExamsQueryDto) {
-    return this.assessmentsService.getExams(query);
+  getExams(@Query() query: ExamsQueryDto, @CurrentUser() user: CurrentUserPayload) {
+    return this.assessmentsService.getExams(query, user.id);
   }
 
   @Get(':examId')
   @ApiOperation({ summary: 'Get exam detail' })
   @ApiParam({ name: 'examId', format: 'uuid' })
   @ApiOkResponse({ description: 'Exam detail returned successfully' })
-  getExamDetail(@Param('examId', ParseUUIDPipe) examId: string) {
-    return this.assessmentsService.getExamDetail(examId);
+  getExamDetail(
+    @Param('examId', ParseUUIDPipe) examId: string,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
+    return this.assessmentsService.getExamDetail(examId, user.id);
   }
 
   @Patch(':examId')
@@ -45,31 +48,44 @@ export class ExamsController {
   @ApiParam({ name: 'examId', format: 'uuid' })
   @ApiBody({ type: UpdateExamDto })
   @ApiOkResponse({ description: 'Exam updated successfully' })
-  updateExam(@Param('examId', ParseUUIDPipe) examId: string, @Body() body: UpdateExamDto) {
-    return this.assessmentsService.updateExam(examId, body);
+  updateExam(
+    @Param('examId', ParseUUIDPipe) examId: string,
+    @Body() body: UpdateExamDto,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
+    return this.assessmentsService.updateExam(examId, body, user.id);
   }
 
   @Delete(':examId')
   @ApiOperation({ summary: 'Delete exam' })
   @ApiParam({ name: 'examId', format: 'uuid' })
   @ApiOkResponse({ description: 'Exam deleted successfully' })
-  deleteExam(@Param('examId', ParseUUIDPipe) examId: string) {
-    return this.assessmentsService.deleteExam(examId);
+  deleteExam(
+    @Param('examId', ParseUUIDPipe) examId: string,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
+    return this.assessmentsService.deleteExam(examId, user.id);
   }
 
   @Post(':examId/publish')
   @ApiOperation({ summary: 'Publish exam' })
   @ApiParam({ name: 'examId', format: 'uuid' })
   @ApiOkResponse({ description: 'Exam published successfully' })
-  publishExam(@Param('examId', ParseUUIDPipe) examId: string) {
-    return this.assessmentsService.publishExam(examId);
+  publishExam(
+    @Param('examId', ParseUUIDPipe) examId: string,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
+    return this.assessmentsService.publishExam(examId, user.id);
   }
 
   @Post(':examId/close')
   @ApiOperation({ summary: 'Close exam' })
   @ApiParam({ name: 'examId', format: 'uuid' })
   @ApiOkResponse({ description: 'Exam closed successfully' })
-  closeExam(@Param('examId', ParseUUIDPipe) examId: string) {
-    return this.assessmentsService.closeExam(examId);
+  closeExam(
+    @Param('examId', ParseUUIDPipe) examId: string,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
+    return this.assessmentsService.closeExam(examId, user.id);
   }
 }

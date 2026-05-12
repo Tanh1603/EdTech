@@ -6,7 +6,10 @@ export function assertServiceToken(metadata?: Metadata): void {
   const expected = process.env.SERVICE_TOKEN;
 
   if (!expected) {
-    return;
+    throw new RpcException({
+      code: status.UNAUTHENTICATED,
+      message: 'Missing service token configuration',
+    });
   }
 
   const received = metadata?.get('x-service-token')?.[0];

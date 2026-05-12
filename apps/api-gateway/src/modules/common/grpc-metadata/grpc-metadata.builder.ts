@@ -2,14 +2,18 @@ import { Metadata } from '@grpc/grpc-js';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { RequestWithContext } from '../types/request-with-context';
+import { RequestContext } from '../types/request-with-context';
 
 @Injectable()
 export class GrpcMetadataBuilder {
   constructor(private readonly configService: ConfigService) {}
 
   build(req: RequestWithContext): Metadata {
+    return this.buildFromContext(req.context);
+  }
+
+  buildFromContext(context: RequestContext | undefined): Metadata {
     const metadata = new Metadata();
-    const context = req.context;
     const serviceToken = this.configService.get<string>('SERVICE_TOKEN');
 
     if (context?.authorization) metadata.set('authorization', context.authorization);

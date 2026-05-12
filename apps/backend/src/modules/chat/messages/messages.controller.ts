@@ -41,14 +41,20 @@ export class MessagesController {
   @ApiOperation({ summary: 'Get message detail' })
   @ApiParam({ name: 'messageId', format: 'uuid' })
   @ApiOkResponse({ description: 'Message detail returned successfully' })
-  getMessageDetail(@Param('messageId', ParseUUIDPipe) messageId: string) {
-    return this.chatService.getMessageDetail(messageId);
+  getMessageDetail(
+    @Param('messageId', ParseUUIDPipe) messageId: string,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
+    return this.chatService.getMessageDetail(messageId, user.id);
   }
 
   @Delete('messages/:messageId')
   @ApiOperation({ summary: 'Delete message' })
   @ApiParam({ name: 'messageId', format: 'uuid' })
-  deleteMessage(@Param('messageId', ParseUUIDPipe) messageId: string) {
-    return this.chatService.deleteMessage(messageId);
+  deleteMessage(
+    @Param('messageId', ParseUUIDPipe) messageId: string,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
+    return this.chatService.deleteMessage(messageId, user.id);
   }
 }

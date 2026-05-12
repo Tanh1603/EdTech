@@ -8,6 +8,7 @@ import {
 } from '@edtech/contracts';
 import { interval, merge, Observable, Subject } from 'rxjs';
 import { finalize, map } from 'rxjs/operators';
+import { NotificationSseHeartbeatIntervalMs } from '../realtime/realtime.constants';
 
 interface NotificationStreamState {
   subject: Subject<MessageEvent>;
@@ -28,7 +29,7 @@ export class NotificationStreamService {
     const state = this.getOrCreateState(userId);
     state.subscribers += 1;
 
-    const heartbeat$ = interval(30_000).pipe(
+    const heartbeat$ = interval(NotificationSseHeartbeatIntervalMs).pipe(
       map(() =>
         this.toMessageEvent(NotificationRealtimeEvents.heartbeat, {
           now: new Date().toISOString(),
@@ -114,4 +115,3 @@ export class NotificationStreamService {
     };
   }
 }
-

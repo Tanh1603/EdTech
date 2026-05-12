@@ -2,6 +2,7 @@ import { Metadata } from '@grpc/grpc-js';
 import { Controller } from '@nestjs/common';
 import { GrpcContractMethod, GrpcMethods, GrpcServices } from '@edtech/contracts';
 import { toIsoString } from '@edtech/contracts';
+import { getAuthenticatedGrpcUserId } from '../../../common/grpc/metadata.mapper';
 import { runGrpc } from '../../../common/grpc/error-to-rpc-exception';
 import { toGrpcPage } from '@edtech/contracts';
 import { assertServiceToken } from '../../../common/grpc/service-token';
@@ -45,7 +46,10 @@ export class ClassroomsGrpcController {
     assertServiceToken(metadata);
     return runGrpc(async () =>
       this.toClassroomDetail(
-        await this.classroomsService.getClassroomDetail(payload.classroomId),
+        await this.classroomsService.getClassroomDetail(
+          payload.classroomId,
+          await getAuthenticatedGrpcUserId(metadata),
+        ),
       ),
     );
   }

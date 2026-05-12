@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import Joi from 'joi';
 import { AcademicGatewayModule } from '../academic/academic-gateway.module';
+import { GatewayAuthModule } from '../auth/gateway-auth.module';
 import { AssessmentsGatewayModule } from '../assessments/assessments-gateway.module';
 import { GatewayAuthGuard } from '../auth/gateway-auth.guard';
 import { ChatGatewayModule } from '../chat/chat-gateway.module';
@@ -31,6 +32,7 @@ import { UsersGatewayModule } from '../users/users-gateway.module';
       }),
       isGlobal: true,
     }),
+    GatewayAuthModule,
     AcademicGatewayModule,
     AssessmentsGatewayModule,
     ChatGatewayModule,

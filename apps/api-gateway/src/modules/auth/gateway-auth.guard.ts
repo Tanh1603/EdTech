@@ -1,4 +1,3 @@
-import { verifyToken } from '@clerk/backend';
 import {
   CanActivate,
   ExecutionContext,
@@ -6,14 +5,14 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { RequestWithContext } from '../common/types/request-with-context';
+import { GatewayIdentityService } from './gateway-identity.service';
 
 @Injectable()
 export class GatewayAuthGuard implements CanActivate {
   private readonly logger = new Logger(GatewayAuthGuard.name);
 
-  constructor(private readonly configService: ConfigService) {}
+  constructor(private readonly identityService: GatewayIdentityService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     if (context.getType() === 'ws') {
@@ -22,10 +21,9 @@ export class GatewayAuthGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest<RequestWithContext>();
     const authorization = request.headers.authorization;
-    const token = authorization?.split(' ').pop();
     const requestId = request.requestId ?? 'unknown';
 
-    if (!token) {
+    if (!authorization) {
       this.logger.warn(
         `[${requestId}] auth.reject reason=missing_token route=${request.method} ${request.originalUrl}`,
       );
@@ -33,20 +31,18 @@ export class GatewayAuthGuard implements CanActivate {
     }
 
     try {
-      const payload = await verifyToken(token, {
-        secretKey: this.configService.getOrThrow<string>('CLERK_SECRET_KEY'),
-      });
+      const identity = await this.identityService.verifyBearerAuthorization(authorization);
 
-      request.user = { id: payload.sub };
+      request.user = { id: identity.userId };
       request.context = {
         requestId: request.requestId ?? 'unknown',
         correlationId: request.correlationId ?? request.requestId ?? 'unknown',
-        userId: payload.sub,
-        authorization,
+        userId: identity.userId,
+        authorization: identity.authorization,
       };
 
       this.logger.log(
-        `[${requestId}] auth.ok user=${payload.sub} route=${request.method} ${request.originalUrl}`,
+        `[${requestId}] auth.ok user=${identity.userId} route=${request.method} ${request.originalUrl}`,
       );
 
       return true;

@@ -27,6 +27,8 @@ import { ClassInvitesDto } from '@edtech/contracts';
 import { ClassroomQueryDto } from '@edtech/contracts';
 import { CreateClassroomDto } from '@edtech/contracts';
 import { UpdateClassroomDto } from '@edtech/contracts';
+import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import { CurrentUser as CurrentUserPayload } from '../../../common/types/current-user.type';
 
 @ApiTags('Academic - Classrooms')
 @ApiBearerAuth()
@@ -50,8 +52,9 @@ export class ClassroomsController {
   @ApiOkResponse({ description: 'Classroom detail returned successfully' })
   getClassroomDetail(
     @Param('classroomId', ParseUUIDPipe) classroomId: string,
+    @CurrentUser() user: CurrentUserPayload,
   ) {
-    return this.classroomsService.getClassroomDetail(classroomId);
+    return this.classroomsService.getClassroomDetail(classroomId, user.id);
   }
 
   @Patch('classes/:classroomId')

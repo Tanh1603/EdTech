@@ -1,5 +1,6 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { PageDto } from '@edtech/contracts';
+import { AccessPolicyService } from '../../../common/access/access-policy.service';
 import { AppHttpException } from '../../../common/errors/app-http.exception';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import { Prisma } from '../../../generated/prisma/client';
@@ -13,6 +14,7 @@ import { JobsService } from '../../jobs/jobs.service';
 @Injectable()
 export class ClassroomsService {
   constructor(
+    private readonly accessPolicy: AccessPolicyService,
     private readonly prisma: PrismaService,
     private readonly jobsService: JobsService,
   ) {}
@@ -54,7 +56,11 @@ export class ClassroomsService {
     return this.toClassroomResponse(classroom);
   }
 
-  async getClassroomDetail(classroomId: string) {
+  async getClassroomDetail(classroomId: string, userId?: string) {
+    if (userId) {
+      await this.accessPolicy.assertClassroomAccess(classroomId, userId);
+    }
+
     const classroom = await this.prisma.classroom.findUniqueOrThrow({
       where: { id: classroomId },
       include: {

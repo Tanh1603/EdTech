@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>EdTech Realtime Test</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+      }
+
+      body {
+        margin: 0;
+        background: #f6f7f9;
+        color: #17202a;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+
+      h1 {
+        margin: 0 0 18px;
+        font-size: 24px;
+        line-height: 1.2;
+      }
+
+      section {
+        background: #ffffff;
+        border: 1px solid #d9dee7;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        padding: 16px;
+      }
+
+      label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+
+      input,
+      textarea,
+      select {
+        box-sizing: border-box;
+        width: 100%;
+        border: 1px solid #c9d1dd;
+        border-radius: 6px;
+        padding: 9px 10px;
+        font: inherit;
+        background: #ffffff;
+      }
+
+      textarea {
+        min-height: 72px;
+        resize: vertical;
+      }
+
+      button {
+        border: 1px solid #1c5db8;
+        border-radius: 6px;
+        background: #1f6fd1;
+        color: #ffffff;
+        padding: 9px 12px;
+        font: inherit;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: #ffffff;
+        color: #1f3553;
+        border-color: #b7c1cf;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 12px;
+      }
+
+      .buttons {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .status {
+        font-size: 13px;
+        color: #526173;
+      }
+
+      pre {
+        min-height: 240px;
+        max-height: 520px;
+        overflow: auto;
+        background: #101820;
+        color: #d6f5ff;
+        border-radius: 8px;
+        padding: 14px;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>EdTech Realtime Test</h1>
+
+      <section>
+        <div class="grid">
+          <div>
+            <label for="apiBase">API base URL</label>
+            <input id="apiBase" placeholder="Same origin by default" />
+          </div>
+          <div>
+            <label for="token">Clerk JWT</label>
+            <textarea id="token" placeholder="Paste a Clerk JWT"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Connections</h2>
+        <div class="buttons">
+          <button id="wsConnect">Connect WebSocket</button>
+          <button id="wsDisconnect" class="secondary">Disconnect WebSocket</button>
+          <span id="wsStatus" class="status">WebSocket disconnected</span>
+        </div>
+        <div class="buttons" style="margin-top: 10px">
+          <button id="sseConnect">Connect Notification SSE</button>
+          <button id="sseDisconnect" class="secondary">Disconnect SSE</button>
+          <span id="sseStatus" class="status">SSE disconnected</span>
+        </div>
+      </section>
+
+      <section>
+        <h2>Room Subscriptions</h2>
+        <div class="grid">
+          <div>
+            <label for="chatSessionId">Chat session ID</label>
+            <input id="chatSessionId" placeholder="uuid" />
+            <button data-subscribe="subscribe.chatSession" data-field="chatSessionId">Subscribe</button>
+          </div>
+          <div>
+            <label for="classId">Class ID</label>
+            <input id="classId" placeholder="uuid" />
+            <button data-subscribe="subscribe.class" data-field="classId">Subscribe</button>
+          </div>
+          <div>
+            <label for="examId">Exam ID</label>
+            <input id="examId" placeholder="uuid" />
+            <button data-subscribe="subscribe.exam" data-field="examId">Subscribe</button>
+          </div>
+          <div>
+            <label for="submissionId">Submission ID</label>
+            <input id="submissionId" placeholder="uuid" />
+            <button data-subscribe="subscribe.submission" data-field="submissionId">Subscribe</button>
+          </div>
+          <div>
+            <label for="aiJobId">AI job ID</label>
+            <input id="aiJobId" placeholder="uuid" />
+            <button data-subscribe="subscribe.aiJob" data-field="aiJobId">Subscribe</button>
+          </div>
+          <div>
+            <label for="aiChatSessionId">AI chat session ID</label>
+            <input id="aiChatSessionId" placeholder="uuid" />
+            <button data-subscribe="subscribe.aiChat" data-field="aiChatSessionId">Subscribe</button>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>REST Actions</h2>
+        <div class="grid">
+          <div>
+            <label for="chatSessionBody">Chat session JSON</label>
+            <textarea id="chatSessionBody">{"title":"Realtime Test Session"}</textarea>
+            <button id="createSession">Create chat session</button>
+          </div>
+          <div>
+            <label for="chatMessageBody">Chat message JSON</label>
+            <textarea id="chatMessageBody">{"role":"user","content":"Hello realtime"}</textarea>
+            <button id="createMessage">Create chat message</button>
+          </div>
+          <div>
+            <label for="autosaveBody">Autosave answers JSON</label>
+            <textarea id="autosaveBody">{"answers":[]}</textarea>
+            <button id="autosaveSubmission">Autosave submission</button>
+            <button id="submitSubmission" class="secondary">Submit submission</button>
+          </div>
+          <div>
+            <label>Exam actions</label>
+            <div class="buttons">
+              <button id="publishExam">Publish exam</button>
+              <button id="closeExam" class="secondary">Close exam</button>
+            </div>
+          </div>
+          <div>
+            <label for="notificationBody">Notification JSON</label>
+            <textarea id="notificationBody">{"title":"Realtime notice","body":"Created from test client","audience":{"type":"user_ids","values":["USER_ID"]}}</textarea>
+            <button id="createNotification">Create notification</button>
+          </div>
+          <div>
+            <label for="notificationId">Notification ID</label>
+            <input id="notificationId" placeholder="uuid" />
+            <button id="markNotificationRead">Mark notification read</button>
+            <button id="markAllRead" class="secondary">Mark all read</button>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Event Log</h2>
+        <div class="buttons">
+          <button id="clearLog" class="secondary">Clear</button>
+        </div>
+        <pre id="log"></pre>
+      </section>
+    </main>
+
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="./realtime-test.js"></script>
+  </body>
+</html>

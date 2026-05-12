@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { GrpcClientsModule } from '../grpc-clients/grpc-clients.module';
+import { RealtimeModule } from '../realtime/realtime.module';
 import {
   ChatAnalyticsGatewayController,
   ChatMessagesGatewayController,
@@ -7,7 +8,7 @@ import {
 } from './chat.gateway.controller';
 
 @Module({
-  imports: [GrpcClientsModule],
+  imports: [GrpcClientsModule, RealtimeModule],
   controllers: [
     ChatSessionsGatewayController,
     ChatMessagesGatewayController,

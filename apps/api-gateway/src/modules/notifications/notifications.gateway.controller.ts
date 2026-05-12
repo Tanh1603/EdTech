@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  MessageEvent,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  Sse,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -9,14 +20,18 @@ import {
 } from '@nestjs/swagger';
 import {
   CreateNotificationDto,
+  NotificationAudienceTypes,
   NotificationQueryDto,
+  NotificationRealtimeEvents,
   unwrapObjectResponse,
   unwrapPageResponse,
 } from '@edtech/contracts';
 import { lastValueFrom } from 'rxjs';
+import { Observable } from 'rxjs';
 import { GrpcMetadataBuilder } from '../common/grpc-metadata/grpc-metadata.builder';
 import { RequestWithContext } from '../common/types/request-with-context';
 import { BeCoreGrpcClientService } from '../grpc-clients/be-core-grpc-client.service';
+import { NotificationStreamService } from './notification-stream.service';
 
 @ApiTags('Notifications')
 @ApiBearerAuth()
@@ -25,7 +40,14 @@ export class NotificationsGatewayController {
   constructor(
     private readonly grpc: BeCoreGrpcClientService,
     private readonly metadata: GrpcMetadataBuilder,
+    private readonly notificationStreamService: NotificationStreamService,
   ) {}
+
+  @Sse('stream')
+  @ApiOperation({ summary: 'Stream current user notification events' })
+  streamNotifications(@Req() req: RequestWithContext): Observable<MessageEvent> {
+    return this.notificationStreamService.stream(this.getUserId(req));
+  }
 
   @Post()
   @ApiOperation({ summary: 'Create/send notification' })
@@ -34,7 +56,7 @@ export class NotificationsGatewayController {
     @Body() body: CreateNotificationDto,
     @Req() req: RequestWithContext,
   ) {
-    return unwrapObjectResponse(
+    const result = unwrapObjectResponse(
       await lastValueFrom(
         this.grpc.notifications.createNotification(
           {
@@ -49,6 +71,19 @@ export class NotificationsGatewayController {
         ),
       ),
     );
+
+    if (body.audience.type === NotificationAudienceTypes.userIds) {
+      for (const userId of body.audience.values) {
+        this.notificationStreamService.publishToUser(
+          userId,
+          NotificationRealtimeEvents.notificationCreated,
+          result,
+          this.getPublishContext(req),
+        );
+      }
+    }
+
+    return result;
   }
 
   @Get()
@@ -88,7 +123,7 @@ export class NotificationsGatewayController {
   @Patch('read-all')
   @ApiOperation({ summary: 'Mark all notifications as read' })
   async markAllRead(@Req() req: RequestWithContext) {
-    return unwrapObjectResponse(
+    const result = unwrapObjectResponse(
       await lastValueFrom(
         this.grpc.notifications.markAllNotificationsRead(
           {},
@@ -96,6 +131,22 @@ export class NotificationsGatewayController {
         ),
       ),
     );
+
+    const userId = this.getUserId(req);
+    this.notificationStreamService.publishToUser(
+      userId,
+      NotificationRealtimeEvents.notificationReadAll,
+      result,
+      this.getPublishContext(req),
+    );
+    this.notificationStreamService.publishToUser(
+      userId,
+      NotificationRealtimeEvents.unreadCountUpdated,
+      { count: 0 },
+      this.getPublishContext(req),
+    );
+
+    return result;
   }
 
   @Patch(':notificationId/read')
@@ -105,7 +156,7 @@ export class NotificationsGatewayController {
     @Param('notificationId') notificationId: string,
     @Req() req: RequestWithContext,
   ) {
-    return unwrapObjectResponse(
+    const result = unwrapObjectResponse(
       await lastValueFrom(
         this.grpc.notifications.markNotificationRead(
           { notificationId },
@@ -113,6 +164,46 @@ export class NotificationsGatewayController {
         ),
       ),
     );
+
+    const userId = this.getUserId(req);
+    this.notificationStreamService.publishToUser(
+      userId,
+      NotificationRealtimeEvents.notificationRead,
+      result,
+      this.getPublishContext(req),
+    );
+    this.notificationStreamService.publishToUser(
+      userId,
+      NotificationRealtimeEvents.unreadCountUpdated,
+      await this.getUnreadCountPayload(req),
+      this.getPublishContext(req),
+    );
+
+    return result;
+  }
+
+  private async getUnreadCountPayload(req: RequestWithContext) {
+    const result = unwrapObjectResponse(
+      await lastValueFrom(
+        this.grpc.notifications.getUnreadCount({}, this.metadata.build(req)),
+      ),
+    ) as { count?: number };
+    return { count: result.count ?? 0 };
+  }
+
+  private getUserId(req: RequestWithContext): string {
+    const userId = req.context?.userId;
+    if (!userId) {
+      throw new Error('Missing authenticated user context');
+    }
+    return userId;
+  }
+
+  private getPublishContext(req: RequestWithContext) {
+    return {
+      requestId: req.context?.requestId,
+      correlationId: req.context?.correlationId,
+    };
   }
 }
 

@@ -39,6 +39,10 @@ export class GatewayErrorFilter implements ExceptionFilter {
       this.logger.error(exception);
     }
 
+    this.logger.warn(
+      `[${req.requestId ?? 'unknown'}] error status=${statusCode} code=${code} route=${req.method} ${req.originalUrl} message=${message}`,
+    );
+
     res.status(statusCode).json({
       success: false,
       data: null,

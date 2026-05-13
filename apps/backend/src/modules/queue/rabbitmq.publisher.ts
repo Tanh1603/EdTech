@@ -108,7 +108,6 @@ export class RabbitMqPublisher implements OnModuleDestroy {
     let amqp: { connect: (url: string) => Promise<AmqpConnection> };
     try {
       // amqplib is an optional runtime dependency for local development.
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       amqp = require('amqplib');
     } catch {
       this.logger.warn('RABBITMQ_URL is set but amqplib is not installed; RabbitMQ publishing is disabled.');

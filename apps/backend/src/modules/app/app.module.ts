@@ -3,6 +3,8 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import Joi from 'joi';
 import { GlobalExceptionFilter } from '../../common/filters/global-exception.filter';
+import { GrpcServiceAuthGuard } from '../../common/guards/grpc-service-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
 import { ResponseEnvelopeInterceptor } from '../../common/interceptors/response-envelope.interceptor';
 import { RequestIdMiddleware } from '../../common/middlewares/request-id.middleware';
 import { RequestLoggingMiddleware } from '../../common/middlewares/request-logging.middleware';
@@ -65,6 +67,14 @@ import { UsersModule } from '../users/users.module';
     {
       provide: APP_GUARD,
       useClass: ClerkAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: GrpcServiceAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
     },
     ClerkClientProvider,
   ],

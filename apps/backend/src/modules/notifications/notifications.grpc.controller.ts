@@ -1,5 +1,5 @@
 import { Metadata } from '@grpc/grpc-js';
-import { Controller } from '@nestjs/common';
+import { Controller, UseGuards } from '@nestjs/common';
 import {
   GrpcContractMethod,
   GrpcMethods,
@@ -7,18 +7,19 @@ import {
   toObjectResponse,
   toPageResponse,
 } from '@edtech/contracts';
+import { GrpcUserAuthGuard } from '../../common/guards/grpc-user-auth.guard';
 import { runGrpc } from '../../common/grpc/error-to-rpc-exception';
 import { getGrpcUserId } from '../../common/grpc/metadata.mapper';
-import { assertServiceToken } from '../../common/grpc/service-token';
 import { NotificationsService } from './notifications.service';
 
 @Controller()
+@UseGuards(GrpcUserAuthGuard)
 export class NotificationsGrpcController {
   constructor(private readonly notificationsService: NotificationsService) {}
 
   @GrpcContractMethod(GrpcServices.notifications, GrpcMethods.notifications.createNotification)
   createNotification(payload: any, metadata: Metadata) {
-    return this.authenticated(metadata, () =>
+    return runGrpc(() =>
       this.notificationsService
         .createNotification(
           {
@@ -39,7 +40,7 @@ export class NotificationsGrpcController {
 
   @GrpcContractMethod(GrpcServices.notifications, GrpcMethods.notifications.listMyNotifications)
   listMyNotifications(payload: any, metadata: Metadata) {
-    return this.authenticated(metadata, () =>
+    return runGrpc(() =>
       this.notificationsService
         .listMyNotifications(getGrpcUserId(metadata), {
           page: payload.page || undefined,
@@ -53,7 +54,7 @@ export class NotificationsGrpcController {
 
   @GrpcContractMethod(GrpcServices.notifications, GrpcMethods.notifications.getUnreadCount)
   getUnreadCount(_payload: any, metadata: Metadata) {
-    return this.authenticated(metadata, () =>
+    return runGrpc(() =>
       this.notificationsService
         .getUnreadCount(getGrpcUserId(metadata))
         .then(toObjectResponse),
@@ -62,7 +63,7 @@ export class NotificationsGrpcController {
 
   @GrpcContractMethod(GrpcServices.notifications, GrpcMethods.notifications.markNotificationRead)
   markNotificationRead(payload: any, metadata: Metadata) {
-    return this.authenticated(metadata, () =>
+    return runGrpc(() =>
       this.notificationsService
         .markRead(getGrpcUserId(metadata), payload.notificationId)
         .then(toObjectResponse),
@@ -71,16 +72,10 @@ export class NotificationsGrpcController {
 
   @GrpcContractMethod(GrpcServices.notifications, GrpcMethods.notifications.markAllNotificationsRead)
   markAllNotificationsRead(_payload: any, metadata: Metadata) {
-    return this.authenticated(metadata, () =>
+    return runGrpc(() =>
       this.notificationsService
         .markAllRead(getGrpcUserId(metadata))
         .then(toObjectResponse),
     );
   }
-
-  private authenticated<T>(metadata: Metadata, callback: () => Promise<T>) {
-    assertServiceToken(metadata);
-    return runGrpc(callback);
-  }
 }
-

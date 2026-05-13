@@ -1,9 +1,28 @@
 import { verifyToken } from '@clerk/backend';
 import { status } from '@grpc/grpc-js';
 import { Metadata } from '@grpc/grpc-js';
+import { UserRole } from '@edtech/contracts';
 import { RpcException } from '@nestjs/microservices';
+import {
+  extractUserRolesFromClaims,
+  normalizeUserRoles,
+} from '../auth/roles.util';
+import { getStoredGrpcIdentity } from './grpc-identity.store';
+
+export interface GrpcIdentity {
+  userId: string;
+  roles: UserRole[];
+}
 
 export function getGrpcUserId(metadata: Metadata): string {
+  return getGrpcIdentity(metadata).userId;
+}
+
+export function getGrpcIdentity(metadata: Metadata): GrpcIdentity {
+  return getStoredGrpcIdentity(metadata);
+}
+
+export function getGrpcMetadataUserId(metadata: Metadata): string {
   const userId = metadata.get('x-user-id')[0];
 
   if (typeof userId === 'string' && userId.length > 0) {
@@ -16,10 +35,10 @@ export function getGrpcUserId(metadata: Metadata): string {
   });
 }
 
-export async function getAuthenticatedGrpcUserId(
+export async function verifyAuthenticatedGrpcIdentity(
   metadata: Metadata,
-): Promise<string> {
-  const userId = getGrpcUserId(metadata);
+): Promise<GrpcIdentity> {
+  const userId = getGrpcMetadataUserId(metadata);
   const authorization = metadata.get('authorization')[0];
 
   if (typeof authorization !== 'string' || authorization.length === 0) {
@@ -53,5 +72,23 @@ export async function getAuthenticatedGrpcUserId(
     });
   }
 
-  return userId;
+  const tokenRoles = extractUserRolesFromClaims(payload);
+  const headerRoles = normalizeUserRoles(metadata.get('x-user-roles')[0]);
+  if (headerRoles.length > 0 && !sameRoles(tokenRoles, headerRoles)) {
+    throw new RpcException({
+      code: status.UNAUTHENTICATED,
+      message: 'Token roles do not match x-user-roles metadata',
+    });
+  }
+
+  return { userId, roles: tokenRoles };
+}
+
+function sameRoles(left: UserRole[], right: UserRole[]): boolean {
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  const rightSet = new Set(right);
+  return left.every((role) => rightSet.has(role));
 }

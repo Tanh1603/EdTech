@@ -26,7 +26,11 @@ export class SubmissionsController {
     @Param('submissionId', ParseUUIDPipe) submissionId: string,
     @CurrentUser() user: CurrentUserPayload,
   ) {
-    return this.assessmentsService.getSubmissionDetail(submissionId, user.id);
+    return this.assessmentsService.getSubmissionDetail(
+      submissionId,
+      user.id,
+      user.roles,
+    );
   }
 
   @Patch('submissions/:submissionId/answers')
@@ -38,7 +42,12 @@ export class SubmissionsController {
     @Body() body: AnswersDto,
     @CurrentUser() user: CurrentUserPayload,
   ) {
-    return this.assessmentsService.autosaveAnswers(submissionId, body, user.id);
+    return this.assessmentsService.autosaveAnswers(
+      submissionId,
+      body,
+      user.id,
+      user.roles,
+    );
   }
 
   @Post('submissions/:submissionId/submit')
@@ -48,6 +57,10 @@ export class SubmissionsController {
     @Param('submissionId', ParseUUIDPipe) submissionId: string,
     @CurrentUser() user: CurrentUserPayload,
   ) {
-    return this.assessmentsService.submitSubmission(submissionId, user.id);
+    return this.assessmentsService.submitSubmission(
+      submissionId,
+      user.id,
+      user.roles,
+    );
   }
 }

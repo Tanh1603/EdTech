@@ -154,7 +154,6 @@ export class LessonsService {
       classroomId,
       'New lesson published',
       `${lesson?.title ?? 'A lesson'} is now available.`,
-      { resourceType: 'lesson', resourceId: lessonId },
     );
   }
 

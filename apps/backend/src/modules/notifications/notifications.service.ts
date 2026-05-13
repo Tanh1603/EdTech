@@ -10,12 +10,6 @@ import { AppHttpException } from '../../common/errors/app-http.exception';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { JobsService } from '../jobs/jobs.service';
 
-interface NotificationMetadata {
-  createdBy?: string | null;
-  resourceType?: string | null;
-  resourceId?: string | null;
-}
-
 @Injectable()
 export class NotificationsService {
   constructor(
@@ -29,11 +23,6 @@ export class NotificationsService {
       userIds,
       payload.title,
       payload.body,
-      {
-        createdBy,
-        resourceType: payload.resourceType,
-        resourceId: payload.resourceId,
-      },
     );
     const job = await this.jobsService.enqueue({
       type: JobTypes.notificationDispatch,
@@ -68,7 +57,6 @@ export class NotificationsService {
     userId: string,
     title: string,
     body: string,
-    _metadata: NotificationMetadata = {},
   ) {
     return this.prisma.notification.create({
       data: { userId, title, body },
@@ -79,7 +67,6 @@ export class NotificationsService {
     userIds: string[],
     title: string,
     body: string,
-    _metadata: NotificationMetadata = {},
   ) {
     const uniqueUserIds = [...new Set(userIds.filter(Boolean))];
     if (uniqueUserIds.length === 0) {
@@ -153,11 +140,7 @@ export class NotificationsService {
     }
 
     const userIds = await this.resolveAudience(payload.audience);
-    const result = await this.createForUsers(userIds, payload.title, payload.body, {
-      createdBy: payload.createdBy,
-      resourceType: payload.resourceType,
-      resourceId: payload.resourceId,
-    });
+    const result = await this.createForUsers(userIds, payload.title, payload.body);
 
     return {
       recipients: userIds.length,
@@ -170,14 +153,9 @@ export class NotificationsService {
     classId: string,
     title: string,
     body: string,
-    metadata: NotificationMetadata = {},
   ) {
     const userIds = await this.getClassStudentUserIds(classId);
-    return this.createForUsers(userIds, title, body, {
-      ...metadata,
-      resourceType: metadata.resourceType ?? 'classroom',
-      resourceId: metadata.resourceId ?? classId,
-    });
+    return this.createForUsers(userIds, title, body);
   }
 
   async listMyNotifications(

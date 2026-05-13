@@ -20,6 +20,7 @@ export class GrpcMetadataBuilder {
     if (context?.requestId) metadata.set('x-request-id', context.requestId);
     if (context?.correlationId) metadata.set('x-correlation-id', context.correlationId);
     if (context?.userId) metadata.set('x-user-id', context.userId);
+    if (context?.roles?.length) metadata.set('x-user-roles', context.roles.join(','));
     if (serviceToken) metadata.set('x-service-token', serviceToken);
 
     return metadata;

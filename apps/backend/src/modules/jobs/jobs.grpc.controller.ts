@@ -1,4 +1,3 @@
-import { Metadata } from '@grpc/grpc-js';
 import { Controller } from '@nestjs/common';
 import {
   fromProtoStruct,
@@ -8,7 +7,6 @@ import {
   toObjectResponse,
 } from '@edtech/contracts';
 import { runGrpc } from '../../common/grpc/error-to-rpc-exception';
-import { assertServiceToken } from '../../common/grpc/service-token';
 import { JobsService } from './jobs.service';
 
 @Controller()
@@ -16,15 +14,15 @@ export class JobsGrpcController {
   constructor(private readonly jobsService: JobsService) {}
 
   @GrpcContractMethod(GrpcServices.jobs, GrpcMethods.jobs.getJobStatus)
-  getJobStatus(payload: any, metadata: Metadata) {
-    return this.authenticated(metadata, () =>
+  getJobStatus(payload: any) {
+    return runGrpc(() =>
       this.jobsService.getJobStatus(payload.jobId).then(toObjectResponse),
     );
   }
 
   @GrpcContractMethod(GrpcServices.jobs, GrpcMethods.jobs.createJob)
-  createJob(payload: any, metadata: Metadata) {
-    return this.authenticated(metadata, () =>
+  createJob(payload: any) {
+    return runGrpc(() =>
       this.jobsService
         .enqueue({
           type: payload.type,
@@ -42,8 +40,8 @@ export class JobsGrpcController {
   }
 
   @GrpcContractMethod(GrpcServices.jobs, GrpcMethods.jobs.updateJobStatus)
-  updateJobStatus(payload: any, metadata: Metadata) {
-    return this.authenticated(metadata, () =>
+  updateJobStatus(payload: any) {
+    return runGrpc(() =>
       this.jobsService
         .updateJobStatus(
           payload.jobId,
@@ -56,15 +54,15 @@ export class JobsGrpcController {
   }
 
   @GrpcContractMethod(GrpcServices.jobs, GrpcMethods.jobs.markJobRunning)
-  markJobRunning(payload: any, metadata: Metadata) {
-    return this.authenticated(metadata, () =>
+  markJobRunning(payload: any) {
+    return runGrpc(() =>
       this.jobsService.markRunning(payload.jobId).then(toObjectResponse),
     );
   }
 
   @GrpcContractMethod(GrpcServices.jobs, GrpcMethods.jobs.markJobSucceeded)
-  markJobSucceeded(payload: any, metadata: Metadata) {
-    return this.authenticated(metadata, () =>
+  markJobSucceeded(payload: any) {
+    return runGrpc(() =>
       this.jobsService
         .markSucceeded(payload.jobId, fromProtoStruct(payload.result))
         .then(toObjectResponse),
@@ -72,17 +70,11 @@ export class JobsGrpcController {
   }
 
   @GrpcContractMethod(GrpcServices.jobs, GrpcMethods.jobs.markJobFailed)
-  markJobFailed(payload: any, metadata: Metadata) {
-    return this.authenticated(metadata, () =>
+  markJobFailed(payload: any) {
+    return runGrpc(() =>
       this.jobsService
         .markFailed(payload.jobId, fromProtoStruct(payload.error))
         .then(toObjectResponse),
     );
   }
-
-  private authenticated<T>(metadata: Metadata, callback: () => Promise<T>) {
-    assertServiceToken(metadata);
-    return runGrpc(callback);
-  }
 }
-

@@ -9,6 +9,7 @@ import {
   SubmissionStatus,
 } from '../../../generated/prisma/client';
 import { CreateExamDto, UpdateExamDto } from '@edtech/contracts';
+import { UserRole } from '@edtech/contracts';
 import { ExamsQueryDto } from '@edtech/contracts';
 import { CreateQuestionDto, ReorderQuestionsDto, UpdateQuestionDto } from '@edtech/contracts';
 import { AnswersDto, ManualGradeDto } from '@edtech/contracts';
@@ -25,8 +26,16 @@ export class AssessmentsSharedService {
     private readonly notificationsService: NotificationsService,
   ) {}
 
-  async createExam(payload: CreateExamDto, userId: string) {
-    await this.accessPolicy.assertClassroomAccess(payload.classId, userId);
+  async createExam(
+    payload: CreateExamDto,
+    userId: string,
+    roles: UserRole[] = [],
+  ) {
+    await this.accessPolicy.assertClassTeacherOrAdmin(
+      payload.classId,
+      userId,
+      roles,
+    );
 
     return this.prisma.exam.create({
       data: { ...payload, createdBy: userId },
@@ -34,18 +43,24 @@ export class AssessmentsSharedService {
     });
   }
 
-  async getExams(query: ExamsQueryDto, userId: string): Promise<PageDto<unknown>> {
+  async getExams(
+    query: ExamsQueryDto,
+    userId: string,
+    roles: UserRole[] = [],
+  ): Promise<PageDto<unknown>> {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
     const status = this.toExamStatus(query.status);
     if (query.classId) {
-      await this.accessPolicy.assertClassroomAccess(query.classId, userId);
+      await this.accessPolicy.assertClassroomAccess(query.classId, userId, roles);
     }
 
     const where: Prisma.ExamWhereInput = {
       ...(query.classId
         ? { classId: query.classId }
-        : {
+        : roles.includes(UserRole.admin)
+          ? {}
+          : {
             OR: [
               { createdBy: userId },
               {
@@ -73,8 +88,12 @@ export class AssessmentsSharedService {
     return this.toPage(items, page, limit, total);
   }
 
-  async getExamDetail(examId: string, userId: string) {
-    await this.accessPolicy.assertExamAccess(examId, userId);
+  async getExamDetail(
+    examId: string,
+    userId: string,
+    roles: UserRole[] = [],
+  ) {
+    await this.accessPolicy.assertExamAccess(examId, userId, roles);
 
     const exam = await this.prisma.exam.findUniqueOrThrow({
       where: { id: examId },
@@ -84,14 +103,19 @@ export class AssessmentsSharedService {
     return { ...rest, questionsCount: _count.questions };
   }
 
-  async updateExam(examId: string, payload: UpdateExamDto, userId: string) {
-    await this.accessPolicy.assertExamAccess(examId, userId);
+  async updateExam(
+    examId: string,
+    payload: UpdateExamDto,
+    userId: string,
+    roles: UserRole[] = [],
+  ) {
+    await this.accessPolicy.assertExamManageAccess(examId, userId, roles);
 
     return this.prisma.exam.update({ where: { id: examId }, data: payload });
   }
 
-  async deleteExam(examId: string, userId: string) {
-    await this.accessPolicy.assertExamAccess(examId, userId);
+  async deleteExam(examId: string, userId: string, roles: UserRole[] = []) {
+    await this.accessPolicy.assertExamManageAccess(examId, userId, roles);
 
     await this.prisma.$transaction([
       this.prisma.result.deleteMany({ where: { submission: { examId } } }),
@@ -102,8 +126,8 @@ export class AssessmentsSharedService {
     return { id: examId, deleted: true };
   }
 
-  async publishExam(examId: string, userId: string) {
-    await this.accessPolicy.assertExamAccess(examId, userId);
+  async publishExam(examId: string, userId: string, roles: UserRole[] = []) {
+    await this.accessPolicy.assertExamManageAccess(examId, userId, roles);
 
     const exam = await this.prisma.exam.update({
       where: { id: examId },
@@ -114,13 +138,12 @@ export class AssessmentsSharedService {
       exam.classId,
       'New exam published',
       `${exam.title} is now available.`,
-      { resourceType: 'exam', resourceId: exam.id },
     );
     return { examId: exam.id, status: exam.status };
   }
 
-  async closeExam(examId: string, userId: string) {
-    await this.accessPolicy.assertExamAccess(examId, userId);
+  async closeExam(examId: string, userId: string, roles: UserRole[] = []) {
+    await this.accessPolicy.assertExamManageAccess(examId, userId, roles);
 
     const exam = await this.prisma.exam.update({
       where: { id: examId },
@@ -131,13 +154,17 @@ export class AssessmentsSharedService {
       exam.createdBy,
       'Exam closed',
       `${exam.title} has been closed.`,
-      { resourceType: 'exam', resourceId: exam.id },
     );
     return { examId: exam.id, status: 'closed' };
   }
 
-  async createQuestion(examId: string, payload: CreateQuestionDto, userId: string) {
-    await this.accessPolicy.assertExamAccess(examId, userId);
+  async createQuestion(
+    examId: string,
+    payload: CreateQuestionDto,
+    userId: string,
+    roles: UserRole[] = [],
+  ) {
+    await this.accessPolicy.assertExamManageAccess(examId, userId, roles);
 
     return this.prisma.question.create({
       data: {
@@ -153,20 +180,33 @@ export class AssessmentsSharedService {
     });
   }
 
-  async getExamQuestions(examId: string, userId: string) {
-    await this.accessPolicy.assertExamAccess(examId, userId);
+  async getExamQuestions(
+    examId: string,
+    userId: string,
+    roles: UserRole[] = [],
+  ) {
+    await this.accessPolicy.assertExamAccess(examId, userId, roles);
 
     return this.prisma.question.findMany({ where: { examId }, orderBy: { orderNo: 'asc' } });
   }
 
-  async getQuestionDetail(questionId: string, userId: string) {
-    await this.assertQuestionExamAccess(questionId, userId);
+  async getQuestionDetail(
+    questionId: string,
+    userId: string,
+    roles: UserRole[] = [],
+  ) {
+    await this.assertQuestionExamAccess(questionId, userId, roles);
 
     return this.prisma.question.findUniqueOrThrow({ where: { id: questionId } });
   }
 
-  async updateQuestion(questionId: string, payload: UpdateQuestionDto, userId: string) {
-    await this.assertQuestionExamAccess(questionId, userId);
+  async updateQuestion(
+    questionId: string,
+    payload: UpdateQuestionDto,
+    userId: string,
+    roles: UserRole[] = [],
+  ) {
+    await this.assertQuestionExamManageAccess(questionId, userId, roles);
 
     return this.prisma.question.update({
       where: { id: questionId },
@@ -180,17 +220,21 @@ export class AssessmentsSharedService {
     });
   }
 
-  async deleteQuestion(questionId: string, userId: string) {
-    await this.assertQuestionExamAccess(questionId, userId);
+  async deleteQuestion(questionId: string, userId: string, roles: UserRole[] = []) {
+    await this.assertQuestionExamManageAccess(questionId, userId, roles);
 
     await this.prisma.question.delete({ where: { id: questionId } });
     return { id: questionId, deleted: true };
   }
 
-  async reorderQuestions(payload: ReorderQuestionsDto, userId: string) {
+  async reorderQuestions(
+    payload: ReorderQuestionsDto,
+    userId: string,
+    roles: UserRole[] = [],
+  ) {
     const firstQuestionId = payload.items[0]?.questionId;
     if (firstQuestionId) {
-      await this.assertQuestionExamAccess(firstQuestionId, userId);
+      await this.assertQuestionExamManageAccess(firstQuestionId, userId, roles);
     }
 
     const items = await this.prisma.$transaction(
@@ -205,7 +249,7 @@ export class AssessmentsSharedService {
   }
 
   async startExam(examId: string, userId: string) {
-    await this.accessPolicy.assertExamAccess(examId, userId);
+    await this.accessPolicy.assertExamAccess(examId, userId, [UserRole.student]);
 
     const submission = await this.prisma.submission.upsert({
       where: { examId_studentId: { examId, studentId: userId } },
@@ -219,8 +263,12 @@ export class AssessmentsSharedService {
     };
   }
 
-  async getSubmissionDetail(submissionId: string, userId: string) {
-    await this.accessPolicy.assertSubmissionAccess(submissionId, userId);
+  async getSubmissionDetail(
+    submissionId: string,
+    userId: string,
+    roles: UserRole[] = [],
+  ) {
+    await this.accessPolicy.assertSubmissionAccess(submissionId, userId, roles);
 
     return this.prisma.submission.findUniqueOrThrow({
       where: { id: submissionId },
@@ -228,8 +276,13 @@ export class AssessmentsSharedService {
     });
   }
 
-  async autosaveAnswers(submissionId: string, payload: AnswersDto, userId: string) {
-    await this.accessPolicy.assertSubmissionOwner(submissionId, userId);
+  async autosaveAnswers(
+    submissionId: string,
+    payload: AnswersDto,
+    userId: string,
+    roles: UserRole[] = [],
+  ) {
+    await this.accessPolicy.assertSubmissionOwner(submissionId, userId, roles);
 
     return this.prisma.submission.update({
       where: { id: submissionId },
@@ -237,8 +290,12 @@ export class AssessmentsSharedService {
     });
   }
 
-  async submitSubmission(submissionId: string, userId: string) {
-    await this.accessPolicy.assertSubmissionOwner(submissionId, userId);
+  async submitSubmission(
+    submissionId: string,
+    userId: string,
+    roles: UserRole[] = [],
+  ) {
+    await this.accessPolicy.assertSubmissionOwner(submissionId, userId, roles);
 
     const submission = await this.prisma.submission.update({
       where: { id: submissionId },
@@ -266,7 +323,6 @@ export class AssessmentsSharedService {
         exam.createdBy,
         'New submission received',
         `A student submitted ${exam.title}.`,
-        { resourceType: 'submission', resourceId: submission.id },
       );
     }
 
@@ -281,14 +337,27 @@ export class AssessmentsSharedService {
     };
   }
 
-  async getResult(submissionId: string, userId: string) {
-    await this.accessPolicy.assertSubmissionAccess(submissionId, userId);
+  async getResult(
+    submissionId: string,
+    userId: string,
+    roles: UserRole[] = [],
+  ) {
+    await this.accessPolicy.assertSubmissionAccess(submissionId, userId, roles);
 
     return this.prisma.result.findUniqueOrThrow({ where: { submissionId } });
   }
 
-  async manualGrade(submissionId: string, payload: ManualGradeDto, userId: string) {
-    await this.accessPolicy.assertSubmissionAccess(submissionId, userId);
+  async manualGrade(
+    submissionId: string,
+    payload: ManualGradeDto,
+    userId: string,
+    roles: UserRole[] = [],
+  ) {
+    await this.accessPolicy.assertSubmissionOwnerTeacherOrAdmin(
+      submissionId,
+      userId,
+      roles,
+    );
 
     const result = await this.prisma.result.upsert({
       where: { submissionId },
@@ -315,14 +384,13 @@ export class AssessmentsSharedService {
         submission.studentId,
         'Assessment graded',
         `Your result for ${submission.exam.title} is ready.`,
-        { resourceType: 'submission', resourceId: submissionId },
       );
     }
     return result;
   }
 
-  async getExamAnalytics(examId: string, userId: string) {
-    await this.accessPolicy.assertExamAccess(examId, userId);
+  async getExamAnalytics(examId: string, userId: string, roles: UserRole[] = []) {
+    await this.accessPolicy.assertExamManageAccess(examId, userId, roles);
 
     const aggregate = await this.prisma.result.aggregate({
       where: { submission: { examId } },
@@ -339,8 +407,12 @@ export class AssessmentsSharedService {
     };
   }
 
-  async getQuestionAnalytics(examId: string, userId: string) {
-    await this.accessPolicy.assertExamAccess(examId, userId);
+  async getQuestionAnalytics(
+    examId: string,
+    userId: string,
+    roles: UserRole[] = [],
+  ) {
+    await this.accessPolicy.assertExamManageAccess(examId, userId, roles);
 
     const questions = await this.prisma.question.findMany({
       where: { examId },
@@ -355,7 +427,15 @@ export class AssessmentsSharedService {
     };
   }
 
-  async getStudentAnalytics(studentId: string, userId: string) {
+  async getStudentAnalytics(
+    studentId: string,
+    userId: string,
+    roles: UserRole[] = [],
+  ) {
+    if (roles.includes(UserRole.admin)) {
+      return this.buildStudentAnalytics(studentId);
+    }
+
     if (studentId !== userId) {
       await this.prisma.enrollment.findFirstOrThrow({
         where: {
@@ -371,6 +451,10 @@ export class AssessmentsSharedService {
       });
     }
 
+    return this.buildStudentAnalytics(studentId);
+  }
+
+  private async buildStudentAnalytics(studentId: string) {
     const aggregate = await this.prisma.result.aggregate({
       where: { submission: { studentId } },
       _avg: { score: true },
@@ -390,12 +474,28 @@ export class AssessmentsSharedService {
     return undefined;
   }
 
-  private async assertQuestionExamAccess(questionId: string, userId: string) {
+  private async assertQuestionExamAccess(
+    questionId: string,
+    userId: string,
+    roles: UserRole[] = [],
+  ) {
     const question = await this.prisma.question.findUniqueOrThrow({
       where: { id: questionId },
       select: { examId: true },
     });
-    await this.accessPolicy.assertExamAccess(question.examId, userId);
+    await this.accessPolicy.assertExamAccess(question.examId, userId, roles);
+  }
+
+  private async assertQuestionExamManageAccess(
+    questionId: string,
+    userId: string,
+    roles: UserRole[] = [],
+  ) {
+    const question = await this.prisma.question.findUniqueOrThrow({
+      where: { id: questionId },
+      select: { examId: true },
+    });
+    await this.accessPolicy.assertExamManageAccess(question.examId, userId, roles);
   }
 
   private toQuestionType(type: string): QuestionType {

@@ -24,6 +24,6 @@ export class ChatAnalyticsController {
     @Param('classId', ParseUUIDPipe) classId: string,
     @CurrentUser() user: CurrentUserPayload,
   ) {
-    return this.chatService.getClassroomAnalytics(classId, user.id);
+    return this.chatService.getClassroomAnalytics(classId, user.id, user.roles);
   }
 }

@@ -1,10 +1,12 @@
 import { AppHttpException } from './../../../common/errors/app-http.exception';
-import { ClerkClient, User, verifyToken } from '@clerk/backend';
+import { ClerkClient, verifyToken } from '@clerk/backend';
 import { HttpStatus, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { Strategy } from 'passport-custom';
+import { extractUserRolesFromClerkUser } from '../../../common/auth/roles.util';
+import { CurrentUser } from '../../../common/types/current-user.type';
 
 @Injectable()
 export class ClerkStrategy extends PassportStrategy(Strategy, 'clerk') {
@@ -16,7 +18,7 @@ export class ClerkStrategy extends PassportStrategy(Strategy, 'clerk') {
     super();
   }
 
-  async validate(req: Request): Promise<User> {
+  async validate(req: Request): Promise<CurrentUser> {
     const token = req.headers.authorization?.split(' ').pop();
 
     if (!token) {
@@ -33,7 +35,13 @@ export class ClerkStrategy extends PassportStrategy(Strategy, 'clerk') {
 
       const user = await this.clerkClient.users.getUser(tokenPayload.sub);
 
-      return user;
+      return {
+        id: user.id,
+        externalUserId: user.externalId ?? user.id,
+        email: user.emailAddresses[0]?.emailAddress ?? '',
+        status: user.banned ? 'banned' : 'active',
+        roles: extractUserRolesFromClerkUser(user),
+      };
     } catch (error) {
       console.error(error);
       throw new UnauthorizedException('Invalid token');

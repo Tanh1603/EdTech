@@ -33,16 +33,17 @@ export class GatewayAuthGuard implements CanActivate {
     try {
       const identity = await this.identityService.verifyBearerAuthorization(authorization);
 
-      request.user = { id: identity.userId };
+      request.user = { id: identity.userId, roles: identity.roles };
       request.context = {
         requestId: request.requestId ?? 'unknown',
         correlationId: request.correlationId ?? request.requestId ?? 'unknown',
         userId: identity.userId,
+        roles: identity.roles,
         authorization: identity.authorization,
       };
 
       this.logger.log(
-        `[${requestId}] auth.ok user=${identity.userId} route=${request.method} ${request.originalUrl}`,
+        `[${requestId}] auth.ok user=${identity.userId} roles=${identity.roles.join(',')} route=${request.method} ${request.originalUrl}`,
       );
 
       return true;

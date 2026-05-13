@@ -1,4 +1,6 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
+import { UserRole } from '@edtech/contracts';
+import { AccessPolicyService } from '../../../common/access/access-policy.service';
 import { AppHttpException } from '../../../common/errors/app-http.exception';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import { ClassRole } from '../../../generated/prisma/client';
@@ -10,6 +12,7 @@ import { NotificationsService } from '../../notifications/notifications.service'
 @Injectable()
 export class EnrollmentsService {
   constructor(
+    private readonly accessPolicy: AccessPolicyService,
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
   ) {}
@@ -45,14 +48,25 @@ export class EnrollmentsService {
         detail.course.teacherId,
         'New student joined your class',
         `A student joined ${detail.name}.`,
-        { resourceType: 'classroom', resourceId: classroom.id },
       );
     }
 
     return enrollment;
   }
 
-  async createEnrollment(payload: CreateEnrollmentDto) {
+  async createEnrollment(
+    payload: CreateEnrollmentDto,
+    userId?: string,
+    roles: UserRole[] = [],
+  ) {
+    if (userId) {
+      await this.accessPolicy.assertClassTeacherOrAdmin(
+        payload.classId,
+        userId,
+        roles,
+      );
+    }
+
     const enrollment = await this.prisma.enrollment.create({ data: payload });
     const classroom = await this.prisma.classroom.findUnique({
       where: { id: payload.classId },
@@ -62,13 +76,24 @@ export class EnrollmentsService {
       payload.userId,
       'You were added to a class',
       `You were added to ${classroom?.name ?? 'a class'}.`,
-      { resourceType: 'classroom', resourceId: payload.classId },
     );
     return enrollment;
   }
 
-  async getClassroomStudents(classroomId: string) {
-    await this.prisma.classroom.findUniqueOrThrow({ where: { id: classroomId } });
+  async getClassroomStudents(
+    classroomId: string,
+    userId?: string,
+    roles: UserRole[] = [],
+  ) {
+    if (userId) {
+      await this.accessPolicy.assertClassTeacherOrAdmin(
+        classroomId,
+        userId,
+        roles,
+      );
+    } else {
+      await this.prisma.classroom.findUniqueOrThrow({ where: { id: classroomId } });
+    }
 
     return this.prisma.enrollment.findMany({
       where: { classId: classroomId },
@@ -85,14 +110,44 @@ export class EnrollmentsService {
   async updateEnrollmentRole(
     enrollmentId: string,
     payload: UpdateEnrollmentDto,
+    userId?: string,
+    roles: UserRole[] = [],
   ) {
+    if (userId) {
+      const enrollment = await this.prisma.enrollment.findUniqueOrThrow({
+        where: { id: enrollmentId },
+        select: { classId: true },
+      });
+      await this.accessPolicy.assertClassTeacherOrAdmin(
+        enrollment.classId,
+        userId,
+        roles,
+      );
+    }
+
     return this.prisma.enrollment.update({
       where: { id: enrollmentId },
       data: { role: payload.role },
     });
   }
 
-  async removeEnrollment(enrollmentId: string) {
+  async removeEnrollment(
+    enrollmentId: string,
+    userId?: string,
+    roles: UserRole[] = [],
+  ) {
+    if (userId) {
+      const enrollment = await this.prisma.enrollment.findUniqueOrThrow({
+        where: { id: enrollmentId },
+        select: { classId: true },
+      });
+      await this.accessPolicy.assertClassTeacherOrAdmin(
+        enrollment.classId,
+        userId,
+        roles,
+      );
+    }
+
     const deleted = await this.prisma.enrollment.delete({
       where: { id: enrollmentId },
     });

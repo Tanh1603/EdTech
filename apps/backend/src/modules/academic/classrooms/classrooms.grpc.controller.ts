@@ -1,97 +1,126 @@
 import { Metadata } from '@grpc/grpc-js';
-import { Controller } from '@nestjs/common';
-import { GrpcContractMethod, GrpcMethods, GrpcServices } from '@edtech/contracts';
-import { toIsoString } from '@edtech/contracts';
-import { getAuthenticatedGrpcUserId } from '../../../common/grpc/metadata.mapper';
+import { Controller, UseGuards } from '@nestjs/common';
+import {
+  GrpcContractMethod,
+  GrpcMethods,
+  GrpcServices,
+  toGrpcPage,
+  toIsoString,
+} from '@edtech/contracts';
+import { GrpcUserAuthGuard } from '../../../common/guards/grpc-user-auth.guard';
+import { getGrpcIdentity } from '../../../common/grpc/metadata.mapper';
 import { runGrpc } from '../../../common/grpc/error-to-rpc-exception';
-import { toGrpcPage } from '@edtech/contracts';
-import { assertServiceToken } from '../../../common/grpc/service-token';
 import { ClassroomsService } from './classrooms.service';
 
 @Controller()
+@UseGuards(GrpcUserAuthGuard)
 export class ClassroomsGrpcController {
   constructor(private readonly classroomsService: ClassroomsService) {}
 
   @GrpcContractMethod(GrpcServices.academicClassrooms, GrpcMethods.academicClassrooms.getClassrooms)
   getClassrooms(payload: any, metadata: Metadata) {
-    assertServiceToken(metadata);
     return runGrpc(async () => {
-      const page = await this.classroomsService.getClassrooms({
-        page: payload.page || undefined,
-        limit: payload.limit || undefined,
-        courseId: payload.courseId || undefined,
-      });
+      const identity = getGrpcIdentity(metadata);
+      const page = await this.classroomsService.getClassrooms(
+        {
+          page: payload.page || undefined,
+          limit: payload.limit || undefined,
+          courseId: payload.courseId || undefined,
+        },
+        identity.userId,
+        identity.roles,
+      );
       return toGrpcPage(page as any, this.toClassroom);
     });
   }
 
   @GrpcContractMethod(GrpcServices.academicClassrooms, GrpcMethods.academicClassrooms.createClassroom)
   createClassroom(payload: any, metadata: Metadata) {
-    assertServiceToken(metadata);
-    return runGrpc(async () =>
-      this.toClassroom(
-        await this.classroomsService.createClassroom({
-          courseId: payload.courseId,
-          name: payload.name,
-          inviteCode: payload.inviteCode || undefined,
-          startAt: payload.startAt || undefined,
-          endAt: payload.endAt || undefined,
-        }),
-      ),
-    );
+    return runGrpc(async () => {
+      const identity = getGrpcIdentity(metadata);
+      return this.toClassroom(
+        await this.classroomsService.createClassroom(
+          {
+            courseId: payload.courseId,
+            name: payload.name,
+            inviteCode: payload.inviteCode || undefined,
+            startAt: payload.startAt || undefined,
+            endAt: payload.endAt || undefined,
+          },
+          identity.userId,
+          identity.roles,
+        ),
+      );
+    });
   }
 
   @GrpcContractMethod(GrpcServices.academicClassrooms, GrpcMethods.academicClassrooms.getClassroomDetail)
   getClassroomDetail(payload: any, metadata: Metadata) {
-    assertServiceToken(metadata);
-    return runGrpc(async () =>
-      this.toClassroomDetail(
+    return runGrpc(async () => {
+      const identity = getGrpcIdentity(metadata);
+      return this.toClassroomDetail(
         await this.classroomsService.getClassroomDetail(
           payload.classroomId,
-          await getAuthenticatedGrpcUserId(metadata),
+          identity.userId,
         ),
-      ),
-    );
+      );
+    });
   }
 
   @GrpcContractMethod(GrpcServices.academicClassrooms, GrpcMethods.academicClassrooms.updateClassroom)
   updateClassroom(payload: any, metadata: Metadata) {
-    assertServiceToken(metadata);
-    return runGrpc(async () =>
-      this.toClassroom(
-        await this.classroomsService.updateClassroom(payload.classroomId, {
-          name: payload.name,
-          startAt: payload.startAt,
-          endAt: payload.endAt,
-        }),
-      ),
-    );
+    return runGrpc(async () => {
+      const identity = getGrpcIdentity(metadata);
+      return this.toClassroom(
+        await this.classroomsService.updateClassroom(
+          payload.classroomId,
+          {
+            name: payload.name,
+            startAt: payload.startAt,
+            endAt: payload.endAt,
+          },
+          identity.userId,
+          identity.roles,
+        ),
+      );
+    });
   }
 
   @GrpcContractMethod(GrpcServices.academicClassrooms, GrpcMethods.academicClassrooms.deleteClassroom)
   deleteClassroom(payload: any, metadata: Metadata) {
-    assertServiceToken(metadata);
-    return runGrpc(() =>
-      this.classroomsService.deleteClassroom(payload.classroomId),
-    );
+    return runGrpc(async () => {
+      const identity = getGrpcIdentity(metadata);
+      return this.classroomsService.deleteClassroom(
+        payload.classroomId,
+        identity.userId,
+        identity.roles,
+      );
+    });
   }
 
   @GrpcContractMethod(GrpcServices.academicClassrooms, GrpcMethods.academicClassrooms.regenerateInviteCode)
   regenerateInviteCode(payload: any, metadata: Metadata) {
-    assertServiceToken(metadata);
-    return runGrpc(() =>
-      this.classroomsService.regenerateInviteCode(payload.classroomId),
-    );
+    return runGrpc(async () => {
+      const identity = getGrpcIdentity(metadata);
+      return this.classroomsService.regenerateInviteCode(
+        payload.classroomId,
+        identity.userId,
+        identity.roles,
+      );
+    });
   }
 
   @GrpcContractMethod(GrpcServices.academicClassrooms, GrpcMethods.academicClassrooms.inviteClassMembers)
   inviteClassMembers(payload: any, metadata: Metadata) {
-    assertServiceToken(metadata);
-    return runGrpc(() =>
-      this.classroomsService.inviteClassMembers(payload.classId, {
-        emails: payload.emails ?? [],
-      }),
-    );
+    return runGrpc(async () => {
+      const identity = getGrpcIdentity(metadata);
+      return this.classroomsService.inviteClassMembers(
+        payload.classId,
+        { emails: payload.emails ?? [] },
+        identity.userId,
+        identity.roles,
+      );
+    });
   }
 
   private toClassroom = (classroom: any) => ({

@@ -19,7 +19,7 @@ export class ResultsController {
     @Param('submissionId', ParseUUIDPipe) submissionId: string,
     @CurrentUser() user: CurrentUserPayload,
   ) {
-    return this.assessmentsService.getResult(submissionId, user.id);
+    return this.assessmentsService.getResult(submissionId, user.id, user.roles);
   }
 
   @Post('results/:submissionId/manual-grade')
@@ -31,7 +31,12 @@ export class ResultsController {
     @Body() body: ManualGradeDto,
     @CurrentUser() user: CurrentUserPayload,
   ) {
-    return this.assessmentsService.manualGrade(submissionId, body, user.id);
+    return this.assessmentsService.manualGrade(
+      submissionId,
+      body,
+      user.id,
+      user.roles,
+    );
   }
 
 }

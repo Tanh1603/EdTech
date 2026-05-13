@@ -1,7 +1,9 @@
 import { Socket } from 'socket.io';
+import { UserRole } from '@edtech/contracts';
 
 export interface RealtimeSocketData {
   userId: string;
+  roles: UserRole[];
   authorization: string;
   requestId: string;
   correlationId: string;

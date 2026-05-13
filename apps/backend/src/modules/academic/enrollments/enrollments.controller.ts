@@ -45,8 +45,11 @@ export class EnrollmentsController {
   @ApiOperation({ summary: 'Add student to classroom' })
   @ApiBody({ type: CreateEnrollmentDto })
   @ApiCreatedResponse({ description: 'Enrollment created successfully' })
-  createEnrollment(@Body() body: CreateEnrollmentDto) {
-    return this.enrollmentsService.createEnrollment(body);
+  createEnrollment(
+    @Body() body: CreateEnrollmentDto,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
+    return this.enrollmentsService.createEnrollment(body, user.id, user.roles);
   }
 
   @Get('classrooms/:classroomId/students')
@@ -55,8 +58,13 @@ export class EnrollmentsController {
   @ApiOkResponse({ description: 'Classroom students returned successfully' })
   getClassroomStudents(
     @Param('classroomId', ParseUUIDPipe) classroomId: string,
+    @CurrentUser() user: CurrentUserPayload,
   ) {
-    return this.enrollmentsService.getClassroomStudents(classroomId);
+    return this.enrollmentsService.getClassroomStudents(
+      classroomId,
+      user.id,
+      user.roles,
+    );
   }
 
   @Patch('enrollments/:enrollmentId')
@@ -67,15 +75,28 @@ export class EnrollmentsController {
   updateEnrollmentRole(
     @Param('enrollmentId', ParseUUIDPipe) enrollmentId: string,
     @Body() body: UpdateEnrollmentDto,
+    @CurrentUser() user: CurrentUserPayload,
   ) {
-    return this.enrollmentsService.updateEnrollmentRole(enrollmentId, body);
+    return this.enrollmentsService.updateEnrollmentRole(
+      enrollmentId,
+      body,
+      user.id,
+      user.roles,
+    );
   }
 
   @Delete('enrollments/:enrollmentId')
   @ApiOperation({ summary: 'Remove student from classroom' })
   @ApiParam({ name: 'enrollmentId', format: 'uuid' })
   @ApiOkResponse({ description: 'Enrollment removed successfully' })
-  removeEnrollment(@Param('enrollmentId', ParseUUIDPipe) enrollmentId: string) {
-    return this.enrollmentsService.removeEnrollment(enrollmentId);
+  removeEnrollment(
+    @Param('enrollmentId', ParseUUIDPipe) enrollmentId: string,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
+    return this.enrollmentsService.removeEnrollment(
+      enrollmentId,
+      user.id,
+      user.roles,
+    );
   }
 }

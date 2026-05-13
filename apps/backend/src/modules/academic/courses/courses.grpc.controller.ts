@@ -1,73 +1,102 @@
 import { Metadata } from '@grpc/grpc-js';
-import { Controller } from '@nestjs/common';
-import { GrpcContractMethod, GrpcMethods, GrpcServices } from '@edtech/contracts';
-import { toIsoString } from '@edtech/contracts';
+import { Controller, UseGuards } from '@nestjs/common';
+import {
+  GrpcContractMethod,
+  GrpcMethods,
+  GrpcServices,
+  toGrpcPage,
+  toIsoString,
+} from '@edtech/contracts';
+import { GrpcUserAuthGuard } from '../../../common/guards/grpc-user-auth.guard';
+import { getGrpcIdentity } from '../../../common/grpc/metadata.mapper';
 import { runGrpc } from '../../../common/grpc/error-to-rpc-exception';
-import { toGrpcPage } from '@edtech/contracts';
-import { assertServiceToken } from '../../../common/grpc/service-token';
 import { CoursesService } from './courses.service';
 
 @Controller()
+@UseGuards(GrpcUserAuthGuard)
 export class CoursesGrpcController {
   constructor(private readonly coursesService: CoursesService) {}
 
   @GrpcContractMethod(GrpcServices.academicCourses, GrpcMethods.academicCourses.getCourses)
   getCourses(payload: any, metadata: Metadata) {
-    assertServiceToken(metadata);
     return runGrpc(async () => {
-      const page = await this.coursesService.getCourses({
-        page: payload.page || undefined,
-        limit: payload.limit || undefined,
-        search: payload.search || undefined,
-        teacherId: payload.teacherId || undefined,
-      });
+      const identity = getGrpcIdentity(metadata);
+      const page = await this.coursesService.getCourses(
+        {
+          page: payload.page || undefined,
+          limit: payload.limit || undefined,
+          search: payload.search || undefined,
+          teacherId: payload.teacherId || undefined,
+        },
+        identity.userId,
+        identity.roles,
+      );
       return toGrpcPage(page as any, this.toCourse);
     });
   }
 
   @GrpcContractMethod(GrpcServices.academicCourses, GrpcMethods.academicCourses.createCourse)
   createCourse(payload: any, metadata: Metadata) {
-    assertServiceToken(metadata);
-    return runGrpc(async () =>
-      this.toCourse(
-        await this.coursesService.createCourse({
-          teacherId: payload.teacherId,
-          name: payload.name,
-          description: payload.description || undefined,
-          thumbnailUrl: payload.thumbnailUrl || undefined,
-        }),
-      ),
-    );
+    return runGrpc(async () => {
+      const identity = getGrpcIdentity(metadata);
+      return this.toCourse(
+        await this.coursesService.createCourse(
+          {
+            teacherId: payload.teacherId,
+            name: payload.name,
+            description: payload.description || undefined,
+            thumbnailUrl: payload.thumbnailUrl || undefined,
+          },
+          identity.userId,
+          identity.roles,
+        ),
+      );
+    });
   }
 
   @GrpcContractMethod(GrpcServices.academicCourses, GrpcMethods.academicCourses.getCourseDetail)
   getCourseDetail(payload: any, metadata: Metadata) {
-    assertServiceToken(metadata);
-    return runGrpc(async () =>
-      this.toCourseDetail(
-        await this.coursesService.getCourseDetail(payload.courseId),
-      ),
-    );
+    return runGrpc(async () => {
+      const identity = getGrpcIdentity(metadata);
+      return this.toCourseDetail(
+        await this.coursesService.getCourseDetail(
+          payload.courseId,
+          identity.userId,
+          identity.roles,
+        ),
+      );
+    });
   }
 
   @GrpcContractMethod(GrpcServices.academicCourses, GrpcMethods.academicCourses.updateCourse)
   updateCourse(payload: any, metadata: Metadata) {
-    assertServiceToken(metadata);
-    return runGrpc(async () =>
-      this.toCourse(
-        await this.coursesService.updateCourse(payload.courseId, {
-          name: payload.name,
-          description: payload.description,
-          thumbnailUrl: payload.thumbnailUrl,
-        }),
-      ),
-    );
+    return runGrpc(async () => {
+      const identity = getGrpcIdentity(metadata);
+      return this.toCourse(
+        await this.coursesService.updateCourse(
+          payload.courseId,
+          {
+            name: payload.name,
+            description: payload.description,
+            thumbnailUrl: payload.thumbnailUrl,
+          },
+          identity.userId,
+          identity.roles,
+        ),
+      );
+    });
   }
 
   @GrpcContractMethod(GrpcServices.academicCourses, GrpcMethods.academicCourses.deleteCourse)
   deleteCourse(payload: any, metadata: Metadata) {
-    assertServiceToken(metadata);
-    return runGrpc(() => this.coursesService.deleteCourse(payload.courseId));
+    return runGrpc(async () => {
+      const identity = getGrpcIdentity(metadata);
+      return this.coursesService.deleteCourse(
+        payload.courseId,
+        identity.userId,
+        identity.roles,
+      );
+    });
   }
 
   private toCourse = (course: any) => ({

@@ -18,7 +18,7 @@ export class AnalyticsController {
     @Param('examId', ParseUUIDPipe) examId: string,
     @CurrentUser() user: CurrentUserPayload,
   ) {
-    return this.assessmentsService.getExamAnalytics(examId, user.id);
+    return this.assessmentsService.getExamAnalytics(examId, user.id, user.roles);
   }
 
   @Get('exams/:examId/questions')
@@ -29,7 +29,11 @@ export class AnalyticsController {
     @Param('examId', ParseUUIDPipe) examId: string,
     @CurrentUser() user: CurrentUserPayload,
   ) {
-    return this.assessmentsService.getQuestionAnalytics(examId, user.id);
+    return this.assessmentsService.getQuestionAnalytics(
+      examId,
+      user.id,
+      user.roles,
+    );
   }
 
   @Get('students/:studentId')
@@ -40,6 +44,10 @@ export class AnalyticsController {
     @Param('studentId') studentId: string,
     @CurrentUser() user: CurrentUserPayload,
   ) {
-    return this.assessmentsService.getStudentAnalytics(studentId, user.id);
+    return this.assessmentsService.getStudentAnalytics(
+      studentId,
+      user.id,
+      user.roles,
+    );
   }
 }

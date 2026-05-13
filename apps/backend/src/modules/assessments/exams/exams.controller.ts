@@ -17,7 +17,7 @@ export class ExamsController {
   @ApiBody({ type: CreateExamDto })
   @ApiCreatedResponse({ description: 'Exam created successfully' })
   createExam(@Body() body: CreateExamDto, @CurrentUser() user: CurrentUserPayload) {
-    return this.assessmentsService.createExam(body, user.id);
+    return this.assessmentsService.createExam(body, user.id, user.roles);
   }
 
   @Get()
@@ -29,7 +29,7 @@ export class ExamsController {
   @ApiQuery({ name: 'search', required: false, type: String })
   @ApiOkResponse({ description: 'Exams returned successfully' })
   getExams(@Query() query: ExamsQueryDto, @CurrentUser() user: CurrentUserPayload) {
-    return this.assessmentsService.getExams(query, user.id);
+    return this.assessmentsService.getExams(query, user.id, user.roles);
   }
 
   @Get(':examId')
@@ -40,7 +40,7 @@ export class ExamsController {
     @Param('examId', ParseUUIDPipe) examId: string,
     @CurrentUser() user: CurrentUserPayload,
   ) {
-    return this.assessmentsService.getExamDetail(examId, user.id);
+    return this.assessmentsService.getExamDetail(examId, user.id, user.roles);
   }
 
   @Patch(':examId')
@@ -53,7 +53,7 @@ export class ExamsController {
     @Body() body: UpdateExamDto,
     @CurrentUser() user: CurrentUserPayload,
   ) {
-    return this.assessmentsService.updateExam(examId, body, user.id);
+    return this.assessmentsService.updateExam(examId, body, user.id, user.roles);
   }
 
   @Delete(':examId')
@@ -64,7 +64,7 @@ export class ExamsController {
     @Param('examId', ParseUUIDPipe) examId: string,
     @CurrentUser() user: CurrentUserPayload,
   ) {
-    return this.assessmentsService.deleteExam(examId, user.id);
+    return this.assessmentsService.deleteExam(examId, user.id, user.roles);
   }
 
   @Post(':examId/publish')
@@ -75,7 +75,7 @@ export class ExamsController {
     @Param('examId', ParseUUIDPipe) examId: string,
     @CurrentUser() user: CurrentUserPayload,
   ) {
-    return this.assessmentsService.publishExam(examId, user.id);
+    return this.assessmentsService.publishExam(examId, user.id, user.roles);
   }
 
   @Post(':examId/close')
@@ -86,6 +86,6 @@ export class ExamsController {
     @Param('examId', ParseUUIDPipe) examId: string,
     @CurrentUser() user: CurrentUserPayload,
   ) {
-    return this.assessmentsService.closeExam(examId, user.id);
+    return this.assessmentsService.closeExam(examId, user.id, user.roles);
   }
 }

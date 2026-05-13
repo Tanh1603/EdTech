@@ -1,10 +1,8 @@
-import { Metadata } from '@grpc/grpc-js';
 import { Controller } from '@nestjs/common';
 import { GrpcContractMethod, GrpcMethods, GrpcServices } from '@edtech/contracts';
 import { toIsoString } from '@edtech/contracts';
 import { runGrpc } from '../../../common/grpc/error-to-rpc-exception';
 import { toGrpcPage } from '@edtech/contracts';
-import { assertServiceToken } from '../../../common/grpc/service-token';
 import { LessonsService } from './lessons.service';
 
 @Controller()
@@ -12,8 +10,7 @@ export class LessonsGrpcController {
   constructor(private readonly lessonsService: LessonsService) {}
 
   @GrpcContractMethod(GrpcServices.academicLessons, GrpcMethods.academicLessons.createLesson)
-  createLesson(payload: any, metadata: Metadata) {
-    assertServiceToken(metadata);
+  createLesson(payload: any) {
     return runGrpc(async () =>
       this.toLesson(
         await this.lessonsService.createLesson({
@@ -27,8 +24,7 @@ export class LessonsGrpcController {
   }
 
   @GrpcContractMethod(GrpcServices.academicLessons, GrpcMethods.academicLessons.getLessonsByCourse)
-  getLessonsByCourse(payload: any, metadata: Metadata) {
-    assertServiceToken(metadata);
+  getLessonsByCourse(payload: any) {
     return runGrpc(async () => {
       const page = await this.lessonsService.getLessonsByCourse(
         payload.courseId,
@@ -42,8 +38,7 @@ export class LessonsGrpcController {
   }
 
   @GrpcContractMethod(GrpcServices.academicLessons, GrpcMethods.academicLessons.getLessonDetail)
-  getLessonDetail(payload: any, metadata: Metadata) {
-    assertServiceToken(metadata);
+  getLessonDetail(payload: any) {
     return runGrpc(async () =>
       this.toLessonDetail(
         await this.lessonsService.getLessonDetail(payload.lessonId),
@@ -52,8 +47,7 @@ export class LessonsGrpcController {
   }
 
   @GrpcContractMethod(GrpcServices.academicLessons, GrpcMethods.academicLessons.updateLesson)
-  updateLesson(payload: any, metadata: Metadata) {
-    assertServiceToken(metadata);
+  updateLesson(payload: any) {
     return runGrpc(async () =>
       this.toLesson(
         await this.lessonsService.updateLesson(payload.lessonId, {
@@ -66,14 +60,12 @@ export class LessonsGrpcController {
   }
 
   @GrpcContractMethod(GrpcServices.academicLessons, GrpcMethods.academicLessons.deleteLesson)
-  deleteLesson(payload: any, metadata: Metadata) {
-    assertServiceToken(metadata);
+  deleteLesson(payload: any) {
     return runGrpc(() => this.lessonsService.deleteLesson(payload.lessonId));
   }
 
   @GrpcContractMethod(GrpcServices.academicLessons, GrpcMethods.academicLessons.publishLessonToClassroom)
-  publishLessonToClassroom(payload: any, metadata: Metadata) {
-    assertServiceToken(metadata);
+  publishLessonToClassroom(payload: any) {
     return runGrpc(async () =>
       this.toClassroomLesson(
         await this.lessonsService.publishLessonToClassroom(payload.classroomId, {
@@ -85,8 +77,7 @@ export class LessonsGrpcController {
   }
 
   @GrpcContractMethod(GrpcServices.academicLessons, GrpcMethods.academicLessons.getClassroomLessons)
-  getClassroomLessons(payload: any, metadata: Metadata) {
-    assertServiceToken(metadata);
+  getClassroomLessons(payload: any) {
     return runGrpc(async () => ({
       items: (
         await this.lessonsService.getClassroomLessons(payload.classroomId, {
@@ -104,8 +95,7 @@ export class LessonsGrpcController {
   }
 
   @GrpcContractMethod(GrpcServices.academicLessons, GrpcMethods.academicLessons.updateClassroomLesson)
-  updateClassroomLesson(payload: any, metadata: Metadata) {
-    assertServiceToken(metadata);
+  updateClassroomLesson(payload: any) {
     return runGrpc(async () =>
       this.toClassroomLesson(
         await this.lessonsService.updateClassroomLesson(
@@ -118,8 +108,7 @@ export class LessonsGrpcController {
   }
 
   @GrpcContractMethod(GrpcServices.academicLessons, GrpcMethods.academicLessons.removeLessonFromClassroom)
-  removeLessonFromClassroom(payload: any, metadata: Metadata) {
-    assertServiceToken(metadata);
+  removeLessonFromClassroom(payload: any) {
     return runGrpc(() =>
       this.lessonsService.removeLessonFromClassroom(
         payload.classroomId,

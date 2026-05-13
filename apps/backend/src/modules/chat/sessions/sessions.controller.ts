@@ -16,7 +16,7 @@ export class SessionsController {
   @ApiBody({ type: CreateChatSessionDto })
   @ApiCreatedResponse({ description: 'Session created successfully' })
   createSession(@Body() body: CreateChatSessionDto, @CurrentUser() user: CurrentUserPayload) {
-    return this.chatService.createSession(body, user.id);
+    return this.chatService.createSession(body, user.id, user.roles);
   }
 
   @Get()

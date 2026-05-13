@@ -104,6 +104,7 @@ export class RealtimeAccessService {
   private metadataForSocket(socket: AuthenticatedRealtimeSocket) {
     return this.metadataBuilder.buildFromContext({
       userId: socket.data.userId,
+      roles: socket.data.roles,
       authorization: socket.data.authorization,
       requestId: socket.data.requestId,
       correlationId: socket.data.correlationId,

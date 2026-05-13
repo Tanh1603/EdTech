@@ -1,5 +1,5 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { PageDto } from '@edtech/contracts';
+import { PageDto, UserRole } from '@edtech/contracts';
 import { AccessPolicyService } from '../../../common/access/access-policy.service';
 import { AppHttpException } from '../../../common/errors/app-http.exception';
 import { PrismaService } from '../../../common/prisma/prisma.service';
@@ -19,11 +19,20 @@ export class ClassroomsService {
     private readonly jobsService: JobsService,
   ) {}
 
-  async getClassrooms(query: ClassroomQueryDto): Promise<PageDto<unknown>> {
+  async getClassrooms(
+    query: ClassroomQueryDto,
+    userId?: string,
+    roles: UserRole[] = [],
+  ): Promise<PageDto<unknown>> {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
     const where: Prisma.ClassroomWhereInput = {
       ...(query.courseId ? { courseId: query.courseId } : {}),
+      ...(userId && !roles.includes(UserRole.admin)
+        ? roles.includes(UserRole.teacher)
+          ? { course: { teacherId: userId } }
+          : { enrollments: { some: { userId } } }
+        : {}),
     };
 
     const [items, total] = await Promise.all([
@@ -49,7 +58,19 @@ export class ClassroomsService {
     );
   }
 
-  async createClassroom(payload: CreateClassroomDto) {
+  async createClassroom(
+    payload: CreateClassroomDto,
+    userId?: string,
+    roles: UserRole[] = [],
+  ) {
+    if (userId) {
+      await this.accessPolicy.assertCourseTeacherOrAdmin(
+        payload.courseId,
+        userId,
+        roles,
+      );
+    }
+
     this.assertDateRange(payload.startAt, payload.endAt);
 
     const classroom = await this.createClassroomWithUniqueInviteCode(payload);
@@ -79,7 +100,20 @@ export class ClassroomsService {
     return this.toClassroomResponse(classroom);
   }
 
-  async updateClassroom(classroomId: string, payload: UpdateClassroomDto) {
+  async updateClassroom(
+    classroomId: string,
+    payload: UpdateClassroomDto,
+    userId?: string,
+    roles: UserRole[] = [],
+  ) {
+    if (userId) {
+      await this.accessPolicy.assertClassTeacherOrAdmin(
+        classroomId,
+        userId,
+        roles,
+      );
+    }
+
     this.assertDateRange(payload.startAt, payload.endAt);
 
     const classroom = await this.prisma.classroom.update({
@@ -99,7 +133,19 @@ export class ClassroomsService {
     return this.toClassroomResponse(classroom);
   }
 
-  async deleteClassroom(classroomId: string) {
+  async deleteClassroom(
+    classroomId: string,
+    userId?: string,
+    roles: UserRole[] = [],
+  ) {
+    if (userId) {
+      await this.accessPolicy.assertClassTeacherOrAdmin(
+        classroomId,
+        userId,
+        roles,
+      );
+    }
+
     await this.prisma.$transaction([
       this.prisma.classroomLesson.deleteMany({ where: { classId: classroomId } }),
       this.prisma.enrollment.deleteMany({ where: { classId: classroomId } }),
@@ -109,7 +155,19 @@ export class ClassroomsService {
     return { id: classroomId, deleted: true };
   }
 
-  async regenerateInviteCode(classroomId: string) {
+  async regenerateInviteCode(
+    classroomId: string,
+    userId?: string,
+    roles: UserRole[] = [],
+  ) {
+    if (userId) {
+      await this.accessPolicy.assertClassTeacherOrAdmin(
+        classroomId,
+        userId,
+        roles,
+      );
+    }
+
     for (let attempt = 0; attempt < 5; attempt += 1) {
       try {
         const classroom = await this.prisma.classroom.update({
@@ -133,7 +191,16 @@ export class ClassroomsService {
     );
   }
 
-  async inviteClassMembers(classId: string, payload: ClassInvitesDto) {
+  async inviteClassMembers(
+    classId: string,
+    payload: ClassInvitesDto,
+    userId?: string,
+    roles: UserRole[] = [],
+  ) {
+    if (userId) {
+      await this.accessPolicy.assertClassTeacherOrAdmin(classId, userId, roles);
+    }
+
     await this.prisma.classroom.findUniqueOrThrow({ where: { id: classId } });
 
     const job = await this.jobsService.enqueue({

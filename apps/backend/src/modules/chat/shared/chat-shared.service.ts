@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PageDto } from '@edtech/contracts';
+import { UserRole } from '@edtech/contracts';
 import { AccessPolicyService } from '../../../common/access/access-policy.service';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import { Prisma } from '../../../generated/prisma/client';
@@ -18,9 +19,13 @@ export class ChatSharedService {
     private readonly prisma: PrismaService,
   ) {}
 
-  async createSession(payload: CreateChatSessionDto, userId: string) {
+  async createSession(
+    payload: CreateChatSessionDto,
+    userId: string,
+    roles: UserRole[] = [],
+  ) {
     if (payload.classId) {
-      await this.accessPolicy.assertClassroomAccess(payload.classId, userId);
+      await this.accessPolicy.assertClassroomAccess(payload.classId, userId, roles);
     }
 
     return this.prisma.chatSession.create({
@@ -162,8 +167,12 @@ export class ChatSharedService {
     return { totalSessions, totalMessages, favoriteTopics: [] };
   }
 
-  async getClassroomAnalytics(classId: string, userId: string) {
-    await this.accessPolicy.assertClassroomAccess(classId, userId);
+  async getClassroomAnalytics(
+    classId: string,
+    userId: string,
+    roles: UserRole[] = [],
+  ) {
+    await this.accessPolicy.assertClassroomAccess(classId, userId, roles);
 
     const sessions = await this.prisma.chatSession.findMany({
       where: { classId },

@@ -22,6 +22,8 @@ import {
 import { CourseQueryDto } from '@edtech/contracts';
 import { CreateCourseDto } from '@edtech/contracts';
 import { UpdateCourseDto } from '@edtech/contracts';
+import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import { CurrentUser as CurrentUserPayload } from '../../../common/types/current-user.type';
 import { CoursesService } from './courses.service';
 
 @ApiTags('Academic - Courses')
@@ -42,24 +44,27 @@ export class CoursesController {
     example: 'teacher_123',
   })
   @ApiOkResponse({ description: 'Courses returned successfully' })
-  getCourses(@Query() query: CourseQueryDto) {
-    return this.coursesService.getCourses(query);
+  getCourses(@Query() query: CourseQueryDto, @CurrentUser() user: CurrentUserPayload) {
+    return this.coursesService.getCourses(query, user.id, user.roles);
   }
 
   @Post()
   @ApiOperation({ summary: 'Create course' })
   @ApiBody({ type: CreateCourseDto })
   @ApiCreatedResponse({ description: 'Course created successfully' })
-  createCourse(@Body() body: CreateCourseDto) {
-    return this.coursesService.createCourse(body);
+  createCourse(@Body() body: CreateCourseDto, @CurrentUser() user: CurrentUserPayload) {
+    return this.coursesService.createCourse(body, user.id, user.roles);
   }
 
   @Get(':courseId')
   @ApiOperation({ summary: 'Get course detail' })
   @ApiParam({ name: 'courseId', format: 'uuid' })
   @ApiOkResponse({ description: 'Course detail returned successfully' })
-  getCourseDetail(@Param('courseId', ParseUUIDPipe) courseId: string) {
-    return this.coursesService.getCourseDetail(courseId);
+  getCourseDetail(
+    @Param('courseId', ParseUUIDPipe) courseId: string,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
+    return this.coursesService.getCourseDetail(courseId, user.id, user.roles);
   }
 
   @Patch(':courseId')
@@ -70,15 +75,19 @@ export class CoursesController {
   updateCourse(
     @Param('courseId', ParseUUIDPipe) courseId: string,
     @Body() body: UpdateCourseDto,
+    @CurrentUser() user: CurrentUserPayload,
   ) {
-    return this.coursesService.updateCourse(courseId, body);
+    return this.coursesService.updateCourse(courseId, body, user.id, user.roles);
   }
 
   @Delete(':courseId')
   @ApiOperation({ summary: 'Delete course' })
   @ApiParam({ name: 'courseId', format: 'uuid' })
   @ApiOkResponse({ description: 'Course deleted successfully' })
-  deleteCourse(@Param('courseId', ParseUUIDPipe) courseId: string) {
-    return this.coursesService.deleteCourse(courseId);
+  deleteCourse(
+    @Param('courseId', ParseUUIDPipe) courseId: string,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
+    return this.coursesService.deleteCourse(courseId, user.id, user.roles);
   }
 }

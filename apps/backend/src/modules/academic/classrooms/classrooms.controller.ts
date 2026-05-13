@@ -42,8 +42,13 @@ export class ClassroomsController {
   @ApiCreatedResponse({ description: 'Invite code regenerated successfully' })
   regenerateInviteCode(
     @Param('classroomId', ParseUUIDPipe) classroomId: string,
+    @CurrentUser() user: CurrentUserPayload,
   ) {
-    return this.classroomsService.regenerateInviteCode(classroomId);
+    return this.classroomsService.regenerateInviteCode(
+      classroomId,
+      user.id,
+      user.roles,
+    );
   }
 
   @Get('classes/:classroomId')
@@ -65,16 +70,29 @@ export class ClassroomsController {
   updateClassroom(
     @Param('classroomId', ParseUUIDPipe) classroomId: string,
     @Body() body: UpdateClassroomDto,
+    @CurrentUser() user: CurrentUserPayload,
   ) {
-    return this.classroomsService.updateClassroom(classroomId, body);
+    return this.classroomsService.updateClassroom(
+      classroomId,
+      body,
+      user.id,
+      user.roles,
+    );
   }
 
   @Delete('classes/:classroomId')
   @ApiOperation({ summary: 'Delete classroom' })
   @ApiParam({ name: 'classroomId', format: 'uuid' })
   @ApiOkResponse({ description: 'Classroom deleted successfully' })
-  deleteClassroom(@Param('classroomId', ParseUUIDPipe) classroomId: string) {
-    return this.classroomsService.deleteClassroom(classroomId);
+  deleteClassroom(
+    @Param('classroomId', ParseUUIDPipe) classroomId: string,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
+    return this.classroomsService.deleteClassroom(
+      classroomId,
+      user.id,
+      user.roles,
+    );
   }
 
   @Get('classes')
@@ -83,16 +101,16 @@ export class ClassroomsController {
   @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
   @ApiQuery({ name: 'courseId', required: false, format: 'uuid' })
   @ApiOkResponse({ description: 'Classes returned successfully' })
-  getClasses(@Query() query: ClassroomQueryDto) {
-    return this.classroomsService.getClassrooms(query);
+  getClasses(@Query() query: ClassroomQueryDto, @CurrentUser() user: CurrentUserPayload) {
+    return this.classroomsService.getClassrooms(query, user.id, user.roles);
   }
 
   @Post('classes')
   @ApiOperation({ summary: 'Create class alias' })
   @ApiBody({ type: CreateClassroomDto })
   @ApiCreatedResponse({ description: 'Class created successfully' })
-  createClass(@Body() body: CreateClassroomDto) {
-    return this.classroomsService.createClassroom(body);
+  createClass(@Body() body: CreateClassroomDto, @CurrentUser() user: CurrentUserPayload) {
+    return this.classroomsService.createClassroom(body, user.id, user.roles);
   }
 
   @Post('classes/:classId/invites')
@@ -104,7 +122,13 @@ export class ClassroomsController {
   inviteClassMembers(
     @Param('classId', ParseUUIDPipe) classId: string,
     @Body() body: ClassInvitesDto,
+    @CurrentUser() user: CurrentUserPayload,
   ) {
-    return this.classroomsService.inviteClassMembers(classId, body);
+    return this.classroomsService.inviteClassMembers(
+      classId,
+      body,
+      user.id,
+      user.roles,
+    );
   }
 }

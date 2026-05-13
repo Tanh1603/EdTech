@@ -20,7 +20,7 @@ export class QuestionsController {
     @Body() body: CreateQuestionDto,
     @CurrentUser() user: CurrentUserPayload,
   ) {
-    return this.assessmentsService.createQuestion(examId, body, user.id);
+    return this.assessmentsService.createQuestion(examId, body, user.id, user.roles);
   }
 
   @Get('exams/:examId/questions')
@@ -31,7 +31,7 @@ export class QuestionsController {
     @Param('examId', ParseUUIDPipe) examId: string,
     @CurrentUser() user: CurrentUserPayload,
   ) {
-    return this.assessmentsService.getExamQuestions(examId, user.id);
+    return this.assessmentsService.getExamQuestions(examId, user.id, user.roles);
   }
 
   @Get('questions/:questionId')
@@ -41,7 +41,11 @@ export class QuestionsController {
     @Param('questionId', ParseUUIDPipe) questionId: string,
     @CurrentUser() user: CurrentUserPayload,
   ) {
-    return this.assessmentsService.getQuestionDetail(questionId, user.id);
+    return this.assessmentsService.getQuestionDetail(
+      questionId,
+      user.id,
+      user.roles,
+    );
   }
 
   @Patch('questions/:questionId')
@@ -53,7 +57,12 @@ export class QuestionsController {
     @Body() body: UpdateQuestionDto,
     @CurrentUser() user: CurrentUserPayload,
   ) {
-    return this.assessmentsService.updateQuestion(questionId, body, user.id);
+    return this.assessmentsService.updateQuestion(
+      questionId,
+      body,
+      user.id,
+      user.roles,
+    );
   }
 
   @Delete('questions/:questionId')
@@ -63,7 +72,7 @@ export class QuestionsController {
     @Param('questionId', ParseUUIDPipe) questionId: string,
     @CurrentUser() user: CurrentUserPayload,
   ) {
-    return this.assessmentsService.deleteQuestion(questionId, user.id);
+    return this.assessmentsService.deleteQuestion(questionId, user.id, user.roles);
   }
 
   @Post('questions/reorder')
@@ -73,6 +82,6 @@ export class QuestionsController {
     @Body() body: ReorderQuestionsDto,
     @CurrentUser() user: CurrentUserPayload,
   ) {
-    return this.assessmentsService.reorderQuestions(body, user.id);
+    return this.assessmentsService.reorderQuestions(body, user.id, user.roles);
   }
 }

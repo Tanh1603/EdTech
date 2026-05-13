@@ -4,8 +4,8 @@ import {
   GrpcContractMethod,
   GrpcMethods,
   GrpcServices,
-  toGrpcPage,
-  toIsoString,
+  toObjectResponse,
+  toPageResponse,
 } from '@edtech/contracts';
 import { GrpcUserAuthGuard } from '../../../common/guards/grpc-user-auth.guard';
 import { getGrpcIdentity } from '../../../common/grpc/metadata.mapper';
@@ -18,7 +18,7 @@ export class CoursesGrpcController {
   constructor(private readonly coursesService: CoursesService) {}
 
   @GrpcContractMethod(GrpcServices.academicCourses, GrpcMethods.academicCourses.getCourses)
-  getCourses(payload: any, metadata: Metadata) {
+  async getCourses(payload: any, metadata: Metadata) {
     return runGrpc(async () => {
       const identity = getGrpcIdentity(metadata);
       const page = await this.coursesService.getCourses(
@@ -31,7 +31,7 @@ export class CoursesGrpcController {
         identity.userId,
         identity.roles,
       );
-      return toGrpcPage(page as any, this.toCourse);
+      return toPageResponse(page as any);
     });
   }
 
@@ -39,8 +39,7 @@ export class CoursesGrpcController {
   createCourse(payload: any, metadata: Metadata) {
     return runGrpc(async () => {
       const identity = getGrpcIdentity(metadata);
-      return this.toCourse(
-        await this.coursesService.createCourse(
+      return Promise.resolve(this.coursesService.createCourse(
           {
             teacherId: payload.teacherId,
             name: payload.name,
@@ -49,8 +48,7 @@ export class CoursesGrpcController {
           },
           identity.userId,
           identity.roles,
-        ),
-      );
+      )).then(toObjectResponse);
     });
   }
 
@@ -58,13 +56,11 @@ export class CoursesGrpcController {
   getCourseDetail(payload: any, metadata: Metadata) {
     return runGrpc(async () => {
       const identity = getGrpcIdentity(metadata);
-      return this.toCourseDetail(
-        await this.coursesService.getCourseDetail(
+      return Promise.resolve(this.coursesService.getCourseDetail(
           payload.courseId,
           identity.userId,
           identity.roles,
-        ),
-      );
+      )).then(toObjectResponse);
     });
   }
 
@@ -72,8 +68,7 @@ export class CoursesGrpcController {
   updateCourse(payload: any, metadata: Metadata) {
     return runGrpc(async () => {
       const identity = getGrpcIdentity(metadata);
-      return this.toCourse(
-        await this.coursesService.updateCourse(
+      return Promise.resolve(this.coursesService.updateCourse(
           payload.courseId,
           {
             name: payload.name,
@@ -82,8 +77,7 @@ export class CoursesGrpcController {
           },
           identity.userId,
           identity.roles,
-        ),
-      );
+      )).then(toObjectResponse);
     });
   }
 
@@ -99,35 +93,4 @@ export class CoursesGrpcController {
     });
   }
 
-  private toCourse = (course: any) => ({
-    id: course.id,
-    teacherId: course.teacherId,
-    name: course.name,
-    description: course.description ?? '',
-    thumbnailUrl: course.thumbnailUrl ?? '',
-    createdAt: toIsoString(course.createdAt),
-    updatedAt: toIsoString(course.updatedAt),
-  });
-
-  private toCourseDetail = (course: any) => ({
-    ...this.toCourse(course),
-    classrooms: (course.classrooms ?? []).map((classroom: any) => ({
-      id: classroom.id,
-      courseId: classroom.courseId,
-      name: classroom.name,
-      inviteCode: classroom.inviteCode,
-      startAt: toIsoString(classroom.startAt),
-      endAt: toIsoString(classroom.endAt),
-      createdAt: toIsoString(classroom.createdAt),
-    })),
-    lessons: (course.lessons ?? []).map((lesson: any) => ({
-      id: lesson.id,
-      courseId: lesson.courseId,
-      title: lesson.title,
-      description: lesson.description ?? '',
-      orderNo: lesson.orderNo,
-      createdAt: toIsoString(lesson.createdAt),
-      updatedAt: toIsoString(lesson.updatedAt),
-    })),
-  });
 }

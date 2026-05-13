@@ -1,7 +1,12 @@
 import { Metadata } from '@grpc/grpc-js';
 import { Controller, UseGuards } from '@nestjs/common';
-import { GrpcContractMethod, GrpcMethods, GrpcServices } from '@edtech/contracts';
-import { toIsoString } from '@edtech/contracts';
+import {
+  GrpcContractMethod,
+  GrpcMethods,
+  GrpcServices,
+  toListResponse,
+  toObjectResponse,
+} from '@edtech/contracts';
 import { GrpcUserAuthGuard } from '../../../common/guards/grpc-user-auth.guard';
 import { getGrpcIdentity } from '../../../common/grpc/metadata.mapper';
 import { runGrpc } from '../../../common/grpc/error-to-rpc-exception';
@@ -16,12 +21,10 @@ export class EnrollmentsGrpcController {
   joinClassroom(payload: any, metadata: Metadata) {
     return runGrpc(async () => {
       const identity = getGrpcIdentity(metadata);
-      return this.toEnrollment(
-        await this.enrollmentsService.joinClassroom(
+      return Promise.resolve(this.enrollmentsService.joinClassroom(
           { inviteCode: payload.inviteCode },
           identity.userId,
-        ),
-      );
+      )).then(toObjectResponse);
     });
   }
 
@@ -29,13 +32,11 @@ export class EnrollmentsGrpcController {
   createEnrollment(payload: any, metadata: Metadata) {
     return runGrpc(async () => {
       const identity = getGrpcIdentity(metadata);
-      return this.toEnrollment(
-        await this.enrollmentsService.createEnrollment({
+      return Promise.resolve(this.enrollmentsService.createEnrollment({
           classId: payload.classId,
           userId: payload.userId,
           role: payload.role,
-        }, identity.userId, identity.roles),
-      );
+        }, identity.userId, identity.roles)).then(toObjectResponse);
     });
   }
 
@@ -43,15 +44,13 @@ export class EnrollmentsGrpcController {
   getClassroomStudents(payload: any, metadata: Metadata) {
     return runGrpc(async () => {
       const identity = getGrpcIdentity(metadata);
-      return {
-        items: (
-          await this.enrollmentsService.getClassroomStudents(
+      return Promise.resolve(
+        this.enrollmentsService.getClassroomStudents(
             payload.classroomId,
             identity.userId,
             identity.roles,
-          )
-        ).map(this.toStudentEnrollment),
-      };
+        ),
+      ).then(toListResponse);
     });
   }
 
@@ -59,14 +58,12 @@ export class EnrollmentsGrpcController {
   updateEnrollmentRole(payload: any, metadata: Metadata) {
     return runGrpc(async () => {
       const identity = getGrpcIdentity(metadata);
-      return this.toEnrollment(
-        await this.enrollmentsService.updateEnrollmentRole(
+      return Promise.resolve(this.enrollmentsService.updateEnrollmentRole(
           payload.enrollmentId,
           { role: payload.role },
           identity.userId,
           identity.roles,
-        ),
-      );
+      )).then(toObjectResponse);
     });
   }
 
@@ -81,19 +78,4 @@ export class EnrollmentsGrpcController {
       );
     });
   }
-
-  private toEnrollment = (enrollment: any) => ({
-    id: enrollment.id,
-    classId: enrollment.classId,
-    userId: enrollment.userId,
-    role: enrollment.role,
-    joinedAt: toIsoString(enrollment.joinedAt),
-  });
-
-  private toStudentEnrollment = (enrollment: any) => ({
-    id: enrollment.id,
-    userId: enrollment.userId,
-    role: enrollment.role,
-    joinedAt: toIsoString(enrollment.joinedAt),
-  });
 }

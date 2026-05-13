@@ -4,17 +4,18 @@ package academic;
 
 import "common/pagination.proto";
 import "common/envelope.proto";
+import "common/json.proto";
 
 service AcademicLessonsService {
-  rpc CreateLesson (CreateLessonRequest) returns (Lesson);
-  rpc GetLessonsByCourse (CourseLessonsQuery) returns (LessonPage);
-  rpc GetLessonDetail (LessonIdRequest) returns (LessonDetail);
-  rpc UpdateLesson (UpdateLessonRequest) returns (Lesson);
+  rpc CreateLesson (CreateLessonRequest) returns (common.ObjectResponse);
+  rpc GetLessonsByCourse (CourseLessonsQuery) returns (common.PageResponse);
+  rpc GetLessonDetail (LessonIdRequest) returns (common.ObjectResponse);
+  rpc UpdateLesson (UpdateLessonRequest) returns (common.ObjectResponse);
   rpc DeleteLesson (LessonIdRequest) returns (common.DeleteResponse);
-  rpc PublishLessonToClassroom (PublishClassroomLessonRequest) returns (ClassroomLesson);
-  rpc GetClassroomLessons (ClassroomLessonsQuery) returns (ClassroomLessonList);
-  rpc UpdateClassroomLesson (UpdateClassroomLessonRequest) returns (ClassroomLesson);
-  rpc RemoveLessonFromClassroom (RemoveClassroomLessonRequest) returns (RemoveClassroomLessonResponse);
+  rpc PublishLessonToClassroom (PublishClassroomLessonRequest) returns (common.ObjectResponse);
+  rpc GetClassroomLessons (ClassroomLessonsQuery) returns (common.ListResponse);
+  rpc UpdateClassroomLesson (UpdateClassroomLessonRequest) returns (common.ObjectResponse);
+  rpc RemoveLessonFromClassroom (RemoveClassroomLessonRequest) returns (common.ObjectResponse);
 }
 
 message CreateLessonRequest {

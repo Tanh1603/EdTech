@@ -20,7 +20,13 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { lastValueFrom } from 'rxjs';
-import { CourseQueryDto, CreateCourseDto, UpdateCourseDto } from '@edtech/contracts';
+import {
+  CourseQueryDto,
+  CreateCourseDto,
+  unwrapObjectResponse,
+  unwrapPageResponse,
+  UpdateCourseDto,
+} from '@edtech/contracts';
 import { GrpcMetadataBuilder } from '../common/grpc-metadata/grpc-metadata.builder';
 import { RequestWithContext } from '../common/types/request-with-context';
 import { BeCoreGrpcClientService } from '../grpc-clients/be-core-grpc-client.service';
@@ -41,8 +47,8 @@ export class CoursesGatewayController {
   @ApiQuery({ name: 'search', required: false, type: String, example: 'math' })
   @ApiQuery({ name: 'teacherId', required: false, type: String })
   @ApiOkResponse({ description: 'Courses returned successfully' })
-  getCourses(@Query() query: CourseQueryDto, @Req() req: RequestWithContext) {
-    return lastValueFrom(
+  async getCourses(@Query() query: CourseQueryDto, @Req() req: RequestWithContext) {
+    return unwrapPageResponse(await lastValueFrom(
       this.grpc.courses.getCourses(
         {
           page: Number(query.page) || undefined,
@@ -52,15 +58,15 @@ export class CoursesGatewayController {
         },
         this.metadataBuilder.build(req),
       ),
-    );
+    ));
   }
 
   @Post()
   @ApiOperation({ summary: 'Create course' })
   @ApiBody({ type: CreateCourseDto })
   @ApiCreatedResponse({ description: 'Course created successfully' })
-  createCourse(@Body() body: CreateCourseDto, @Req() req: RequestWithContext) {
-    return lastValueFrom(
+  async createCourse(@Body() body: CreateCourseDto, @Req() req: RequestWithContext) {
+    return unwrapObjectResponse(await lastValueFrom(
       this.grpc.courses.createCourse(
         {
           teacherId: body.teacherId,
@@ -70,23 +76,23 @@ export class CoursesGatewayController {
         },
         this.metadataBuilder.build(req),
       ),
-    );
+    ));
   }
 
   @Get(':courseId')
   @ApiOperation({ summary: 'Get course detail' })
   @ApiParam({ name: 'courseId', format: 'uuid' })
   @ApiOkResponse({ description: 'Course detail returned successfully' })
-  getCourseDetail(
+  async getCourseDetail(
     @Param('courseId') courseId: string,
     @Req() req: RequestWithContext,
   ) {
-    return lastValueFrom(
+    return unwrapObjectResponse(await lastValueFrom(
       this.grpc.courses.getCourseDetail(
         { courseId },
         this.metadataBuilder.build(req),
       ),
-    );
+    ));
   }
 
   @Patch(':courseId')
@@ -94,12 +100,12 @@ export class CoursesGatewayController {
   @ApiParam({ name: 'courseId', format: 'uuid' })
   @ApiBody({ type: UpdateCourseDto })
   @ApiOkResponse({ description: 'Course updated successfully' })
-  updateCourse(
+  async updateCourse(
     @Param('courseId') courseId: string,
     @Body() body: UpdateCourseDto,
     @Req() req: RequestWithContext,
   ) {
-    return lastValueFrom(
+    return unwrapObjectResponse(await lastValueFrom(
       this.grpc.courses.updateCourse(
         {
           courseId,
@@ -109,7 +115,7 @@ export class CoursesGatewayController {
         },
         this.metadataBuilder.build(req),
       ),
-    );
+    ));
   }
 
   @Delete(':courseId')

@@ -3,12 +3,13 @@ syntax = "proto3";
 package academic;
 
 import "common/envelope.proto";
+import "common/json.proto";
 
 service AcademicEnrollmentsService {
-  rpc JoinClassroom (JoinClassroomRequest) returns (Enrollment);
-  rpc CreateEnrollment (CreateEnrollmentRequest) returns (Enrollment);
-  rpc GetClassroomStudents (EnrollmentClassroomIdRequest) returns (StudentEnrollmentList);
-  rpc UpdateEnrollmentRole (UpdateEnrollmentRoleRequest) returns (Enrollment);
+  rpc JoinClassroom (JoinClassroomRequest) returns (common.ObjectResponse);
+  rpc CreateEnrollment (CreateEnrollmentRequest) returns (common.ObjectResponse);
+  rpc GetClassroomStudents (EnrollmentClassroomIdRequest) returns (common.ListResponse);
+  rpc UpdateEnrollmentRole (UpdateEnrollmentRoleRequest) returns (common.ObjectResponse);
   rpc RemoveEnrollment (EnrollmentIdRequest) returns (common.DeleteResponse);
 }
 

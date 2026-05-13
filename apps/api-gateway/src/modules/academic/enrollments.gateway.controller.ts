@@ -18,7 +18,13 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { lastValueFrom } from 'rxjs';
-import { CreateEnrollmentDto, JoinClassroomDto, UpdateEnrollmentDto } from '@edtech/contracts';
+import {
+  CreateEnrollmentDto,
+  JoinClassroomDto,
+  unwrapListResponse,
+  unwrapObjectResponse,
+  UpdateEnrollmentDto,
+} from '@edtech/contracts';
 import { GrpcMetadataBuilder } from '../common/grpc-metadata/grpc-metadata.builder';
 import { RequestWithContext } from '../common/types/request-with-context';
 import { BeCoreGrpcClientService } from '../grpc-clients/be-core-grpc-client.service';
@@ -36,21 +42,21 @@ export class EnrollmentsGatewayController {
   @ApiOperation({ summary: 'Join classroom by invite code' })
   @ApiBody({ type: JoinClassroomDto })
   @ApiCreatedResponse({ description: 'Joined classroom successfully' })
-  joinClassroom(@Body() body: JoinClassroomDto, @Req() req: RequestWithContext) {
-    return lastValueFrom(
+  async joinClassroom(@Body() body: JoinClassroomDto, @Req() req: RequestWithContext) {
+    return unwrapObjectResponse(await lastValueFrom(
       this.grpc.enrollments.joinClassroom(
         { inviteCode: body.inviteCode, userId: req.user?.id },
         this.metadataBuilder.build(req),
       ),
-    );
+    ));
   }
 
   @Post('enrollments')
   @ApiOperation({ summary: 'Add student to classroom' })
   @ApiBody({ type: CreateEnrollmentDto })
   @ApiCreatedResponse({ description: 'Enrollment created successfully' })
-  createEnrollment(@Body() body: CreateEnrollmentDto, @Req() req: RequestWithContext) {
-    return lastValueFrom(
+  async createEnrollment(@Body() body: CreateEnrollmentDto, @Req() req: RequestWithContext) {
+    return unwrapObjectResponse(await lastValueFrom(
       this.grpc.enrollments.createEnrollment(
         {
           classId: body.classId,
@@ -59,7 +65,7 @@ export class EnrollmentsGatewayController {
         },
         this.metadataBuilder.build(req),
       ),
-    );
+    ));
   }
 
   @Get('classrooms/:classroomId/students')
@@ -76,7 +82,7 @@ export class EnrollmentsGatewayController {
         this.metadataBuilder.build(req),
       ),
     );
-    return response.items ?? [];
+    return unwrapListResponse(response).items;
   }
 
   @Patch('enrollments/:enrollmentId')
@@ -84,17 +90,17 @@ export class EnrollmentsGatewayController {
   @ApiParam({ name: 'enrollmentId', format: 'uuid' })
   @ApiBody({ type: UpdateEnrollmentDto })
   @ApiOkResponse({ description: 'Enrollment updated successfully' })
-  updateEnrollmentRole(
+  async updateEnrollmentRole(
     @Param('enrollmentId') enrollmentId: string,
     @Body() body: UpdateEnrollmentDto,
     @Req() req: RequestWithContext,
   ) {
-    return lastValueFrom(
+    return unwrapObjectResponse(await lastValueFrom(
       this.grpc.enrollments.updateEnrollmentRole(
         { enrollmentId, role: body.role },
         this.metadataBuilder.build(req),
       ),
-    );
+    ));
   }
 
   @Delete('enrollments/:enrollmentId')

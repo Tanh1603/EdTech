@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PageDto, UserRole } from '@edtech/contracts';
+import { PageDto, toIsoString, UserRole } from '@edtech/contracts';
 import { AccessPolicyService } from '../../../common/access/access-policy.service';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import { Prisma } from '../../../generated/prisma/client';
@@ -44,7 +44,12 @@ export class CoursesService {
       this.prisma.course.count({ where }),
     ]);
 
-    return this.toPage(items, page, limit, total);
+    return this.toPage(
+      items.map((course) => this.toCourseResponse(course)),
+      page,
+      limit,
+      total,
+    );
   }
 
   async createCourse(
@@ -53,12 +58,14 @@ export class CoursesService {
     roles: UserRole[] = [],
   ) {
     this.accessPolicy.assertTeacher(roles);
-    return this.prisma.course.create({
+    const course = await this.prisma.course.create({
       data: {
         ...payload,
         teacherId: roles.includes(UserRole.admin) ? payload.teacherId : userId,
       },
     });
+
+    return this.toCourseResponse(course);
   }
 
   async getCourseDetail(
@@ -83,13 +90,15 @@ export class CoursesService {
       }
     }
 
-    return this.prisma.course.findUniqueOrThrow({
+    const course = await this.prisma.course.findUniqueOrThrow({
       where: { id: courseId },
       include: {
         classrooms: true,
         lessons: { orderBy: { orderNo: 'asc' } },
       },
     });
+
+    return this.toCourseDetailResponse(course);
   }
 
   async updateCourse(
@@ -99,10 +108,12 @@ export class CoursesService {
     roles: UserRole[] = [],
   ) {
     await this.accessPolicy.assertCourseTeacherOrAdmin(courseId, userId, roles);
-    return this.prisma.course.update({
+    const course = await this.prisma.course.update({
       where: { id: courseId },
       data: payload,
     });
+
+    return this.toCourseResponse(course);
   }
 
   async deleteCourse(courseId: string, userId: string, roles: UserRole[] = []) {
@@ -125,6 +136,69 @@ export class CoursesService {
         total,
         totalPages: Math.ceil(total / limit),
       },
+    };
+  }
+
+  private toCourseResponse(course: {
+    id: string;
+    teacherId: string;
+    name: string;
+    description: string | null;
+    thumbnailUrl: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  }) {
+    return {
+      id: course.id,
+      teacherId: course.teacherId,
+      name: course.name,
+      description: course.description ?? '',
+      thumbnailUrl: course.thumbnailUrl ?? '',
+      createdAt: toIsoString(course.createdAt),
+      updatedAt: toIsoString(course.updatedAt),
+    };
+  }
+
+  private toCourseDetailResponse(course: Parameters<typeof this.toCourseResponse>[0] & {
+    classrooms?: Array<{
+      id: string;
+      courseId: string;
+      name: string;
+      inviteCode: string;
+      startAt: Date;
+      endAt: Date;
+      createdAt: Date;
+    }>;
+    lessons?: Array<{
+      id: string;
+      courseId: string;
+      title: string;
+      description: string | null;
+      orderNo: number;
+      createdAt: Date;
+      updatedAt: Date;
+    }>;
+  }) {
+    return {
+      ...this.toCourseResponse(course),
+      classrooms: (course.classrooms ?? []).map((classroom) => ({
+        id: classroom.id,
+        courseId: classroom.courseId,
+        name: classroom.name,
+        inviteCode: classroom.inviteCode,
+        startAt: toIsoString(classroom.startAt),
+        endAt: toIsoString(classroom.endAt),
+        createdAt: toIsoString(classroom.createdAt),
+      })),
+      lessons: (course.lessons ?? []).map((lesson) => ({
+        id: lesson.id,
+        courseId: lesson.courseId,
+        title: lesson.title,
+        description: lesson.description ?? '',
+        orderNo: lesson.orderNo,
+        createdAt: toIsoString(lesson.createdAt),
+        updatedAt: toIsoString(lesson.updatedAt),
+      })),
     };
   }
 }

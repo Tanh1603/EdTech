@@ -4,12 +4,13 @@ package academic;
 
 import "common/pagination.proto";
 import "common/envelope.proto";
+import "common/json.proto";
 
 service AcademicCoursesService {
-  rpc GetCourses (CourseQuery) returns (CoursePage);
-  rpc CreateCourse (CreateCourseRequest) returns (Course);
-  rpc GetCourseDetail (CourseIdRequest) returns (CourseDetail);
-  rpc UpdateCourse (UpdateCourseRequest) returns (Course);
+  rpc GetCourses (CourseQuery) returns (common.PageResponse);
+  rpc CreateCourse (CreateCourseRequest) returns (common.ObjectResponse);
+  rpc GetCourseDetail (CourseIdRequest) returns (common.ObjectResponse);
+  rpc UpdateCourse (UpdateCourseRequest) returns (common.ObjectResponse);
   rpc DeleteCourse (CourseIdRequest) returns (common.DeleteResponse);
 }
 

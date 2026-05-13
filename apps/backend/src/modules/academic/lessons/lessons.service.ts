@@ -1,5 +1,5 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { PageDto } from '@edtech/contracts';
+import { PageDto, toIsoString } from '@edtech/contracts';
 import { PaginationQueryDto } from '@edtech/contracts';
 import { AppHttpException } from '../../../common/errors/app-http.exception';
 import { PrismaService } from '../../../common/prisma/prisma.service';
@@ -19,7 +19,8 @@ export class LessonsService {
   ) {}
 
   async createLesson(payload: CreateLessonDto) {
-    return this.prisma.lesson.create({ data: payload });
+    const lesson = await this.prisma.lesson.create({ data: payload });
+    return this.toLessonResponse(lesson);
   }
 
   async getLessonsByCourse(
@@ -40,24 +41,33 @@ export class LessonsService {
       this.prisma.lesson.count({ where }),
     ]);
 
-    return this.toPage(items, page, limit, total);
+    return this.toPage(
+      items.map((lesson) => this.toLessonResponse(lesson)),
+      page,
+      limit,
+      total,
+    );
   }
 
   async getLessonDetail(lessonId: string) {
-    return this.prisma.lesson.findUniqueOrThrow({
+    const lesson = await this.prisma.lesson.findUniqueOrThrow({
       where: { id: lessonId },
       include: {
         materials: true,
         classroomLessons: true,
       },
     });
+
+    return this.toLessonDetailResponse(lesson);
   }
 
   async updateLesson(lessonId: string, payload: UpdateLessonDto) {
-    return this.prisma.lesson.update({
+    const lesson = await this.prisma.lesson.update({
       where: { id: lessonId },
       data: payload,
     });
+
+    return this.toLessonResponse(lesson);
   }
 
   async deleteLesson(lessonId: string) {
@@ -118,10 +128,10 @@ export class LessonsService {
     return classroomLessons.map(({ lesson, ...classroomLesson }) => ({
       lessonId: lesson.id,
       title: lesson.title,
-      description: lesson.description,
+      description: lesson.description ?? '',
       orderNo: lesson.orderNo,
       isPublished: classroomLesson.isPublished,
-      publishedAt: classroomLesson.publishedAt,
+      publishedAt: toIsoString(classroomLesson.publishedAt),
     }));
   }
 
@@ -215,7 +225,70 @@ export class LessonsService {
       classroomId: classroomLesson.classId,
       lessonId: classroomLesson.lessonId,
       isPublished: classroomLesson.isPublished,
-      publishedAt: classroomLesson.publishedAt,
+      publishedAt: toIsoString(classroomLesson.publishedAt),
+    };
+  }
+
+  private toLessonResponse(lesson: {
+    id: string;
+    courseId: string;
+    title: string;
+    description: string | null;
+    orderNo: number;
+    createdAt: Date;
+    updatedAt: Date;
+  }) {
+    return {
+      id: lesson.id,
+      courseId: lesson.courseId,
+      title: lesson.title,
+      description: lesson.description ?? '',
+      orderNo: lesson.orderNo,
+      createdAt: toIsoString(lesson.createdAt),
+      updatedAt: toIsoString(lesson.updatedAt),
+    };
+  }
+
+  private toLessonDetailResponse(lesson: Parameters<typeof this.toLessonResponse>[0] & {
+    materials?: Array<{
+      id: string;
+      lessonId: string;
+      title: string;
+      storageUrl: string;
+      publicId: string | null;
+      mimeType: string | null;
+      size: number | null;
+      status: string;
+      createdBy: string;
+      createdAt: Date;
+    }>;
+    classroomLessons?: Array<{
+      classId: string;
+      lessonId: string;
+      isPublished: boolean;
+      publishedAt: Date | null;
+    }>;
+  }) {
+    return {
+      ...this.toLessonResponse(lesson),
+      materials: (lesson.materials ?? []).map((material) => ({
+        id: material.id,
+        lessonId: material.lessonId,
+        title: material.title,
+        storageUrl: material.storageUrl,
+        publicId: material.publicId ?? '',
+        mimeType: material.mimeType ?? '',
+        size: material.size ?? 0,
+        status: material.status,
+        createdBy: material.createdBy,
+        createdAt: toIsoString(material.createdAt),
+      })),
+      classroomLessons: (lesson.classroomLessons ?? []).map((item) => ({
+        classroomId: item.classId,
+        lessonId: item.lessonId,
+        isPublished: item.isPublished,
+        publishedAt: toIsoString(item.publishedAt),
+      })),
     };
   }
 }

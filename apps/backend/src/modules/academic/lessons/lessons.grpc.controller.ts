@@ -1,8 +1,13 @@
 import { Controller } from '@nestjs/common';
-import { GrpcContractMethod, GrpcMethods, GrpcServices } from '@edtech/contracts';
-import { toIsoString } from '@edtech/contracts';
+import {
+  GrpcContractMethod,
+  GrpcMethods,
+  GrpcServices,
+  toListResponse,
+  toObjectResponse,
+  toPageResponse,
+} from '@edtech/contracts';
 import { runGrpc } from '../../../common/grpc/error-to-rpc-exception';
-import { toGrpcPage } from '@edtech/contracts';
 import { LessonsService } from './lessons.service';
 
 @Controller()
@@ -12,14 +17,12 @@ export class LessonsGrpcController {
   @GrpcContractMethod(GrpcServices.academicLessons, GrpcMethods.academicLessons.createLesson)
   createLesson(payload: any) {
     return runGrpc(async () =>
-      this.toLesson(
-        await this.lessonsService.createLesson({
+      this.lessonsService.createLesson({
           courseId: payload.courseId,
           title: payload.title,
           description: payload.description || undefined,
           orderNo: payload.orderNo,
-        }),
-      ),
+        }).then(toObjectResponse),
     );
   }
 
@@ -33,29 +36,25 @@ export class LessonsGrpcController {
           limit: payload.limit || undefined,
         },
       );
-      return toGrpcPage(page as any, this.toLesson);
+      return toPageResponse(page as any);
     });
   }
 
   @GrpcContractMethod(GrpcServices.academicLessons, GrpcMethods.academicLessons.getLessonDetail)
   getLessonDetail(payload: any) {
     return runGrpc(async () =>
-      this.toLessonDetail(
-        await this.lessonsService.getLessonDetail(payload.lessonId),
-      ),
+      this.lessonsService.getLessonDetail(payload.lessonId).then(toObjectResponse),
     );
   }
 
   @GrpcContractMethod(GrpcServices.academicLessons, GrpcMethods.academicLessons.updateLesson)
   updateLesson(payload: any) {
     return runGrpc(async () =>
-      this.toLesson(
-        await this.lessonsService.updateLesson(payload.lessonId, {
+      this.lessonsService.updateLesson(payload.lessonId, {
           title: payload.title,
           description: payload.description,
           orderNo: payload.orderNo,
-        }),
-      ),
+        }).then(toObjectResponse),
     );
   }
 
@@ -67,43 +66,30 @@ export class LessonsGrpcController {
   @GrpcContractMethod(GrpcServices.academicLessons, GrpcMethods.academicLessons.publishLessonToClassroom)
   publishLessonToClassroom(payload: any) {
     return runGrpc(async () =>
-      this.toClassroomLesson(
-        await this.lessonsService.publishLessonToClassroom(payload.classroomId, {
+      this.lessonsService.publishLessonToClassroom(payload.classroomId, {
           lessonId: payload.lessonId,
           isPublished: payload.isPublished,
-        }),
-      ),
+        }).then(toObjectResponse),
     );
   }
 
   @GrpcContractMethod(GrpcServices.academicLessons, GrpcMethods.academicLessons.getClassroomLessons)
   getClassroomLessons(payload: any) {
-    return runGrpc(async () => ({
-      items: (
-        await this.lessonsService.getClassroomLessons(payload.classroomId, {
+    return runGrpc(async () =>
+      this.lessonsService.getClassroomLessons(payload.classroomId, {
           publishedOnly: payload.publishedOnly,
-        })
-      ).map((item: any) => ({
-        lessonId: item.lessonId,
-        title: item.title,
-        description: item.description ?? '',
-        orderNo: item.orderNo,
-        isPublished: item.isPublished,
-        publishedAt: toIsoString(item.publishedAt),
-      })),
-    }));
+        }).then(toListResponse),
+    );
   }
 
   @GrpcContractMethod(GrpcServices.academicLessons, GrpcMethods.academicLessons.updateClassroomLesson)
   updateClassroomLesson(payload: any) {
     return runGrpc(async () =>
-      this.toClassroomLesson(
-        await this.lessonsService.updateClassroomLesson(
+      this.lessonsService.updateClassroomLesson(
           payload.classroomId,
           payload.lessonId,
           { isPublished: payload.isPublished },
-        ),
-      ),
+      ).then(toObjectResponse),
     );
   }
 
@@ -113,46 +99,7 @@ export class LessonsGrpcController {
       this.lessonsService.removeLessonFromClassroom(
         payload.classroomId,
         payload.lessonId,
-      ),
+      ).then(toObjectResponse),
     );
   }
-
-  private toLesson = (lesson: any) => ({
-    id: lesson.id,
-    courseId: lesson.courseId,
-    title: lesson.title,
-    description: lesson.description ?? '',
-    orderNo: lesson.orderNo,
-    createdAt: toIsoString(lesson.createdAt),
-    updatedAt: toIsoString(lesson.updatedAt),
-  });
-
-  private toLessonDetail = (lesson: any) => ({
-    ...this.toLesson(lesson),
-    materials: (lesson.materials ?? []).map((material: any) => ({
-      id: material.id,
-      lessonId: material.lessonId,
-      title: material.title,
-      storageUrl: material.storageUrl,
-      publicId: material.publicId ?? '',
-      mimeType: material.mimeType ?? '',
-      size: material.size ?? 0,
-      status: material.status,
-      createdBy: material.createdBy,
-      createdAt: toIsoString(material.createdAt),
-    })),
-    classroomLessons: (lesson.classroomLessons ?? []).map((item: any) => ({
-      classroomId: item.classId,
-      lessonId: item.lessonId,
-      isPublished: item.isPublished,
-      publishedAt: toIsoString(item.publishedAt),
-    })),
-  });
-
-  private toClassroomLesson = (item: any) => ({
-    classroomId: item.classroomId,
-    lessonId: item.lessonId,
-    isPublished: item.isPublished,
-    publishedAt: toIsoString(item.publishedAt),
-  });
 }

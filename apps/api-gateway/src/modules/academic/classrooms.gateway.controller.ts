@@ -23,7 +23,14 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { lastValueFrom } from 'rxjs';
-import { ClassInvitesDto, ClassroomQueryDto, CreateClassroomDto, UpdateClassroomDto } from '@edtech/contracts';
+import {
+  ClassInvitesDto,
+  ClassroomQueryDto,
+  CreateClassroomDto,
+  unwrapObjectResponse,
+  unwrapPageResponse,
+  UpdateClassroomDto,
+} from '@edtech/contracts';
 import { GrpcMetadataBuilder } from '../common/grpc-metadata/grpc-metadata.builder';
 import { RequestWithContext } from '../common/types/request-with-context';
 import { BeCoreGrpcClientService } from '../grpc-clients/be-core-grpc-client.service';
@@ -43,8 +50,8 @@ export class ClassroomsGatewayController {
   @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
   @ApiQuery({ name: 'courseId', required: false, format: 'uuid' })
   @ApiOkResponse({ description: 'Classes returned successfully' })
-  getClassrooms(@Query() query: ClassroomQueryDto, @Req() req: RequestWithContext) {
-    return lastValueFrom(
+  async getClassrooms(@Query() query: ClassroomQueryDto, @Req() req: RequestWithContext) {
+    return unwrapPageResponse(await lastValueFrom(
       this.grpc.classrooms.getClassrooms(
         {
           page: Number(query.page) || undefined,
@@ -53,15 +60,15 @@ export class ClassroomsGatewayController {
         },
         this.metadataBuilder.build(req),
       ),
-    );
+    ));
   }
 
   @Post('classes')
   @ApiOperation({ summary: 'Create class' })
   @ApiBody({ type: CreateClassroomDto })
   @ApiCreatedResponse({ description: 'Class created successfully' })
-  createClassroom(@Body() body: CreateClassroomDto, @Req() req: RequestWithContext) {
-    return lastValueFrom(
+  async createClassroom(@Body() body: CreateClassroomDto, @Req() req: RequestWithContext) {
+    return unwrapObjectResponse(await lastValueFrom(
       this.grpc.classrooms.createClassroom(
         {
           courseId: body.courseId,
@@ -72,23 +79,23 @@ export class ClassroomsGatewayController {
         },
         this.metadataBuilder.build(req),
       ),
-    );
+    ));
   }
 
   @Get('classes/:classroomId')
   @ApiOperation({ summary: 'Get classroom detail' })
   @ApiParam({ name: 'classroomId', format: 'uuid' })
   @ApiOkResponse({ description: 'Classroom detail returned successfully' })
-  getClassroomDetail(
+  async getClassroomDetail(
     @Param('classroomId') classroomId: string,
     @Req() req: RequestWithContext,
   ) {
-    return lastValueFrom(
+    return unwrapObjectResponse(await lastValueFrom(
       this.grpc.classrooms.getClassroomDetail(
         { classroomId },
         this.metadataBuilder.build(req),
       ),
-    );
+    ));
   }
 
   @Patch('classes/:classroomId')
@@ -96,12 +103,12 @@ export class ClassroomsGatewayController {
   @ApiParam({ name: 'classroomId', format: 'uuid' })
   @ApiBody({ type: UpdateClassroomDto })
   @ApiOkResponse({ description: 'Classroom updated successfully' })
-  updateClassroom(
+  async updateClassroom(
     @Param('classroomId') classroomId: string,
     @Body() body: UpdateClassroomDto,
     @Req() req: RequestWithContext,
   ) {
-    return lastValueFrom(
+    return unwrapObjectResponse(await lastValueFrom(
       this.grpc.classrooms.updateClassroom(
         {
           classroomId,
@@ -111,7 +118,7 @@ export class ClassroomsGatewayController {
         },
         this.metadataBuilder.build(req),
       ),
-    );
+    ));
   }
 
   @Delete('classes/:classroomId')
@@ -134,16 +141,16 @@ export class ClassroomsGatewayController {
   @ApiOperation({ summary: 'Regenerate classroom invite code' })
   @ApiParam({ name: 'classroomId', format: 'uuid' })
   @ApiCreatedResponse({ description: 'Invite code regenerated successfully' })
-  regenerateInviteCode(
+  async regenerateInviteCode(
     @Param('classroomId') classroomId: string,
     @Req() req: RequestWithContext,
   ) {
-    return lastValueFrom(
+    return unwrapObjectResponse(await lastValueFrom(
       this.grpc.classrooms.regenerateInviteCode(
         { classroomId },
         this.metadataBuilder.build(req),
       ),
-    );
+    ));
   }
 
   @Post('classes/:classId/invites')
@@ -152,16 +159,16 @@ export class ClassroomsGatewayController {
   @ApiParam({ name: 'classId', format: 'uuid' })
   @ApiBody({ type: ClassInvitesDto })
   @ApiAcceptedResponse({ description: 'Invite job queued successfully' })
-  inviteClassMembers(
+  async inviteClassMembers(
     @Param('classId') classId: string,
     @Body() body: ClassInvitesDto,
     @Req() req: RequestWithContext,
   ) {
-    return lastValueFrom(
+    return unwrapObjectResponse(await lastValueFrom(
       this.grpc.classrooms.inviteClassMembers(
         { classId, emails: body.emails ?? [] },
         this.metadataBuilder.build(req),
       ),
-    );
+    ));
   }
 }

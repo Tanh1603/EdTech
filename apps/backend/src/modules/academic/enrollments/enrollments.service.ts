@@ -1,5 +1,5 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { UserRole } from '@edtech/contracts';
+import { toIsoString, UserRole } from '@edtech/contracts';
 import { AccessPolicyService } from '../../../common/access/access-policy.service';
 import { AppHttpException } from '../../../common/errors/app-http.exception';
 import { PrismaService } from '../../../common/prisma/prisma.service';
@@ -51,7 +51,7 @@ export class EnrollmentsService {
       );
     }
 
-    return enrollment;
+    return this.toEnrollmentResponse(enrollment);
   }
 
   async createEnrollment(
@@ -77,7 +77,7 @@ export class EnrollmentsService {
       'You were added to a class',
       `You were added to ${classroom?.name ?? 'a class'}.`,
     );
-    return enrollment;
+    return this.toEnrollmentResponse(enrollment);
   }
 
   async getClassroomStudents(
@@ -95,7 +95,7 @@ export class EnrollmentsService {
       await this.prisma.classroom.findUniqueOrThrow({ where: { id: classroomId } });
     }
 
-    return this.prisma.enrollment.findMany({
+    const enrollments = await this.prisma.enrollment.findMany({
       where: { classId: classroomId },
       select: {
         id: true,
@@ -105,6 +105,10 @@ export class EnrollmentsService {
       },
       orderBy: { joinedAt: 'desc' },
     });
+
+    return enrollments.map((enrollment) =>
+      this.toStudentEnrollmentResponse(enrollment),
+    );
   }
 
   async updateEnrollmentRole(
@@ -125,10 +129,12 @@ export class EnrollmentsService {
       );
     }
 
-    return this.prisma.enrollment.update({
+    const enrollment = await this.prisma.enrollment.update({
       where: { id: enrollmentId },
       data: { role: payload.role },
     });
+
+    return this.toEnrollmentResponse(enrollment);
   }
 
   async removeEnrollment(
@@ -152,5 +158,35 @@ export class EnrollmentsService {
       where: { id: enrollmentId },
     });
     return { id: deleted.id, deleted: true };
+  }
+
+  private toEnrollmentResponse(enrollment: {
+    id: string;
+    classId: string;
+    userId: string;
+    role: ClassRole;
+    joinedAt: Date;
+  }) {
+    return {
+      id: enrollment.id,
+      classId: enrollment.classId,
+      userId: enrollment.userId,
+      role: enrollment.role,
+      joinedAt: toIsoString(enrollment.joinedAt),
+    };
+  }
+
+  private toStudentEnrollmentResponse(enrollment: {
+    id: string;
+    userId: string;
+    role: ClassRole;
+    joinedAt: Date;
+  }) {
+    return {
+      id: enrollment.id,
+      userId: enrollment.userId,
+      role: enrollment.role,
+      joinedAt: toIsoString(enrollment.joinedAt),
+    };
   }
 }

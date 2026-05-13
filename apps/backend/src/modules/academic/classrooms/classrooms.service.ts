@@ -1,5 +1,5 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { PageDto, UserRole } from '@edtech/contracts';
+import { PageDto, toIsoString, UserRole } from '@edtech/contracts';
 import { AccessPolicyService } from '../../../common/access/access-policy.service';
 import { AppHttpException } from '../../../common/errors/app-http.exception';
 import { PrismaService } from '../../../common/prisma/prisma.service';
@@ -74,7 +74,7 @@ export class ClassroomsService {
     this.assertDateRange(payload.startAt, payload.endAt);
 
     const classroom = await this.createClassroomWithUniqueInviteCode(payload);
-    return this.toClassroomResponse(classroom);
+    return this.toClassroomDetailResponse(classroom);
   }
 
   async getClassroomDetail(classroomId: string, userId?: string) {
@@ -288,13 +288,37 @@ export class ClassroomsService {
     };
   }
 
-  private toClassroomResponse<T extends { course: { teacherId: string } }>(
-    classroom: T,
-  ) {
-    const { course, ...rest } = classroom;
+  private toClassroomResponse(classroom: any) {
     return {
-      ...rest,
-      teacherId: course.teacherId,
+      id: classroom.id,
+      courseId: classroom.courseId,
+      teacherId: classroom.course?.teacherId ?? classroom.teacherId ?? '',
+      name: classroom.name,
+      inviteCode: classroom.inviteCode,
+      startAt: toIsoString(classroom.startAt),
+      endAt: toIsoString(classroom.endAt),
+      createdAt: toIsoString(classroom.createdAt),
+    };
+  }
+
+  private toClassroomDetailResponse(classroom: any) {
+    return {
+      ...this.toClassroomResponse(classroom),
+      enrollments: (classroom.enrollments ?? []).map((enrollment: any) => ({
+        id: enrollment.id,
+        classId: enrollment.classId,
+        userId: enrollment.userId,
+        role: enrollment.role,
+        joinedAt: toIsoString(enrollment.joinedAt),
+      })),
+      classroomLessons: (classroom.classroomLessons ?? []).map((item: any) => ({
+        id: item.id,
+        classId: item.classId,
+        lessonId: item.lessonId,
+        isPublished: item.isPublished,
+        publishedAt: toIsoString(item.publishedAt),
+        createdAt: toIsoString(item.createdAt),
+      })),
     };
   }
 

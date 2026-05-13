@@ -4,15 +4,16 @@ package academic;
 
 import "common/pagination.proto";
 import "common/envelope.proto";
+import "common/json.proto";
 
 service AcademicClassroomsService {
-  rpc GetClassrooms (ClassroomQuery) returns (ClassroomPage);
-  rpc CreateClassroom (CreateClassroomRequest) returns (Classroom);
-  rpc GetClassroomDetail (ClassroomIdRequest) returns (ClassroomDetail);
-  rpc UpdateClassroom (UpdateClassroomRequest) returns (Classroom);
+  rpc GetClassrooms (ClassroomQuery) returns (common.PageResponse);
+  rpc CreateClassroom (CreateClassroomRequest) returns (common.ObjectResponse);
+  rpc GetClassroomDetail (ClassroomIdRequest) returns (common.ObjectResponse);
+  rpc UpdateClassroom (UpdateClassroomRequest) returns (common.ObjectResponse);
   rpc DeleteClassroom (ClassroomIdRequest) returns (common.DeleteResponse);
-  rpc RegenerateInviteCode (ClassroomIdRequest) returns (InviteCodeResponse);
-  rpc InviteClassMembers (ClassInvitesRequest) returns (common.JobQueuedResponse);
+  rpc RegenerateInviteCode (ClassroomIdRequest) returns (common.ObjectResponse);
+  rpc InviteClassMembers (ClassInvitesRequest) returns (common.ObjectResponse);
 }
 
 message ClassroomQuery {

@@ -13,7 +13,6 @@ import {
   setGrpcIdentity,
 } from '../grpc/grpc-identity.store';
 import { verifyAuthenticatedGrpcIdentity } from '../grpc/metadata.mapper';
-import { CurrentUser } from '../types/current-user.type';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -29,7 +28,7 @@ export class RolesGuard implements CanActivate {
       return true;
     }
 
-    const roles = await this.getRoles(context);
+    const roles = await this.getRpcRoles(context);
 
     if (
       roles.includes(UserRole.admin) ||
@@ -41,24 +40,23 @@ export class RolesGuard implements CanActivate {
     throw new ForbiddenException('Insufficient role');
   }
 
-  private async getRoles(context: ExecutionContext): Promise<UserRole[]> {
-    if (context.getType() === 'rpc') {
-      const metadata = getGrpcMetadataFromExecutionContext(context);
-      if (!metadata) {
-        return [];
-      }
-
-      const storedIdentity = getOptionalStoredGrpcIdentity(metadata);
-      if (storedIdentity) {
-        return storedIdentity.roles;
-      }
-
-      const identity = await verifyAuthenticatedGrpcIdentity(metadata);
-      setGrpcIdentity(metadata, identity);
-      return identity.roles;
+  private async getRpcRoles(context: ExecutionContext): Promise<UserRole[]> {
+    if (context.getType() !== 'rpc') {
+      return [];
     }
 
-    const request = context.switchToHttp().getRequest<{ user?: CurrentUser }>();
-    return request.user?.roles ?? [];
+    const metadata = getGrpcMetadataFromExecutionContext(context);
+    if (!metadata) {
+      return [];
+    }
+
+    const storedIdentity = getOptionalStoredGrpcIdentity(metadata);
+    if (storedIdentity) {
+      return storedIdentity.roles;
+    }
+
+    const identity = await verifyAuthenticatedGrpcIdentity(metadata);
+    setGrpcIdentity(metadata, identity);
+    return identity.roles;
   }
 }

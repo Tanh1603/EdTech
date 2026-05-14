@@ -3,9 +3,9 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import Joi from 'joi';
 import { GrpcServiceAuthGuard } from '../../common/guards/grpc-service-auth.guard';
-import { RolesGuard } from '../../common/guards/roles.guard';
+import { PermissionsGuard } from '../../common/guards/permissions.guard';
+import { BackendAuthModule } from '../../common/auth/backend-auth.module';
 import { PrismaModule } from '../../common/prisma/prisma.module';
-import { ClerkClientProvider } from '../../common/providers/clerk-client.provider';
 import { AcademicModule } from '../academic/academic.module';
 import { AssessmentsModule } from '../assessments/assessments.module';
 import { ChatModule } from '../chat/chat.module';
@@ -18,6 +18,7 @@ import { UsersModule } from '../users/users.module';
 @Module({
   imports: [
     PrismaModule,
+    BackendAuthModule,
     UsersModule,
     AcademicModule,
     AssessmentsModule,
@@ -52,9 +53,8 @@ import { UsersModule } from '../users/users.module';
     },
     {
       provide: APP_GUARD,
-      useClass: RolesGuard,
+      useClass: PermissionsGuard,
     },
-    ClerkClientProvider,
   ],
 })
 export class AppModule {}

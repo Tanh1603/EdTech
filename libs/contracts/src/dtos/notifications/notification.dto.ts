@@ -11,6 +11,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { PaginationQueryDto } from '../common';
+import { UserSummaryDto } from '../users';
 
 export const NotificationAudienceTypes = {
   userIds: 'user_ids',
@@ -71,6 +72,9 @@ export class NotificationDto {
 
   @ApiProperty()
   userId!: string;
+
+  @ApiPropertyOptional()
+  user?: UserSummaryDto;
 
   @ApiProperty()
   title!: string;

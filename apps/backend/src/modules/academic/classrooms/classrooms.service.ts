@@ -3,6 +3,7 @@ import { PageDto, toIsoString, UserRole } from '@edtech/contracts';
 import { AccessPolicyService } from '../../../common/access/access-policy.service';
 import { AppHttpException } from '../../../common/errors/app-http.exception';
 import { PrismaService } from '../../../common/prisma/prisma.service';
+import { toUserSummary, userSummarySelect } from '../../../common/rbac/rbac.mapper';
 import { Prisma } from '../../../generated/prisma/client';
 import { ClassInvitesDto } from '@edtech/contracts';
 import { ClassroomQueryDto } from '@edtech/contracts';
@@ -43,7 +44,10 @@ export class ClassroomsService {
         orderBy: { createdAt: 'desc' },
         include: {
           course: {
-            select: { teacherId: true },
+            select: {
+              teacherId: true,
+              teacher: { select: userSummarySelect },
+            },
           },
         },
       }),
@@ -86,9 +90,16 @@ export class ClassroomsService {
       where: { id: classroomId },
       include: {
         course: {
-          select: { teacherId: true },
+          select: {
+            teacherId: true,
+            teacher: { select: userSummarySelect },
+          },
         },
-        enrollments: true,
+        enrollments: {
+          include: {
+            user: { select: userSummarySelect },
+          },
+        },
         classroomLessons: {
           include: {
             lesson: true,
@@ -125,7 +136,10 @@ export class ClassroomsService {
       },
       include: {
         course: {
-          select: { teacherId: true },
+          select: {
+            teacherId: true,
+            teacher: { select: userSummarySelect },
+          },
         },
       },
     });
@@ -239,7 +253,10 @@ export class ClassroomsService {
           },
           include: {
             course: {
-              select: { teacherId: true },
+              select: {
+                teacherId: true,
+                teacher: { select: userSummarySelect },
+              },
             },
           },
         });
@@ -293,6 +310,7 @@ export class ClassroomsService {
       id: classroom.id,
       courseId: classroom.courseId,
       teacherId: classroom.course?.teacherId ?? classroom.teacherId ?? '',
+      teacher: toUserSummary(classroom.course?.teacher),
       name: classroom.name,
       inviteCode: classroom.inviteCode,
       startAt: toIsoString(classroom.startAt),
@@ -308,6 +326,7 @@ export class ClassroomsService {
         id: enrollment.id,
         classId: enrollment.classId,
         userId: enrollment.userId,
+        user: toUserSummary(enrollment.user),
         role: enrollment.role,
         joinedAt: toIsoString(enrollment.joinedAt),
       })),

@@ -15,12 +15,20 @@ export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 
 export const RolePermissions = {
   usersManage: 'users.manage',
+  rolesManage: 'roles.manage',
   coursesManage: 'courses.manage',
   classesManage: 'classes.manage',
+  lessonsManage: 'lessons.manage',
   enrollmentsManage: 'enrollments.manage',
+  learningRead: 'learning.read',
+  chatUse: 'chat.use',
   examsManage: 'exams.manage',
+  examsTake: 'exams.take',
+  submissionsManage: 'submissions.manage',
   submissionsGrade: 'submissions.grade',
+  resultsReadOwn: 'results.read_own',
   notificationsManage: 'notifications.manage',
+  notificationsReadOwn: 'notifications.read_own',
   analyticsView: 'analytics.view',
 } as const;
 

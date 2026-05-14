@@ -15,6 +15,7 @@ import { JobsGatewayModule } from '../jobs/jobs-gateway.module';
 import { NotificationsGatewayModule } from '../notifications/notifications-gateway.module';
 import { StorageGatewayModule } from '../storage/storage-gateway.module';
 import { UsersGatewayModule } from '../users/users-gateway.module';
+import { WebhooksGatewayModule } from '../webhooks/webhooks-gateway.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { UsersGatewayModule } from '../users/users-gateway.module';
         BE_CORE_GRPC_URL: Joi.string().default('localhost:50051'),
         CLERK_PUBLISHABLE_KEY: Joi.string().optional(),
         CLERK_SECRET_KEY: Joi.string().required(),
+        CLERK_WEBHOOK_SECRET: Joi.string().optional(),
         SERVICE_TOKEN: Joi.string().optional(),
         CLOUDINARY_NAME: Joi.string().required(),
         CLOUDINARY_API_KEY: Joi.string().required(),
@@ -41,6 +43,7 @@ import { UsersGatewayModule } from '../users/users-gateway.module';
     NotificationsGatewayModule,
     StorageGatewayModule,
     UsersGatewayModule,
+    WebhooksGatewayModule,
   ],
   providers: [
     {

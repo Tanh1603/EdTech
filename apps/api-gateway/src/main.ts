@@ -9,6 +9,7 @@ import { createGatewayCorsOptions } from './modules/common/cors/gateway-cors.con
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     cors: createGatewayCorsOptions(),
+    rawBody: true,
   });
 
   if (process.env.ENABLE_REALTIME_TEST_CLIENT === 'true') {

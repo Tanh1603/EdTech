@@ -108,7 +108,10 @@ export class AccessPolicyService {
     });
   }
 
-  async assertChatSessionOwner(sessionId: string, userId: string): Promise<void> {
+  async assertChatSessionOwner(
+    sessionId: string,
+    userId: string,
+  ): Promise<void> {
     await this.prisma.chatSession.findFirstOrThrow({
       where: { id: sessionId, userId },
       select: { id: true },

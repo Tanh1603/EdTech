@@ -3,6 +3,7 @@ import { PageDto, toIsoString } from '@edtech/contracts';
 import { PaginationQueryDto } from '@edtech/contracts';
 import { AppHttpException } from '../../../common/errors/app-http.exception';
 import { PrismaService } from '../../../common/prisma/prisma.service';
+import { toUserSummary, userSummarySelect } from '../../../common/rbac/rbac.mapper';
 import { Prisma } from '../../../generated/prisma/client';
 import { ClassroomLessonsQueryDto } from '@edtech/contracts';
 import { CreateLessonDto } from '@edtech/contracts';
@@ -53,7 +54,11 @@ export class LessonsService {
     const lesson = await this.prisma.lesson.findUniqueOrThrow({
       where: { id: lessonId },
       include: {
-        materials: true,
+        materials: {
+          include: {
+            creator: { select: userSummarySelect },
+          },
+        },
         classroomLessons: true,
       },
     });
@@ -261,6 +266,7 @@ export class LessonsService {
       status: string;
       createdBy: string;
       createdAt: Date;
+      creator?: Parameters<typeof toUserSummary>[0];
     }>;
     classroomLessons?: Array<{
       classId: string;
@@ -281,6 +287,7 @@ export class LessonsService {
         size: material.size ?? 0,
         status: material.status,
         createdBy: material.createdBy,
+        creator: toUserSummary(material.creator),
         createdAt: toIsoString(material.createdAt),
       })),
       classroomLessons: (lesson.classroomLessons ?? []).map((item) => ({

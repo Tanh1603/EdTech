@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PageDto, toIsoString, UserRole } from '@edtech/contracts';
 import { AccessPolicyService } from '../../../common/access/access-policy.service';
 import { PrismaService } from '../../../common/prisma/prisma.service';
+import { toUserSummary, userSummarySelect } from '../../../common/rbac/rbac.mapper';
 import { Prisma } from '../../../generated/prisma/client';
 import { CourseQueryDto } from '@edtech/contracts';
 import { CreateCourseDto } from '@edtech/contracts';
@@ -40,6 +41,7 @@ export class CoursesService {
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { createdAt: 'desc' },
+        include: { teacher: { select: userSummarySelect } },
       }),
       this.prisma.course.count({ where }),
     ]);
@@ -63,6 +65,7 @@ export class CoursesService {
         ...payload,
         teacherId: roles.includes(UserRole.admin) ? payload.teacherId : userId,
       },
+      include: { teacher: { select: userSummarySelect } },
     });
 
     return this.toCourseResponse(course);
@@ -93,6 +96,7 @@ export class CoursesService {
     const course = await this.prisma.course.findUniqueOrThrow({
       where: { id: courseId },
       include: {
+        teacher: { select: userSummarySelect },
         classrooms: true,
         lessons: { orderBy: { orderNo: 'asc' } },
       },
@@ -111,6 +115,7 @@ export class CoursesService {
     const course = await this.prisma.course.update({
       where: { id: courseId },
       data: payload,
+      include: { teacher: { select: userSummarySelect } },
     });
 
     return this.toCourseResponse(course);
@@ -147,6 +152,7 @@ export class CoursesService {
     thumbnailUrl: string | null;
     createdAt: Date;
     updatedAt: Date;
+    teacher?: Parameters<typeof toUserSummary>[0];
   }) {
     return {
       id: course.id,
@@ -154,6 +160,7 @@ export class CoursesService {
       name: course.name,
       description: course.description ?? '',
       thumbnailUrl: course.thumbnailUrl ?? '',
+      teacher: toUserSummary(course.teacher),
       createdAt: toIsoString(course.createdAt),
       updatedAt: toIsoString(course.updatedAt),
     };

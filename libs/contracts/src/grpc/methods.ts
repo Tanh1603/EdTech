@@ -119,6 +119,14 @@ export const GrpcMethods = {
   },
   users: {
     getUsers: 'GetUsers',
+    getMe: 'GetMe',
+    updateMyProfile: 'UpdateMyProfile',
+    syncClerkUserCreated: 'SyncClerkUserCreated',
+    syncClerkUserUpdated: 'SyncClerkUserUpdated',
+    syncClerkUserDeleted: 'SyncClerkUserDeleted',
+    assignUserRoles: 'AssignUserRoles',
+    getRoles: 'GetRoles',
+    getPermissions: 'GetPermissions',
   },
   jobs: {
     getJobStatus: 'GetJobStatus',

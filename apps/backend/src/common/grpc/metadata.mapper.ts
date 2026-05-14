@@ -1,17 +1,13 @@
-import { verifyToken } from '@clerk/backend';
 import { status } from '@grpc/grpc-js';
 import { Metadata } from '@grpc/grpc-js';
-import { UserRole } from '@edtech/contracts';
+import { RolePermission, RolePermissions, UserRole } from '@edtech/contracts';
 import { RpcException } from '@nestjs/microservices';
-import {
-  extractUserRolesFromClaims,
-  normalizeUserRoles,
-} from '../auth/roles.util';
 import { getStoredGrpcIdentity } from './grpc-identity.store';
 
 export interface GrpcIdentity {
   userId: string;
   roles: UserRole[];
+  permissions: RolePermission[];
 }
 
 export function getGrpcUserId(metadata: Metadata): string {
@@ -22,73 +18,59 @@ export function getGrpcIdentity(metadata: Metadata): GrpcIdentity {
   return getStoredGrpcIdentity(metadata);
 }
 
-export function getGrpcMetadataUserId(metadata: Metadata): string {
-  const userId = metadata.get('x-user-id')[0];
+export function getTrustedGrpcIdentity(metadata: Metadata): GrpcIdentity {
+  return {
+    userId: getRequiredStringMetadata(metadata, 'x-user-id'),
+    roles: parseRoles(metadata.get('x-user-roles')[0]),
+    permissions: parsePermissions(metadata.get('x-user-permissions')[0]),
+  };
+}
 
-  if (typeof userId === 'string' && userId.length > 0) {
-    return userId;
+function getRequiredStringMetadata(metadata: Metadata, key: string): string {
+  const value = metadata.get(key)[0];
+
+  if (typeof value === 'string' && value.length > 0) {
+    return value;
   }
 
   throw new RpcException({
     code: status.UNAUTHENTICATED,
-    message: 'Missing x-user-id metadata',
+    message: `Missing ${key} metadata`,
   });
 }
 
-export async function verifyAuthenticatedGrpcIdentity(
-  metadata: Metadata,
-): Promise<GrpcIdentity> {
-  const userId = getGrpcMetadataUserId(metadata);
-  const authorization = metadata.get('authorization')[0];
-
-  if (typeof authorization !== 'string' || authorization.length === 0) {
-    throw new RpcException({
-      code: status.UNAUTHENTICATED,
-      message: 'Missing authorization metadata',
-    });
+function parseRoles(value: string | Buffer | undefined): UserRole[] {
+  if (typeof value !== 'string' || value.length === 0) {
+    return [];
   }
 
-  const [scheme, token] = authorization.split(' ');
-  if (scheme?.toLowerCase() !== 'bearer' || !token) {
-    throw new RpcException({
-      code: status.UNAUTHENTICATED,
-      message: 'Invalid authorization metadata',
-    });
-  }
-
-  const secretKey = process.env.CLERK_SECRET_KEY;
-  if (!secretKey) {
-    throw new RpcException({
-      code: status.UNAUTHENTICATED,
-      message: 'Missing Clerk secret key',
-    });
-  }
-
-  const payload = await verifyToken(token, { secretKey });
-  if (payload.sub !== userId) {
-    throw new RpcException({
-      code: status.UNAUTHENTICATED,
-      message: 'Token subject does not match x-user-id metadata',
-    });
-  }
-
-  const tokenRoles = extractUserRolesFromClaims(payload);
-  const headerRoles = normalizeUserRoles(metadata.get('x-user-roles')[0]);
-  if (headerRoles.length > 0 && !sameRoles(tokenRoles, headerRoles)) {
-    throw new RpcException({
-      code: status.UNAUTHENTICATED,
-      message: 'Token roles do not match x-user-roles metadata',
-    });
-  }
-
-  return { userId, roles: tokenRoles };
+  return Array.from(
+    new Set(
+      value
+        .split(',')
+        .map((role) => role.trim())
+        .filter((role): role is UserRole =>
+          Object.values(UserRole).includes(role as UserRole),
+        ),
+    ),
+  );
 }
 
-function sameRoles(left: UserRole[], right: UserRole[]): boolean {
-  if (left.length !== right.length) {
-    return false;
+function parsePermissions(
+  value: string | Buffer | undefined,
+): RolePermission[] {
+  if (typeof value !== 'string' || value.length === 0) {
+    return [];
   }
 
-  const rightSet = new Set(right);
-  return left.every((role) => rightSet.has(role));
+  return Array.from(
+    new Set(
+      value
+        .split(',')
+        .map((permission) => permission.trim())
+        .filter((permission): permission is RolePermission =>
+          Object.values(RolePermissions).includes(permission as RolePermission),
+        ),
+    ),
+  );
 }

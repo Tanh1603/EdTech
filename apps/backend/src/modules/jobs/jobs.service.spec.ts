@@ -1,4 +1,5 @@
-import { JobStatuses, JobTypes } from '@edtech/contracts';
+import { JobStatuses, JobTypes, UserRole } from '@edtech/contracts';
+import { AppHttpException } from '../../common/errors/app-http.exception';
 
 jest.mock('../../common/prisma/prisma.service', () => ({
   PrismaService: class PrismaService {},
@@ -81,17 +82,22 @@ describe('JobsService', () => {
   it('marks jobs succeeded with result and finishedAt', async () => {
     const prisma = {
       job: {
-        update: jest.fn().mockResolvedValue(createJob({
-          status: JobStatuses.succeeded,
-          result: { ok: true },
-          finishedAt: now,
-        })),
+        update: jest.fn().mockResolvedValue(
+          createJob({
+            status: JobStatuses.succeeded,
+            result: { ok: true },
+            finishedAt: now,
+          }),
+        ),
       },
     };
-    const service = new JobsService(prisma as any, {
-      publishJob: jest.fn(),
-      publishDeadLetter: jest.fn(),
-    } as any);
+    const service = new JobsService(
+      prisma as any,
+      {
+        publishJob: jest.fn(),
+        publishDeadLetter: jest.fn(),
+      } as any,
+    );
 
     const result = await service.markSucceeded('job-1', { ok: true });
 
@@ -107,6 +113,72 @@ describe('JobsService', () => {
     expect(result.status).toBe(JobStatuses.succeeded);
   });
 
+  it('returns job status for the user that created the job', async () => {
+    const prisma = {
+      job: {
+        findUniqueOrThrow: jest.fn().mockResolvedValue(createJob()),
+      },
+    };
+    const service = new JobsService(
+      prisma as any,
+      {
+        publishJob: jest.fn(),
+        publishDeadLetter: jest.fn(),
+      } as any,
+    );
+
+    const result = await service.getJobStatusForUser('job-1', 'user-1', [
+      UserRole.student,
+    ]);
+
+    expect(prisma.job.findUniqueOrThrow).toHaveBeenCalledWith({
+      where: { id: 'job-1' },
+    });
+    expect(result.jobId).toBe('job-1');
+  });
+
+  it('allows admins to read any job status', async () => {
+    const prisma = {
+      job: {
+        findUniqueOrThrow: jest
+          .fn()
+          .mockResolvedValue(createJob({ createdBy: 'user-2' })),
+      },
+    };
+    const service = new JobsService(
+      prisma as any,
+      {
+        publishJob: jest.fn(),
+        publishDeadLetter: jest.fn(),
+      } as any,
+    );
+
+    await expect(
+      service.getJobStatusForUser('job-1', 'admin-1', [UserRole.admin]),
+    ).resolves.toMatchObject({ jobId: 'job-1' });
+  });
+
+  it('rejects job status access for unrelated users', async () => {
+    const prisma = {
+      job: {
+        findUniqueOrThrow: jest
+          .fn()
+          .mockResolvedValue(createJob({ createdBy: 'user-2' })),
+      },
+    };
+    const service = new JobsService(
+      prisma as any,
+      {
+        publishJob: jest.fn(),
+        publishDeadLetter: jest.fn(),
+      } as any,
+    );
+
+    await expect(
+      service.getJobStatusForUser('job-1', 'user-1', [UserRole.student]),
+    ).rejects.toBeInstanceOf(AppHttpException);
+  });
+
   it('dead-letters a failed job when max attempts is reached', async () => {
     const deadLettered = createJob({
       status: JobStatuses.deadLettered,
@@ -116,7 +188,9 @@ describe('JobsService', () => {
     });
     const prisma = {
       job: {
-        findUniqueOrThrow: jest.fn().mockResolvedValue(createJob({ attempts: 3, maxAttempts: 3 })),
+        findUniqueOrThrow: jest
+          .fn()
+          .mockResolvedValue(createJob({ attempts: 3, maxAttempts: 3 })),
         update: jest.fn().mockResolvedValue(deadLettered),
       },
       notification: {

@@ -1,14 +1,19 @@
 import { Metadata } from '@grpc/grpc-js';
 import { Controller, UseGuards } from '@nestjs/common';
-import { GrpcContractMethod, GrpcMethods, GrpcServices } from '@edtech/contracts';
+import {
+  GrpcContractMethod,
+  GrpcMethods,
+  GrpcServices,
+  RolePermissions,
+} from '@edtech/contracts';
 import {
   fromProtoStruct,
   toListResponse,
   toObjectResponse,
 } from '@edtech/contracts';
+import { Permissions } from '../../../common/decorators/permissions.decorator';
 import { GrpcUserAuthGuard } from '../../../common/guards/grpc-user-auth.guard';
 import { getGrpcUserId } from '../../../common/grpc/metadata.mapper';
-import { runGrpc } from '../../../common/grpc/error-to-rpc-exception';
 import { MasteryService } from './mastery.service';
 
 @Controller()
@@ -16,60 +21,78 @@ import { MasteryService } from './mastery.service';
 export class MasteryGrpcController {
   constructor(private readonly masteryService: MasteryService) {}
 
-  @GrpcContractMethod(GrpcServices.learningMastery, GrpcMethods.learningMastery.getMyMastery)
+  @GrpcContractMethod(
+    GrpcServices.learningMastery,
+    GrpcMethods.learningMastery.getMyMastery,
+  )
+  @Permissions(RolePermissions.learningRead)
   getMyMastery(_: any, metadata: Metadata) {
-    return runGrpc(() =>
-      this.masteryService.getMyMastery(getGrpcUserId(metadata)).then(toListResponse),
-    );
+    return this.masteryService
+      .getMyMastery(getGrpcUserId(metadata))
+      .then(toListResponse);
   }
 
-  @GrpcContractMethod(GrpcServices.learningMastery, GrpcMethods.learningMastery.getMasteryByClass)
+  @GrpcContractMethod(
+    GrpcServices.learningMastery,
+    GrpcMethods.learningMastery.getMasteryByClass,
+  )
+  @Permissions(RolePermissions.analyticsView)
   getMasteryByClass(payload: any) {
-    return runGrpc(() =>
-      this.masteryService.getMasteryByClass(payload.classId).then(toListResponse),
-    );
+    return this.masteryService
+      .getMasteryByClass(payload.classId)
+      .then(toListResponse);
   }
 
-  @GrpcContractMethod(GrpcServices.learningMastery, GrpcMethods.learningMastery.getMasteryByTopic)
+  @GrpcContractMethod(
+    GrpcServices.learningMastery,
+    GrpcMethods.learningMastery.getMasteryByTopic,
+  )
+  @Permissions(RolePermissions.learningRead)
   getMasteryByTopic(payload: any, metadata: Metadata) {
-    return runGrpc(() =>
-      this.masteryService
-        .getMasteryByTopic(payload.topic, getGrpcUserId(metadata))
-        .then(toListResponse),
-    );
+    return this.masteryService
+      .getMasteryByTopic(payload.topic, getGrpcUserId(metadata))
+      .then(toListResponse);
   }
 
-  @GrpcContractMethod(GrpcServices.learningMastery, GrpcMethods.learningMastery.getMasteryAnalytics)
+  @GrpcContractMethod(
+    GrpcServices.learningMastery,
+    GrpcMethods.learningMastery.getMasteryAnalytics,
+  )
+  @Permissions(RolePermissions.learningRead)
   getMasteryAnalytics(_: any, metadata: Metadata) {
-    return runGrpc(() =>
-      this.masteryService
-        .getMasteryAnalytics(getGrpcUserId(metadata))
-        .then(toObjectResponse),
-    );
+    return this.masteryService
+      .getMasteryAnalytics(getGrpcUserId(metadata))
+      .then(toObjectResponse);
   }
 
-  @GrpcContractMethod(GrpcServices.learningMastery, GrpcMethods.learningMastery.upsertMastery)
+  @GrpcContractMethod(
+    GrpcServices.learningMastery,
+    GrpcMethods.learningMastery.upsertMastery,
+  )
+  @Permissions(RolePermissions.analyticsView)
   upsertMastery(payload: any) {
-    return runGrpc(() =>
-      this.masteryService
-        .upsertMastery(fromProtoStruct(payload.body) as any)
-        .then(toObjectResponse),
-    );
+    return this.masteryService
+      .upsertMastery(fromProtoStruct(payload.body) as any)
+      .then(toObjectResponse);
   }
 
-  @GrpcContractMethod(GrpcServices.learningMastery, GrpcMethods.learningMastery.bulkUpsertMastery)
+  @GrpcContractMethod(
+    GrpcServices.learningMastery,
+    GrpcMethods.learningMastery.bulkUpsertMastery,
+  )
+  @Permissions(RolePermissions.analyticsView)
   bulkUpsertMastery(payload: any) {
-    return runGrpc(() =>
-      this.masteryService
-        .bulkUpsertMastery(fromProtoStruct(payload.body) as any)
-        .then(toObjectResponse),
-    );
+    return this.masteryService
+      .bulkUpsertMastery(fromProtoStruct(payload.body) as any)
+      .then(toObjectResponse);
   }
 
-  @GrpcContractMethod(GrpcServices.learningMastery, GrpcMethods.learningMastery.getRiskStudents)
+  @GrpcContractMethod(
+    GrpcServices.learningMastery,
+    GrpcMethods.learningMastery.getRiskStudents,
+  )
+  @Permissions(RolePermissions.analyticsView)
   getRiskStudents() {
-    return runGrpc(() =>
-      this.masteryService.getRiskStudents().then(toObjectResponse),
-    );
+    return this.masteryService.getRiskStudents().then(toObjectResponse);
   }
 }

@@ -8,6 +8,7 @@ import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { AppModule } from './modules/app/app.module';
 import { ReflectionService } from '@grpc/reflection';
+import { GrpcExceptionFilter } from './common/grpc/grpc-exception.filter';
 
 async function bootstrap() {
   const grpcUrl = process.env.BACKEND_GRPC_URL ?? '0.0.0.0:50051';
@@ -37,6 +38,7 @@ async function bootstrap() {
       transform: true,
     }),
   );
+  app.useGlobalFilters(new GrpcExceptionFilter());
 
   await app.listen();
   Logger.log(`Backend gRPC running at ${grpcUrl}`);

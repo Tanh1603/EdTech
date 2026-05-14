@@ -8,6 +8,7 @@ import {
 } from '@edtech/contracts';
 import { AppHttpException } from '../../common/errors/app-http.exception';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { userSummarySelect } from '../../common/rbac/rbac.mapper';
 import { JobsService } from '../jobs/jobs.service';
 
 @Injectable()
@@ -60,6 +61,7 @@ export class NotificationsService {
   ) {
     return this.prisma.notification.create({
       data: { userId, title, body },
+      include: { user: { select: userSummarySelect } },
     });
   }
 
@@ -177,6 +179,7 @@ export class NotificationsService {
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { createdAt: 'desc' },
+        include: { user: { select: userSummarySelect } },
       }),
       this.prisma.notification.count({ where }),
     ]);
@@ -200,6 +203,7 @@ export class NotificationsService {
     return this.prisma.notification.update({
       where: { id: notification.id },
       data: { isRead: true },
+      include: { user: { select: userSummarySelect } },
     });
   }
 

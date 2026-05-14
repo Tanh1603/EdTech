@@ -12,7 +12,7 @@ export class RealtimeAuthGuard {
       const identity = await this.identityService.verifySocket(socket);
       socket.data.userId = identity.userId;
       socket.data.roles = identity.roles;
-      socket.data.authorization = identity.authorization;
+      socket.data.permissions = identity.permissions;
       socket.data.requestId = socket.id;
       socket.data.correlationId = socket.id;
       return socket as AuthenticatedRealtimeSocket;

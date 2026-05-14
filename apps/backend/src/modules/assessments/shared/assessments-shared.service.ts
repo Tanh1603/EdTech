@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PageDto } from '@edtech/contracts';
 import { AccessPolicyService } from '../../../common/access/access-policy.service';
 import { PrismaService } from '../../../common/prisma/prisma.service';
+import { userSummarySelect } from '../../../common/rbac/rbac.mapper';
 import {
   ExamStatus,
   Prisma,
@@ -39,7 +40,13 @@ export class AssessmentsSharedService {
 
     return this.prisma.exam.create({
       data: { ...payload, createdBy: userId },
-      select: { id: true, title: true, status: true },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        createdBy: true,
+        creator: { select: userSummarySelect },
+      },
     });
   }
 
@@ -82,6 +89,7 @@ export class AssessmentsSharedService {
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { createdAt: 'desc' },
+        include: { creator: { select: userSummarySelect } },
       }),
       this.prisma.exam.count({ where }),
     ]);
@@ -97,7 +105,10 @@ export class AssessmentsSharedService {
 
     const exam = await this.prisma.exam.findUniqueOrThrow({
       where: { id: examId },
-      include: { _count: { select: { questions: true } } },
+      include: {
+        creator: { select: userSummarySelect },
+        _count: { select: { questions: true } },
+      },
     });
     const { _count, ...rest } = exam;
     return { ...rest, questionsCount: _count.questions };
@@ -111,7 +122,11 @@ export class AssessmentsSharedService {
   ) {
     await this.accessPolicy.assertExamManageAccess(examId, userId, roles);
 
-    return this.prisma.exam.update({ where: { id: examId }, data: payload });
+    return this.prisma.exam.update({
+      where: { id: examId },
+      data: payload,
+      include: { creator: { select: userSummarySelect } },
+    });
   }
 
   async deleteExam(examId: string, userId: string, roles: UserRole[] = []) {
@@ -272,7 +287,11 @@ export class AssessmentsSharedService {
 
     return this.prisma.submission.findUniqueOrThrow({
       where: { id: submissionId },
-      include: { result: true, exam: true },
+      include: {
+        student: { select: userSummarySelect },
+        result: true,
+        exam: true,
+      },
     });
   }
 
@@ -344,7 +363,17 @@ export class AssessmentsSharedService {
   ) {
     await this.accessPolicy.assertSubmissionAccess(submissionId, userId, roles);
 
-    return this.prisma.result.findUniqueOrThrow({ where: { submissionId } });
+    return this.prisma.result.findUniqueOrThrow({
+      where: { submissionId },
+      include: {
+        submission: {
+          select: {
+            studentId: true,
+            student: { select: userSummarySelect },
+          },
+        },
+      },
+    });
   }
 
   async manualGrade(
@@ -373,6 +402,14 @@ export class AssessmentsSharedService {
         feedback: payload.feedback as Prisma.InputJsonValue,
         gradedByAi: false,
         gradedAt: new Date(),
+      },
+      include: {
+        submission: {
+          select: {
+            studentId: true,
+            student: { select: userSummarySelect },
+          },
+        },
       },
     });
     const submission = await this.prisma.submission.findUnique({

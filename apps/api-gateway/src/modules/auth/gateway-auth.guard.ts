@@ -5,17 +5,31 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { RequestWithContext } from '../common/types/request-with-context';
 import { GatewayIdentityService } from './gateway-identity.service';
+import { IS_PUBLIC_ROUTE } from './public.decorator';
 
 @Injectable()
 export class GatewayAuthGuard implements CanActivate {
   private readonly logger = new Logger(GatewayAuthGuard.name);
 
-  constructor(private readonly identityService: GatewayIdentityService) {}
+  constructor(
+    private readonly identityService: GatewayIdentityService,
+    private readonly reflector: Reflector,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     if (context.getType() === 'ws') {
+      return true;
+    }
+
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_ROUTE, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+
+    if (isPublic) {
       return true;
     }
 
@@ -33,13 +47,17 @@ export class GatewayAuthGuard implements CanActivate {
     try {
       const identity = await this.identityService.verifyBearerAuthorization(authorization);
 
-      request.user = { id: identity.userId, roles: identity.roles };
+      request.user = {
+        id: identity.userId,
+        roles: identity.roles,
+        permissions: identity.permissions,
+      };
       request.context = {
         requestId: request.requestId ?? 'unknown',
         correlationId: request.correlationId ?? request.requestId ?? 'unknown',
         userId: identity.userId,
         roles: identity.roles,
-        authorization: identity.authorization,
+        permissions: identity.permissions,
       };
 
       this.logger.log(

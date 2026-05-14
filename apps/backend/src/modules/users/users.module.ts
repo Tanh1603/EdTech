@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { UsersGrpcController } from './controllers/users.grpc.controller';
+import { UsersRepository } from './repositories/users.repository';
 import { UsersService } from './services/users.service';
-import { ClerkClientProvider } from '../../common/providers/clerk-client.provider';
 
 @Module({
   controllers: [UsersGrpcController],
-  providers: [UsersService, ClerkClientProvider],
+  providers: [UsersRepository, UsersService],
 })
 export class UsersModule {}

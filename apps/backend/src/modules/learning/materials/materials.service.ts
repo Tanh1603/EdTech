@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { PageDto } from '@edtech/contracts';
+import { PageDto, toIsoString } from '@edtech/contracts';
 import { PaginationQueryDto } from '@edtech/contracts';
 import { PrismaService } from '../../../common/prisma/prisma.service';
+import { toUserSummary, userSummarySelect } from '../../../common/rbac/rbac.mapper';
 import { MaterialStatus, Prisma } from '../../../generated/prisma/client';
 import { StorageService } from '../../storage/storage.service';
 import { MaterialQueryDto } from '@edtech/contracts';
@@ -27,7 +28,7 @@ export class MaterialsService {
       'edtech/materials',
     );
 
-    return this.prisma.material.create({
+    const material = await this.prisma.material.create({
       data: {
         lessonId: payload.lessonId,
         title: payload.title,
@@ -38,7 +39,10 @@ export class MaterialsService {
         status: MaterialStatus.uploaded,
         createdBy,
       },
+      include: { creator: { select: userSummarySelect } },
     });
+
+    return this.toMaterialResponse(material);
   }
 
   async createMaterial(
@@ -65,6 +69,7 @@ export class MaterialsService {
           status: MaterialStatus.uploaded,
           createdBy,
         },
+        include: { creator: { select: userSummarySelect } },
       });
 
       await this.jobsService.enqueue({
@@ -80,7 +85,7 @@ export class MaterialsService {
         resourceId: material.id,
       });
 
-      return material;
+      return this.toMaterialResponse(material);
     } catch (error) {
       console.log(error);
 
@@ -104,17 +109,24 @@ export class MaterialsService {
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { createdAt: 'desc' },
+        include: { creator: { select: userSummarySelect } },
       }),
       this.prisma.material.count({ where }),
     ]);
 
-    return this.toPage(items, page, limit, total);
+    return this.toPage(
+      items.map((item) => this.toMaterialResponse(item)),
+      page,
+      limit,
+      total,
+    );
   }
 
   async getMaterialDetail(materialId: string) {
     const material = await this.prisma.material.findUniqueOrThrow({
       where: { id: materialId },
       include: {
+        creator: { select: userSummarySelect },
         _count: {
           select: { chunks: true },
         },
@@ -123,16 +135,19 @@ export class MaterialsService {
 
     const { _count, ...rest } = material;
     return {
-      ...rest,
+      ...this.toMaterialResponse(rest),
       chunksCount: _count.chunks,
     };
   }
 
   async updateMaterial(materialId: string, payload: UpdateMaterialDto) {
-    return this.prisma.material.update({
+    const material = await this.prisma.material.update({
       where: { id: materialId },
       data: { title: payload.title },
+      include: { creator: { select: userSummarySelect } },
     });
+
+    return this.toMaterialResponse(material);
   }
 
   async deleteMaterial(materialId: string) {
@@ -194,6 +209,34 @@ export class MaterialsService {
         total,
         totalPages: Math.ceil(total / limit),
       },
+    };
+  }
+
+  private toMaterialResponse(material: {
+    id: string;
+    lessonId: string;
+    title: string;
+    storageUrl: string;
+    publicId: string | null;
+    mimeType: string | null;
+    size: number | null;
+    status: string;
+    createdBy: string;
+    createdAt: Date;
+    creator?: Parameters<typeof toUserSummary>[0];
+  }) {
+    return {
+      id: material.id,
+      lessonId: material.lessonId,
+      title: material.title,
+      storageUrl: material.storageUrl,
+      publicId: material.publicId ?? '',
+      mimeType: material.mimeType ?? '',
+      size: material.size ?? 0,
+      status: material.status,
+      createdBy: material.createdBy,
+      creator: toUserSummary(material.creator),
+      createdAt: toIsoString(material.createdAt),
     };
   }
 }

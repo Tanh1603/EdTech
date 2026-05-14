@@ -62,6 +62,74 @@ enum JobStatus {
 //////////////////// ACADEMIC ////////////////////////
 //////////////////////////////////////////////////////
 
+model User {
+  id          String   @id
+  email       String?
+  firstName   String?  @map("first_name")
+  lastName    String?  @map("last_name")
+  imageUrl    String?  @map("image_url")
+  status      String   @default("active")
+  rbacVersion Int    @default(1) @map("rbac_version")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  roles              UserRoleAssignment[]
+  teachingCourses    Course[]              @relation("CourseTeacher")
+  enrollments        Enrollment[]          @relation("EnrollmentUser")
+  createdMaterials   Material[]            @relation("MaterialCreator")
+  chatSessions       ChatSession[]         @relation("ChatSessionUser")
+  createdExams       Exam[]                @relation("ExamCreator")
+  submissions        Submission[]          @relation("SubmissionStudent")
+  learningRoadmaps   LearningRoadmap[]     @relation("LearningRoadmapUser")
+  topicMasteries     StudentTopicMastery[] @relation("StudentTopicMasteryStudent")
+  notifications      Notification[]        @relation("NotificationUser")
+
+  @@index([email])
+  @@index([status])
+  @@map("users")
+}
+
+model Role {
+  name        String  @id
+  description String?
+
+  users       UserRoleAssignment[]
+  permissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  name        String  @id
+  description String?
+
+  roles RolePermission[]
+
+  @@map("permissions")
+}
+
+model UserRoleAssignment {
+  userId   String @map("user_id")
+  roleName String @map("role_name")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleName], references: [name], onDelete: Cascade)
+
+  @@id([userId, roleName])
+  @@map("user_roles")
+}
+
+model RolePermission {
+  roleName       String @map("role_name")
+  permissionName String @map("permission_name")
+
+  role       Role       @relation(fields: [roleName], references: [name], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionName], references: [name], onDelete: Cascade)
+
+  @@id([roleName, permissionName])
+  @@map("role_permissions")
+}
+
 model Course {
   id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   teacherId    String      @map("teacher_id")
@@ -70,9 +138,11 @@ model Course {
   thumbnailUrl String?     @map("thumbnail_url")
   createdAt    DateTime    @default(now()) @map("created_at")
   updatedAt    DateTime    @updatedAt
+  teacher      User        @relation("CourseTeacher", fields: [teacherId], references: [id], onDelete: Restrict)
   classrooms   Classroom[]
   lessons      Lesson[]
 
+  @@index([teacherId])
   @@map("courses")
 }
 
@@ -101,8 +171,10 @@ model Enrollment {
   role      ClassRole @default(student)
   joinedAt  DateTime  @default(now())
   classroom Classroom @relation(fields: [classId], references: [id])
+  user      User      @relation("EnrollmentUser", fields: [userId], references: [id], onDelete: Restrict)
 
   @@unique([classId, userId])
+  @@index([userId])
   @@map("enrollments")
 }
 
@@ -158,10 +230,12 @@ model Material {
   createdBy  String         @map("created_by")
   createdAt  DateTime       @default(now()) @map("created_at")
 
-  lesson Lesson          @relation(fields: [lessonId], references: [id])
-  chunks MaterialChunk[]
+  lesson  Lesson          @relation(fields: [lessonId], references: [id])
+  creator User            @relation("MaterialCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+  chunks  MaterialChunk[]
 
   @@index([lessonId, status])
+  @@index([createdBy])
   @@map("materials")
 }
 
@@ -193,8 +267,10 @@ model ChatSession {
   createdAt DateTime @default(now()) @map("created_at")
 
   classroom Classroom?    @relation(fields: [classId], references: [id])
+  user      User          @relation("ChatSessionUser", fields: [userId], references: [id], onDelete: Restrict)
   messages  ChatMessage[]
 
+  @@index([userId])
   @@map("chat_sessions")
 }
 
@@ -227,10 +303,12 @@ model Exam {
   updatedAt   DateTime   @updatedAt @map("updated_at")
 
   classroom Classroom @relation(fields: [classId], references: [id])
+  creator   User      @relation("ExamCreator", fields: [createdBy], references: [id], onDelete: Restrict)
 
   questions   Question[]
   submissions Submission[]
 
+  @@index([createdBy])
   @@map("exams")
 }
 
@@ -260,10 +338,12 @@ model Submission {
   startAt     DateTime         @default(now()) @map("start_at")
   submittedAt DateTime?        @map("submitted_at")
 
-  exam   Exam    @relation(fields: [examId], references: [id])
-  result Result?
+  exam    Exam    @relation(fields: [examId], references: [id])
+  student User    @relation("SubmissionStudent", fields: [studentId], references: [id], onDelete: Restrict)
+  result  Result?
 
   @@unique([examId, studentId])
+  @@index([studentId])
   @@map("submissions")
 }
 
@@ -293,8 +373,10 @@ model LearningRoadmap {
   generatedByAi Boolean       @default(true) @map("generated_by_ai")
   createdAt     DateTime      @default(now()) @map("created_at")
 
+  user  User          @relation("LearningRoadmapUser", fields: [userId], references: [id], onDelete: Restrict)
   items RoadmapItem[]
 
+  @@index([userId])
   @@map("learning_roadmaps")
 }
 
@@ -326,7 +408,10 @@ model StudentTopicMastery {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
+  student User      @relation("StudentTopicMasteryStudent", fields: [studentId], references: [id], onDelete: Restrict)
+
   @@unique([studentId, classId, topic])
+  @@index([studentId])
   @@map("student_topic_mastery")
 }
 
@@ -341,6 +426,8 @@ model Notification {
   body      String
   isRead    Boolean  @default(false) @map("is_read")
   createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation("NotificationUser", fields: [userId], references: [id], onDelete: Restrict)
 
   @@index([userId, isRead])
   @@map("notifications")

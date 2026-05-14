@@ -1,10 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import {
   JobStatusValue,
   JobStatuses,
   JobType,
   toIsoString,
+  UserRole,
 } from '@edtech/contracts';
+import { AppHttpException } from '../../common/errors/app-http.exception';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { RabbitMqPublisher } from '../queue/rabbitmq.publisher';
 
@@ -59,6 +61,26 @@ export class JobsService {
       where: { id: jobId },
     })) as any;
     return this.toJobResponse(job);
+  }
+
+  async getJobStatusForUser(
+    jobId: string,
+    userId: string,
+    roles: UserRole[] = [],
+  ) {
+    const job = (await this.prisma.job.findUniqueOrThrow({
+      where: { id: jobId },
+    })) as any;
+
+    if (roles.includes(UserRole.admin) || job.createdBy === userId) {
+      return this.toJobResponse(job);
+    }
+
+    throw new AppHttpException(
+      'FORBIDDEN',
+      'You do not have access to this resource.',
+      HttpStatus.FORBIDDEN,
+    );
   }
 
   async updateJobStatus(

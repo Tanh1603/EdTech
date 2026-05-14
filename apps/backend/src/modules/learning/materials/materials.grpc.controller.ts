@@ -1,14 +1,19 @@
 import { Metadata } from '@grpc/grpc-js';
 import { Controller, UseGuards } from '@nestjs/common';
-import { GrpcContractMethod, GrpcMethods, GrpcServices } from '@edtech/contracts';
+import {
+  GrpcContractMethod,
+  GrpcMethods,
+  GrpcServices,
+  RolePermissions,
+} from '@edtech/contracts';
 import {
   fromProtoStruct,
   toObjectResponse,
   toPageResponse,
 } from '@edtech/contracts';
+import { Permissions } from '../../../common/decorators/permissions.decorator';
 import { GrpcUserAuthGuard } from '../../../common/guards/grpc-user-auth.guard';
 import { getGrpcUserId } from '../../../common/grpc/metadata.mapper';
-import { runGrpc } from '../../../common/grpc/error-to-rpc-exception';
 import { MaterialsService } from './materials.service';
 
 @Controller()
@@ -16,77 +21,97 @@ import { MaterialsService } from './materials.service';
 export class MaterialsGrpcController {
   constructor(private readonly materialsService: MaterialsService) {}
 
-  @GrpcContractMethod(GrpcServices.learningMaterials, GrpcMethods.learningMaterials.createMaterial)
+  @GrpcContractMethod(
+    GrpcServices.learningMaterials,
+    GrpcMethods.learningMaterials.createMaterial,
+  )
+  @Permissions(RolePermissions.lessonsManage)
   createMaterial(payload: any, metadata: Metadata) {
-    return runGrpc(() =>
-      this.materialsService
-        .createMaterial(
-          {
-            lessonId: payload.lessonId,
-            title: payload.title,
-            storageUrl: payload.storageUrl,
-            publicId: payload.publicId || undefined,
-            mimeType: payload.mimeType || undefined,
-            size: payload.size || undefined,
-          },
-          getGrpcUserId(metadata),
-        )
-        .then(toObjectResponse),
-    );
+    return this.materialsService
+      .createMaterial(
+        {
+          lessonId: payload.lessonId,
+          title: payload.title,
+          storageUrl: payload.storageUrl,
+          publicId: payload.publicId || undefined,
+          mimeType: payload.mimeType || undefined,
+          size: payload.size || undefined,
+        },
+        getGrpcUserId(metadata),
+      )
+      .then(toObjectResponse);
   }
 
-  @GrpcContractMethod(GrpcServices.learningMaterials, GrpcMethods.learningMaterials.getMaterials)
+  @GrpcContractMethod(
+    GrpcServices.learningMaterials,
+    GrpcMethods.learningMaterials.getMaterials,
+  )
+  @Permissions(RolePermissions.learningRead, RolePermissions.lessonsManage)
   getMaterials(payload: any) {
-    return runGrpc(() =>
-      this.materialsService.getMaterials({
+    return this.materialsService
+      .getMaterials({
         lessonId: payload.lessonId || undefined,
         status: payload.status || undefined,
         page: payload.page || undefined,
         limit: payload.limit || undefined,
         search: payload.search || undefined,
-      }).then((page) => toPageResponse(page as any)),
-    );
+      })
+      .then((page) => toPageResponse(page as any));
   }
 
-  @GrpcContractMethod(GrpcServices.learningMaterials, GrpcMethods.learningMaterials.getMaterialDetail)
+  @GrpcContractMethod(
+    GrpcServices.learningMaterials,
+    GrpcMethods.learningMaterials.getMaterialDetail,
+  )
+  @Permissions(RolePermissions.learningRead, RolePermissions.lessonsManage)
   getMaterialDetail(payload: any) {
-    return runGrpc(() =>
-      this.materialsService
-        .getMaterialDetail(payload.materialId)
-        .then(toObjectResponse),
-    );
+    return this.materialsService
+      .getMaterialDetail(payload.materialId)
+      .then(toObjectResponse);
   }
 
-  @GrpcContractMethod(GrpcServices.learningMaterials, GrpcMethods.learningMaterials.updateMaterial)
+  @GrpcContractMethod(
+    GrpcServices.learningMaterials,
+    GrpcMethods.learningMaterials.updateMaterial,
+  )
+  @Permissions(RolePermissions.lessonsManage)
   updateMaterial(payload: any) {
-    return runGrpc(() =>
-      this.materialsService
-        .updateMaterial(payload.materialId, fromProtoStruct(payload.body) as any)
-        .then(toObjectResponse),
-    );
+    return this.materialsService
+      .updateMaterial(payload.materialId, fromProtoStruct(payload.body) as any)
+      .then(toObjectResponse);
   }
 
-  @GrpcContractMethod(GrpcServices.learningMaterials, GrpcMethods.learningMaterials.deleteMaterial)
+  @GrpcContractMethod(
+    GrpcServices.learningMaterials,
+    GrpcMethods.learningMaterials.deleteMaterial,
+  )
+  @Permissions(RolePermissions.lessonsManage)
   deleteMaterial(payload: any) {
-    return runGrpc(() => this.materialsService.deleteMaterial(payload.materialId));
+    return this.materialsService.deleteMaterial(payload.materialId);
   }
 
-  @GrpcContractMethod(GrpcServices.learningMaterials, GrpcMethods.learningMaterials.getMaterialChunks)
+  @GrpcContractMethod(
+    GrpcServices.learningMaterials,
+    GrpcMethods.learningMaterials.getMaterialChunks,
+  )
+  @Permissions(RolePermissions.learningRead, RolePermissions.lessonsManage)
   getMaterialChunks(payload: any) {
-    return runGrpc(() =>
-      this.materialsService.getMaterialChunks(payload.materialId, {
+    return this.materialsService
+      .getMaterialChunks(payload.materialId, {
         page: payload.page || undefined,
         limit: payload.limit || undefined,
-      }).then((page) => toPageResponse(page as any)),
-    );
+      })
+      .then((page) => toPageResponse(page as any));
   }
 
-  @GrpcContractMethod(GrpcServices.learningMaterials, GrpcMethods.learningMaterials.getChunkDetail)
+  @GrpcContractMethod(
+    GrpcServices.learningMaterials,
+    GrpcMethods.learningMaterials.getChunkDetail,
+  )
+  @Permissions(RolePermissions.learningRead, RolePermissions.lessonsManage)
   getChunkDetail(payload: any) {
-    return runGrpc(() =>
-      this.materialsService
-        .getChunkDetail(payload.materialId, payload.chunkId)
-        .then(toObjectResponse),
-    );
+    return this.materialsService
+      .getChunkDetail(payload.materialId, payload.chunkId)
+      .then(toObjectResponse);
   }
 }

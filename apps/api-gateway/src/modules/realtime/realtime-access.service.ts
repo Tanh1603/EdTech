@@ -105,7 +105,7 @@ export class RealtimeAccessService {
     return this.metadataBuilder.buildFromContext({
       userId: socket.data.userId,
       roles: socket.data.roles,
-      authorization: socket.data.authorization,
+      permissions: socket.data.permissions,
       requestId: socket.data.requestId,
       correlationId: socket.data.correlationId,
     });

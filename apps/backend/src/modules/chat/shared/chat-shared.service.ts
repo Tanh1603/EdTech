@@ -3,6 +3,7 @@ import { PageDto } from '@edtech/contracts';
 import { UserRole } from '@edtech/contracts';
 import { AccessPolicyService } from '../../../common/access/access-policy.service';
 import { PrismaService } from '../../../common/prisma/prisma.service';
+import { toUserSummary, userSummarySelect } from '../../../common/rbac/rbac.mapper';
 import { Prisma } from '../../../generated/prisma/client';
 import {
   ChatMessagesQueryDto,
@@ -34,6 +35,7 @@ export class ChatSharedService {
         classId: payload.classId,
         title: payload.title,
       },
+      include: { user: { select: userSummarySelect } },
     });
   }
 
@@ -57,6 +59,7 @@ export class ChatSharedService {
         skip: (page - 1) * limit,
         take: limit,
         include: {
+          user: { select: userSummarySelect },
           messages: {
             take: 1,
             orderBy: { createdAt: 'desc' },
@@ -68,8 +71,9 @@ export class ChatSharedService {
     ]);
 
     return this.toPage(
-      sessions.map(({ messages, ...session }) => ({
+      sessions.map(({ messages, user, ...session }) => ({
         ...session,
+        user: toUserSummary(user),
         lastMessage: messages[0]?.content ?? null,
       })),
       page,
@@ -81,6 +85,7 @@ export class ChatSharedService {
   getSessionDetail(sessionId: string, userId: string) {
     return this.prisma.chatSession.findFirstOrThrow({
       where: { id: sessionId, userId },
+      include: { user: { select: userSummarySelect } },
     });
   }
 
@@ -93,6 +98,7 @@ export class ChatSharedService {
     return this.prisma.chatSession.update({
       where: { id: sessionId },
       data: { title: payload.title },
+      include: { user: { select: userSummarySelect } },
     });
   }
 
@@ -176,7 +182,11 @@ export class ChatSharedService {
 
     const sessions = await this.prisma.chatSession.findMany({
       where: { classId },
-      select: { userId: true, _count: { select: { messages: true } } },
+      select: {
+        userId: true,
+        user: { select: userSummarySelect },
+        _count: { select: { messages: true } },
+      },
     });
     return {
       activeStudents: new Set(sessions.map((session) => session.userId)).size,
@@ -184,6 +194,7 @@ export class ChatSharedService {
         (sum, session) => sum + session._count.messages,
         0,
       ),
+      users: sessions.map((session) => toUserSummary(session.user)),
     };
   }
 

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../common/prisma/prisma.service';
+import { userSummarySelect } from '../../../common/rbac/rbac.mapper';
 import { BulkUpsertMasteryDto } from '@edtech/contracts';
 import { UpsertMasteryDto } from '@edtech/contracts';
 
@@ -10,6 +11,7 @@ export class MasteryService {
   async getMyMastery(userId: string) {
     return this.prisma.studentTopicMastery.findMany({
       where: { studentId: userId },
+      include: { student: { select: userSummarySelect } },
       orderBy: [{ classId: 'asc' }, { topic: 'asc' }],
     });
   }
@@ -17,6 +19,7 @@ export class MasteryService {
   async getMasteryByClass(classId: string) {
     return this.prisma.studentTopicMastery.findMany({
       where: { classId },
+      include: { student: { select: userSummarySelect } },
       orderBy: [{ studentId: 'asc' }, { masteryScore: 'asc' }],
     });
   }
@@ -24,6 +27,7 @@ export class MasteryService {
   async getMasteryByTopic(topic: string, userId: string) {
     return this.prisma.studentTopicMastery.findMany({
       where: { topic, studentId: userId },
+      include: { student: { select: userSummarySelect } },
       orderBy: { updatedAt: 'desc' },
     });
   }
@@ -31,6 +35,7 @@ export class MasteryService {
   async getMasteryAnalytics(userId: string) {
     const items = await this.prisma.studentTopicMastery.findMany({
       where: { studentId: userId },
+      include: { student: { select: userSummarySelect } },
       orderBy: { masteryScore: 'asc' },
     });
 
@@ -60,6 +65,7 @@ export class MasteryService {
       },
       create: payload,
       update: { masteryScore: payload.masteryScore },
+      include: { student: { select: userSummarySelect } },
     });
   }
 
@@ -76,6 +82,7 @@ export class MasteryService {
           },
           create: item,
           update: { masteryScore: item.masteryScore },
+          include: { student: { select: userSummarySelect } },
         }),
       ),
     );
@@ -86,14 +93,19 @@ export class MasteryService {
   async getRiskStudents() {
     const weakItems = await this.prisma.studentTopicMastery.findMany({
       where: { masteryScore: { lt: 0.5 } },
+      include: { student: { select: userSummarySelect } },
       orderBy: { masteryScore: 'asc' },
     });
 
-    const grouped = new Map<string, { studentId: string; weakTopics: string[] }>();
+    const grouped = new Map<
+      string,
+      { studentId: string; student?: unknown; weakTopics: string[] }
+    >();
 
     weakItems.forEach((item) => {
       const current = grouped.get(item.studentId) ?? {
         studentId: item.studentId,
+        student: item.student,
         weakTopics: [],
       };
       current.weakTopics.push(item.topic);

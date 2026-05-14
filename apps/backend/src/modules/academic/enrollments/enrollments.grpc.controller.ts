@@ -4,12 +4,13 @@ import {
   GrpcContractMethod,
   GrpcMethods,
   GrpcServices,
+  RolePermissions,
   toListResponse,
   toObjectResponse,
 } from '@edtech/contracts';
+import { Permissions } from '../../../common/decorators/permissions.decorator';
 import { GrpcUserAuthGuard } from '../../../common/guards/grpc-user-auth.guard';
 import { getGrpcIdentity } from '../../../common/grpc/metadata.mapper';
-import { runGrpc } from '../../../common/grpc/error-to-rpc-exception';
 import { EnrollmentsService } from './enrollments.service';
 
 @Controller()
@@ -17,65 +18,85 @@ import { EnrollmentsService } from './enrollments.service';
 export class EnrollmentsGrpcController {
   constructor(private readonly enrollmentsService: EnrollmentsService) {}
 
-  @GrpcContractMethod(GrpcServices.academicEnrollments, GrpcMethods.academicEnrollments.joinClassroom)
+  @GrpcContractMethod(
+    GrpcServices.academicEnrollments,
+    GrpcMethods.academicEnrollments.joinClassroom,
+  )
+  @Permissions(RolePermissions.learningRead)
   joinClassroom(payload: any, metadata: Metadata) {
-    return runGrpc(async () => {
-      const identity = getGrpcIdentity(metadata);
-      return Promise.resolve(this.enrollmentsService.joinClassroom(
-          { inviteCode: payload.inviteCode },
-          identity.userId,
-      )).then(toObjectResponse);
-    });
+    const identity = getGrpcIdentity(metadata);
+    return Promise.resolve(
+      this.enrollmentsService.joinClassroom(
+        { inviteCode: payload.inviteCode },
+        identity.userId,
+      ),
+    ).then(toObjectResponse);
   }
 
-  @GrpcContractMethod(GrpcServices.academicEnrollments, GrpcMethods.academicEnrollments.createEnrollment)
+  @GrpcContractMethod(
+    GrpcServices.academicEnrollments,
+    GrpcMethods.academicEnrollments.createEnrollment,
+  )
+  @Permissions(RolePermissions.enrollmentsManage)
   createEnrollment(payload: any, metadata: Metadata) {
-    return runGrpc(async () => {
-      const identity = getGrpcIdentity(metadata);
-      return Promise.resolve(this.enrollmentsService.createEnrollment({
+    const identity = getGrpcIdentity(metadata);
+    return Promise.resolve(
+      this.enrollmentsService.createEnrollment(
+        {
           classId: payload.classId,
           userId: payload.userId,
           role: payload.role,
-        }, identity.userId, identity.roles)).then(toObjectResponse);
-    });
-  }
-
-  @GrpcContractMethod(GrpcServices.academicEnrollments, GrpcMethods.academicEnrollments.getClassroomStudents)
-  getClassroomStudents(payload: any, metadata: Metadata) {
-    return runGrpc(async () => {
-      const identity = getGrpcIdentity(metadata);
-      return Promise.resolve(
-        this.enrollmentsService.getClassroomStudents(
-            payload.classroomId,
-            identity.userId,
-            identity.roles,
-        ),
-      ).then(toListResponse);
-    });
-  }
-
-  @GrpcContractMethod(GrpcServices.academicEnrollments, GrpcMethods.academicEnrollments.updateEnrollmentRole)
-  updateEnrollmentRole(payload: any, metadata: Metadata) {
-    return runGrpc(async () => {
-      const identity = getGrpcIdentity(metadata);
-      return Promise.resolve(this.enrollmentsService.updateEnrollmentRole(
-          payload.enrollmentId,
-          { role: payload.role },
-          identity.userId,
-          identity.roles,
-      )).then(toObjectResponse);
-    });
-  }
-
-  @GrpcContractMethod(GrpcServices.academicEnrollments, GrpcMethods.academicEnrollments.removeEnrollment)
-  removeEnrollment(payload: any, metadata: Metadata) {
-    return runGrpc(async () => {
-      const identity = getGrpcIdentity(metadata);
-      return this.enrollmentsService.removeEnrollment(
-        payload.enrollmentId,
+        },
         identity.userId,
         identity.roles,
-      );
-    });
+      ),
+    ).then(toObjectResponse);
+  }
+
+  @GrpcContractMethod(
+    GrpcServices.academicEnrollments,
+    GrpcMethods.academicEnrollments.getClassroomStudents,
+  )
+  @Permissions(RolePermissions.enrollmentsManage)
+  getClassroomStudents(payload: any, metadata: Metadata) {
+    const identity = getGrpcIdentity(metadata);
+    return Promise.resolve(
+      this.enrollmentsService.getClassroomStudents(
+        payload.classroomId,
+        identity.userId,
+        identity.roles,
+      ),
+    ).then(toListResponse);
+  }
+
+  @GrpcContractMethod(
+    GrpcServices.academicEnrollments,
+    GrpcMethods.academicEnrollments.updateEnrollmentRole,
+  )
+  @Permissions(RolePermissions.enrollmentsManage)
+  updateEnrollmentRole(payload: any, metadata: Metadata) {
+    const identity = getGrpcIdentity(metadata);
+    return Promise.resolve(
+      this.enrollmentsService.updateEnrollmentRole(
+        payload.enrollmentId,
+        { role: payload.role },
+        identity.userId,
+        identity.roles,
+      ),
+    ).then(toObjectResponse);
+  }
+
+  @GrpcContractMethod(
+    GrpcServices.academicEnrollments,
+    GrpcMethods.academicEnrollments.removeEnrollment,
+  )
+  @Permissions(RolePermissions.enrollmentsManage)
+  removeEnrollment(payload: any, metadata: Metadata) {
+    const identity = getGrpcIdentity(metadata);
+    return this.enrollmentsService.removeEnrollment(
+      payload.enrollmentId,
+      identity.userId,
+      identity.roles,
+    );
   }
 }

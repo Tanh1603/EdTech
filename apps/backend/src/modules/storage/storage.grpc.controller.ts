@@ -1,17 +1,25 @@
-import { Controller } from '@nestjs/common';
-import { GrpcContractMethod, GrpcMethods, GrpcServices } from '@edtech/contracts';
+import { Controller, UseGuards } from '@nestjs/common';
+import {
+  GrpcContractMethod,
+  GrpcMethods,
+  GrpcServices,
+  RolePermissions,
+} from '@edtech/contracts';
 import { toObjectResponse } from '@edtech/contracts';
-import { runGrpc } from '../../common/grpc/error-to-rpc-exception';
+import { Permissions } from '../../common/decorators/permissions.decorator';
+import { GrpcUserAuthGuard } from '../../common/guards/grpc-user-auth.guard';
 import { StorageService as BackendStorageService } from './storage.service';
 
 @Controller()
 export class StorageGrpcController {
   constructor(private readonly storageService: BackendStorageService) {}
 
+  @UseGuards(GrpcUserAuthGuard)
+  @Permissions(RolePermissions.lessonsManage)
   @GrpcContractMethod(GrpcServices.storage, GrpcMethods.storage.deleteFile)
   deleteFile(payload: any) {
-    return runGrpc(async () =>
-      toObjectResponse(await this.storageService.deleteFile(payload.publicId)),
-    );
+    return this.storageService
+      .deleteFile(payload.publicId)
+      .then(toObjectResponse);
   }
 }

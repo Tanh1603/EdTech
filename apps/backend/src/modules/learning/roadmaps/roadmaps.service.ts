@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PageDto } from '@edtech/contracts';
 import { PrismaService } from '../../../common/prisma/prisma.service';
+import { userSummarySelect } from '../../../common/rbac/rbac.mapper';
 import { Prisma, RoadmapStatus } from '../../../generated/prisma/client';
 import { CreateRoadmapItemDto } from '@edtech/contracts';
 import { CreateRoadmapDto } from '@edtech/contracts';
@@ -20,6 +21,7 @@ export class RoadmapsService {
         targetGoal: payload.targetGoal,
         generatedByAi: false,
       },
+      include: { user: { select: userSummarySelect } },
     });
   }
 
@@ -40,6 +42,7 @@ export class RoadmapsService {
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { createdAt: 'desc' },
+        include: { user: { select: userSummarySelect } },
       }),
       this.prisma.learningRoadmap.count({ where }),
     ]);
@@ -51,6 +54,7 @@ export class RoadmapsService {
     return this.prisma.learningRoadmap.findFirstOrThrow({
       where: { id: roadmapId, userId },
       include: {
+        user: { select: userSummarySelect },
         items: { orderBy: { orderNo: 'asc' } },
       },
     });
@@ -69,6 +73,7 @@ export class RoadmapsService {
     return this.prisma.learningRoadmap.update({
       where: { id: roadmapId },
       data: payload,
+      include: { user: { select: userSummarySelect } },
     });
   }
 

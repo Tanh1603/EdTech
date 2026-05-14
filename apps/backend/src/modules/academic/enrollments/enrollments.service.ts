@@ -3,6 +3,7 @@ import { toIsoString, UserRole } from '@edtech/contracts';
 import { AccessPolicyService } from '../../../common/access/access-policy.service';
 import { AppHttpException } from '../../../common/errors/app-http.exception';
 import { PrismaService } from '../../../common/prisma/prisma.service';
+import { toUserSummary, userSummarySelect } from '../../../common/rbac/rbac.mapper';
 import { ClassRole } from '../../../generated/prisma/client';
 import { CreateEnrollmentDto } from '@edtech/contracts';
 import { JoinClassroomDto } from '@edtech/contracts';
@@ -37,6 +38,7 @@ export class EnrollmentsService {
         userId,
         role: ClassRole.student,
       },
+      include: { user: { select: userSummarySelect } },
     });
 
     const detail = await this.prisma.classroom.findUnique({
@@ -67,7 +69,10 @@ export class EnrollmentsService {
       );
     }
 
-    const enrollment = await this.prisma.enrollment.create({ data: payload });
+    const enrollment = await this.prisma.enrollment.create({
+      data: payload,
+      include: { user: { select: userSummarySelect } },
+    });
     const classroom = await this.prisma.classroom.findUnique({
       where: { id: payload.classId },
       select: { name: true },
@@ -102,6 +107,7 @@ export class EnrollmentsService {
         userId: true,
         role: true,
         joinedAt: true,
+        user: { select: userSummarySelect },
       },
       orderBy: { joinedAt: 'desc' },
     });
@@ -132,6 +138,7 @@ export class EnrollmentsService {
     const enrollment = await this.prisma.enrollment.update({
       where: { id: enrollmentId },
       data: { role: payload.role },
+      include: { user: { select: userSummarySelect } },
     });
 
     return this.toEnrollmentResponse(enrollment);
@@ -166,11 +173,13 @@ export class EnrollmentsService {
     userId: string;
     role: ClassRole;
     joinedAt: Date;
+    user?: Parameters<typeof toUserSummary>[0];
   }) {
     return {
       id: enrollment.id,
       classId: enrollment.classId,
       userId: enrollment.userId,
+      user: toUserSummary(enrollment.user),
       role: enrollment.role,
       joinedAt: toIsoString(enrollment.joinedAt),
     };
@@ -181,10 +190,12 @@ export class EnrollmentsService {
     userId: string;
     role: ClassRole;
     joinedAt: Date;
+    user?: Parameters<typeof toUserSummary>[0];
   }) {
     return {
       id: enrollment.id,
       userId: enrollment.userId,
+      user: toUserSummary(enrollment.user),
       role: enrollment.role,
       joinedAt: toIsoString(enrollment.joinedAt),
     };

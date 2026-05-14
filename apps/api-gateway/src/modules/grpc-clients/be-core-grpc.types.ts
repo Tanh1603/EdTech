@@ -139,6 +139,14 @@ export interface StorageGrpc {
 
 export interface UsersGrpc {
   getUsers: GrpcCall;
+  getMe: GrpcCall;
+  updateMyProfile: GrpcCall;
+  syncClerkUserCreated: GrpcCall;
+  syncClerkUserUpdated: GrpcCall;
+  syncClerkUserDeleted: GrpcCall;
+  assignUserRoles: GrpcCall;
+  getRoles: GrpcCall;
+  getPermissions: GrpcCall;
 }
 
 export interface JobsGrpc {

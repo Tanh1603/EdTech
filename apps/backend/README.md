@@ -1,56 +1,38 @@
-# Branch Backend Skeleton
+# EdTech Backend
 
-This folder contains a NestJS + Prisma backend scaffold generated from `.agents/prompts/plan/be` and aligned with `.agents/prompts/rules`.
+This backend is an internal gRPC-only NestJS service. Public HTTP, WebSocket,
+SSE, Swagger, CORS, and Clerk webhook traffic are handled by `apps/api-gateway`.
 
-## Implemented Scope (BE-1..BE-9 scaffold)
+## Runtime Surface
 
-- BE-1 Core:
-  - Global `ValidationPipe` (`whitelist`, `forbidNonWhitelisted`, `transform`)
-  - `ResponseEnvelopeInterceptor` with `success/data/meta/error`
-  - `GlobalExceptionFilter` with standard error code mapping
-  - `RequestIdMiddleware`
-  - `GET /api/health`
-- BE-2 Auth:
-  - `POST /api/auth/clerk/webhook`
-  - `GET /api/auth/me`
-  - `POST /api/auth/logout`
-- BE-3 Users + RBAC:
-  - `GET /api/users/me`
-  - `PUT /api/users/me/learning-profile`
-  - `GET /api/users` (role-restricted via `@Roles('admin')`)
-- BE-4 + BE-5 Learning domain:
-  - `GET/POST /api/courses`
-  - `GET/POST /api/classes`
-  - `POST /api/classes/:classId/invites`
-  - `GET/POST /api/documents`
-  - `PUT /api/documents/:documentId`
-  - `GET /api/jobs/:jobId`
-- BE-6 Chat:
-  - `GET/POST /api/chat/sessions`
-  - `GET/POST /api/chat/sessions/:sessionId/messages`
-  - `POST /api/chat/sessions/:sessionId/memory/reset`
-- BE-7 Assessment:
-  - `POST /api/exams/generate`
-  - `PUT /api/exams/:examId`
-  - `POST /api/exams/:examId/publish`
-  - `POST /api/exams/:examId/attempts`
-  - `POST /api/attempts/:attemptId/submit`
-  - `GET /api/results`
-  - `POST /api/results/:resultId/override`
-- BE-8 Analytics + Admin:
-  - `GET /api/analytics/student`
-  - `GET /api/analytics/class/:classId`
-  - `POST /api/analytics/export`
-  - `GET/POST /api/notifications`
-  - `GET /api/admin/metrics`
-  - `GET /api/admin/agents/monitor`
-  - `GET /api/admin/logs`
-- BE-9 Hardening baseline:
-  - Consistent envelope and error mapping in place
-  - Initial Prisma schema in `prisma/schema.prisma`
+- gRPC listens on `BACKEND_GRPC_URL`.
+- Gateway-to-backend calls require `x-service-token`.
+- User-scoped gRPC calls also require forwarded Clerk bearer metadata.
+- Backend verifies the Clerk token subject, then loads roles and permissions from
+  the local RBAC tables.
 
-## Notes
+## RBAC
 
-- Current implementation is scaffold-level (service logic is stubbed).
-- To finish production-ready BE-9, add repositories with Prisma queries, workers/queues, and e2e/contract tests.
+- `users` stores Clerk user profiles.
+- `roles`, `permissions`, `user_roles`, and `role_permissions` are the source of
+  truth for authorization.
+- Clerk webhook sync is exposed at `POST /api/webhooks/clerk` in API Gateway.
+- New `user.created` webhook users receive the default `student` role.
+- Backend syncs a compact RBAC snapshot to Clerk `privateMetadata.sys.rbac`.
+- Configure Clerk Dashboard webhooks to send `user.created`, `user.updated`, and
+  `user.deleted` events to API Gateway:
+  - local tunnel/dev: `https://<tunnel>/api/webhooks/clerk`
+  - deployed gateway: `https://<gateway-domain>/api/webhooks/clerk`
+- Configure the Clerk session token custom claim so runtime auth can read the
+  snapshot without querying the DB on every request:
 
+```json
+{
+  "sys": "{{user.private_metadata.sys}}"
+}
+```
+
+For local RBAC repair or reseeding, run the idempotent SQL in
+`apps/backend/prisma/seeds/rbac.sql` against the backend database. The same seed
+statements are also included in a Prisma migration so `prisma migrate deploy`
+keeps deployed environments seeded.

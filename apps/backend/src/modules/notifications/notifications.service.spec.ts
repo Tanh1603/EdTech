@@ -1,7 +1,4 @@
-import {
-  JobTypes,
-  NotificationAudienceTypes,
-} from '@edtech/contracts';
+import { JobTypes, NotificationAudienceTypes } from '@edtech/contracts';
 
 jest.mock('../../common/prisma/prisma.service', () => ({
   PrismaService: class PrismaService {},
@@ -26,19 +23,23 @@ describe('NotificationsService', () => {
 
     const result = await service.createForUser('user-1', 'Hello', 'Body');
 
-    expect(prisma.notification.create).toHaveBeenCalledWith({
-      data: { userId: 'user-1', title: 'Hello', body: 'Body' },
-    });
+    expect(prisma.notification.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { userId: 'user-1', title: 'Hello', body: 'Body' },
+      }),
+    );
     expect(result).toMatchObject({ userId: 'user-1', isRead: false });
   });
 
   it('resolves class audience into student notifications', async () => {
     const prisma = {
       enrollment: {
-        findMany: jest.fn().mockResolvedValue([
-          { userId: 'student-1' },
-          { userId: 'student-2' },
-        ]),
+        findMany: jest
+          .fn()
+          .mockResolvedValue([
+            { userId: 'student-1' },
+            { userId: 'student-2' },
+          ]),
       },
       notification: {
         create: jest
@@ -94,10 +95,12 @@ describe('NotificationsService', () => {
     expect(prisma.notification.findFirstOrThrow).toHaveBeenCalledWith({
       where: { id: 'notification-1', userId: 'user-1' },
     });
-    expect(prisma.notification.update).toHaveBeenCalledWith({
-      where: { id: 'notification-1' },
-      data: { isRead: true },
-    });
+    expect(prisma.notification.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'notification-1' },
+        data: { isRead: true },
+      }),
+    );
   });
 
   it('creates notifications immediately and enqueues dispatch jobs', async () => {
@@ -177,4 +180,3 @@ describe('NotificationsService', () => {
     });
   });
 });
-

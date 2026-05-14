@@ -1,6 +1,20 @@
 import { status } from '@grpc/grpc-js';
-import { HttpException, HttpStatus } from '@nestjs/common';
+import {
+  ArgumentsHost,
+  Catch,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
+import { Observable, throwError } from 'rxjs';
+
+@Catch()
+export class GrpcExceptionFilter {
+  catch(exception: unknown, _host: ArgumentsHost): Observable<never> {
+    const rpcException = toRpcException(exception);
+    return throwError(() => rpcException.getError());
+  }
+}
 
 export function toRpcException(error: unknown): RpcException {
   if (error instanceof RpcException) {
@@ -27,23 +41,13 @@ export function toRpcException(error: unknown): RpcException {
   });
 }
 
-function isPrismaKnownRequestError(
-  error: unknown,
-): error is { code: string } {
+function isPrismaKnownRequestError(error: unknown): error is { code: string } {
   return (
     !!error &&
     typeof error === 'object' &&
     typeof (error as { code?: unknown }).code === 'string' &&
     (error as { code: string }).code.startsWith('P')
   );
-}
-
-export async function runGrpc<T>(handler: () => Promise<T>): Promise<T> {
-  try {
-    return await handler();
-  } catch (error) {
-    throw toRpcException(error);
-  }
 }
 
 function mapPrismaCode(code: string): status {
@@ -66,7 +70,8 @@ function mapHttpStatus(httpStatus: number): status {
   if (httpStatus === HttpStatus.FORBIDDEN) return status.PERMISSION_DENIED;
   if (httpStatus === HttpStatus.NOT_FOUND) return status.NOT_FOUND;
   if (httpStatus === HttpStatus.CONFLICT) return status.ALREADY_EXISTS;
-  if (httpStatus === HttpStatus.TOO_MANY_REQUESTS) return status.RESOURCE_EXHAUSTED;
+  if (httpStatus === HttpStatus.TOO_MANY_REQUESTS)
+    return status.RESOURCE_EXHAUSTED;
   return status.INTERNAL;
 }
 

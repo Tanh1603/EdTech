@@ -30,7 +30,7 @@ export class ClerkWebhookController {
     private readonly configService: ConfigService,
     private readonly grpc: BeCoreGrpcClientService,
     private readonly metadata: GrpcMetadataBuilder,
-  ) {}
+  ) { }
 
   @Public()
   @Post()
@@ -49,11 +49,6 @@ export class ClerkWebhookController {
       svixTimestamp,
       svixSignature,
     );
-
-    console.log(payload);
-    console.log(event);
-
-
 
     const metadata = this.metadata.buildFromContext({
       requestId: req.requestId ?? 'unknown',
@@ -100,8 +95,7 @@ export class ClerkWebhookController {
       }
     } catch (error) {
       this.logger.error(
-        `Failed to sync Clerk webhook type=${event.type} user=${clerkUserId ?? 'unknown'} requestId=${req.requestId ?? 'unknown'} message=${
-          error instanceof Error ? error.message : String(error)
+        `Failed to sync Clerk webhook type=${event.type} user=${clerkUserId ?? 'unknown'} requestId=${req.requestId ?? 'unknown'} message=${error instanceof Error ? error.message : String(error)
         }`,
         error instanceof Error ? error.stack : undefined,
       );
@@ -137,8 +131,7 @@ export class ClerkWebhookController {
       }) as ClerkWebhookEvent;
     } catch (error) {
       this.logger.warn(
-        `Rejected Clerk webhook signature message=${
-          error instanceof Error ? error.message : String(error)
+        `Rejected Clerk webhook signature message=${error instanceof Error ? error.message : String(error)
         }`,
       );
       throw new UnauthorizedException('Invalid Clerk webhook signature');

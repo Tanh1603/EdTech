@@ -8,7 +8,12 @@ import {
   UserResponseDto,
   UserRole,
 } from '@edtech/contracts';
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ClerkRbacSyncService } from '../../../common/auth/clerk-rbac-sync.service';
 import {
   toPermissionResponse,
@@ -18,29 +23,42 @@ import {
 import { UsersRepository } from '../repositories/users.repository';
 
 const DefaultUserRole = UserRole.student;
+const BootstrapAdminEmailsEnv = 'RBAC_BOOTSTRAP_ADMIN_EMAILS';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly usersRepository: UsersRepository,
     private readonly clerkRbacSyncService: ClerkRbacSyncService,
+    private readonly configService: ConfigService,
   ) {}
 
-  async syncClerkUserCreated(payload: SyncClerkUserDto): Promise<UserResponseDto> {
+  async syncClerkUserCreated(
+    payload: SyncClerkUserDto,
+  ): Promise<UserResponseDto> {
     this.assertSyncPayload(payload);
     const user = await this.usersRepository.upsertClerkUser(payload, 'active');
-    await this.usersRepository.ensureDefaultRole(user.id, DefaultUserRole);
+    await this.ensureBootstrapRole(user.id, payload.email, {
+      incrementAdminRbacVersion: false,
+    });
     await this.clerkRbacSyncService.syncUserRbacSnapshot(user.id);
     return this.getUserById(user.id);
   }
 
-  async syncClerkUserUpdated(payload: SyncClerkUserDto): Promise<UserResponseDto> {
+  async syncClerkUserUpdated(
+    payload: SyncClerkUserDto,
+  ): Promise<UserResponseDto> {
     this.assertSyncPayload(payload);
     const user = await this.usersRepository.upsertClerkUser(
       payload,
       payload.status ?? 'active',
     );
-    await this.usersRepository.ensureDefaultRole(user.id, DefaultUserRole);
+    const roleChanged = await this.ensureBootstrapRole(user.id, payload.email, {
+      incrementAdminRbacVersion: true,
+    });
+    if (roleChanged) {
+      await this.clerkRbacSyncService.syncUserRbacSnapshot(user.id);
+    }
     return this.getUserById(user.id);
   }
 
@@ -123,7 +141,49 @@ export class UsersService {
     const invalidRoles = roles.filter((role) => !allowedRoles.has(role));
 
     if (invalidRoles.length > 0) {
-      throw new BadRequestException(`Invalid roles: ${invalidRoles.join(', ')}`);
+      throw new BadRequestException(
+        `Invalid roles: ${invalidRoles.join(', ')}`,
+      );
     }
+  }
+
+  private async ensureBootstrapRole(
+    userId: string,
+    email: string | null | undefined,
+    options: { incrementAdminRbacVersion: boolean },
+  ): Promise<boolean> {
+    if (this.isBootstrapAdminEmail(email)) {
+      return this.usersRepository.ensureRole(userId, UserRole.admin, {
+        incrementRbacVersion: options.incrementAdminRbacVersion,
+      });
+    }
+
+    return this.usersRepository.ensureDefaultRole(userId, DefaultUserRole);
+  }
+
+  private isBootstrapAdminEmail(email: string | null | undefined): boolean {
+    const normalizedEmail = this.normalizeEmail(email);
+    if (!normalizedEmail) {
+      return false;
+    }
+
+    return this.getBootstrapAdminEmails().has(normalizedEmail);
+  }
+
+  private getBootstrapAdminEmails(): Set<string> {
+    const rawValue =
+      this.configService.get<string>(BootstrapAdminEmailsEnv) ?? '';
+
+    return new Set(
+      rawValue
+        .split(',')
+        .map((email) => this.normalizeEmail(email))
+        .filter((email): email is string => Boolean(email)),
+    );
+  }
+
+  private normalizeEmail(email: string | null | undefined): string | undefined {
+    const normalized = email?.trim().toLowerCase();
+    return normalized && normalized.length > 0 ? normalized : undefined;
   }
 }

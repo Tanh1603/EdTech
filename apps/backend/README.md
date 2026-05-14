@@ -7,9 +7,9 @@ SSE, Swagger, CORS, and Clerk webhook traffic are handled by `apps/api-gateway`.
 
 - gRPC listens on `BACKEND_GRPC_URL`.
 - Gateway-to-backend calls require `x-service-token`.
-- User-scoped gRPC calls also require forwarded Clerk bearer metadata.
-- Backend verifies the Clerk token subject, then loads roles and permissions from
-  the local RBAC tables.
+- User-scoped gRPC calls receive trusted identity metadata from API Gateway.
+- Backend checks the service token, then reads user id, roles, and permissions
+  from gRPC metadata.
 
 ## RBAC
 
@@ -17,8 +17,11 @@ SSE, Swagger, CORS, and Clerk webhook traffic are handled by `apps/api-gateway`.
 - `roles`, `permissions`, `user_roles`, and `role_permissions` are the source of
   truth for authorization.
 - Clerk webhook sync is exposed at `POST /api/webhooks/clerk` in API Gateway.
-- New `user.created` webhook users receive the default `student` role.
-- Backend syncs a compact RBAC snapshot to Clerk `privateMetadata.sys.rbac`.
+- New `user.created` webhook users receive the default `student` role unless
+  their email is listed in `RBAC_BOOTSTRAP_ADMIN_EMAILS`.
+- `RBAC_BOOTSTRAP_ADMIN_EMAILS` is a comma-separated allowlist for bootstrap
+  admin accounts, for example `admin@example.com,owner@example.com`.
+- Backend syncs a compact RBAC snapshot to Clerk `publicMetadata.sys.rbac`.
 - Configure Clerk Dashboard webhooks to send `user.created`, `user.updated`, and
   `user.deleted` events to API Gateway:
   - local tunnel/dev: `https://<tunnel>/api/webhooks/clerk`
@@ -28,7 +31,7 @@ SSE, Swagger, CORS, and Clerk webhook traffic are handled by `apps/api-gateway`.
 
 ```json
 {
-  "sys": "{{user.private_metadata.sys}}"
+  "sys": "{{user.public_metadata.sys}}"
 }
 ```
 

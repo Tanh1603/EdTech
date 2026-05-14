@@ -38,6 +38,7 @@ import { UsersModule } from '../users/users.module';
         CLOUDINARY_API_SECRET: Joi.string().required(),
         BACKEND_GRPC_URL: Joi.string().optional(),
         SERVICE_TOKEN: Joi.string().optional(),
+        RBAC_BOOTSTRAP_ADMIN_EMAILS: Joi.string().allow('').optional(),
         ENABLE_BE_WORKERS: Joi.boolean().optional(),
         RABBITMQ_URL: Joi.string().optional(),
         RABBITMQ_EXCHANGE: Joi.string().default('edtech.jobs'),

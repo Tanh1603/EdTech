@@ -1,4 +1,9 @@
-import { PageDto, SyncClerkUserDto, UserQueryDto, UserRole } from '@edtech/contracts';
+import {
+  PageDto,
+  SyncClerkUserDto,
+  UserQueryDto,
+  UserRole,
+} from '@edtech/contracts';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import {
@@ -127,21 +132,57 @@ export class UsersRepository {
     return Boolean(user);
   }
 
-  async ensureDefaultRole(userId: string, roleName: UserRole): Promise<void> {
+  async ensureDefaultRole(
+    userId: string,
+    roleName: UserRole,
+  ): Promise<boolean> {
     const count = await this.prisma.userRoleAssignment.count({
       where: { userId },
     });
 
     if (count > 0) {
-      return;
+      return false;
     }
 
-    await this.prisma.userRoleAssignment.create({
-      data: {
-        userId,
-        roleName,
+    return this.ensureRole(userId, roleName);
+  }
+
+  async ensureRole(
+    userId: string,
+    roleName: UserRole,
+    options: { incrementRbacVersion?: boolean } = {},
+  ): Promise<boolean> {
+    const existing = await this.prisma.userRoleAssignment.findUnique({
+      where: {
+        userId_roleName: {
+          userId,
+          roleName,
+        },
       },
     });
+
+    if (existing) {
+      return false;
+    }
+
+    const createRole = this.prisma.userRoleAssignment.create({
+      data: { userId, roleName },
+    });
+
+    if (!options.incrementRbacVersion) {
+      await createRole;
+      return true;
+    }
+
+    await this.prisma.$transaction([
+      createRole,
+      this.prisma.user.update({
+        where: { id: userId },
+        data: { rbacVersion: { increment: 1 } },
+      }),
+    ]);
+
+    return true;
   }
 
   async replaceRoles(userId: string, roles: UserRole[]): Promise<void> {

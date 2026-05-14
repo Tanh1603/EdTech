@@ -16,12 +16,12 @@ export class ClerkRbacMetadataAdapter {
   ): Promise<void> {
     const client = this.getClerkClient();
     const clerkUser = await client.users.getUser(userId);
-    const privateMetadata = this.asRecord(clerkUser.privateMetadata);
-    const sys = this.asRecord(privateMetadata.sys);
+    const publicMetadata = this.asRecord(clerkUser.publicMetadata);
+    const sys = this.asRecord(publicMetadata.sys);
 
     await client.users.updateUserMetadata(userId, {
-      privateMetadata: {
-        ...privateMetadata,
+      publicMetadata: {
+        ...publicMetadata,
         sys: {
           ...sys,
           rbac: snapshot,

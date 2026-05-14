@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Patch, Query, Req } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { lastValueFrom } from 'rxjs';
 import {
   AssignUserRolesDto,
@@ -18,7 +18,7 @@ import { BeCoreGrpcClientService } from '../grpc-clients/be-core-grpc-client.ser
 @ApiBearerAuth()
 @Controller('users')
 export class UsersGatewayController {
-  constructor(private readonly grpc: BeCoreGrpcClientService, private readonly metadata: GrpcMetadataBuilder) {}
+  constructor(private readonly grpc: BeCoreGrpcClientService, private readonly metadata: GrpcMetadataBuilder) { }
 
   @Get()
   @ApiOperation({ summary: 'Get users' })
@@ -37,6 +37,7 @@ export class UsersGatewayController {
 
   @Patch('me')
   @ApiOperation({ summary: 'Update authenticated user profile' })
+  @ApiBody({ type: UpdateUserProfileDto })
   async updateMyProfile(
     @Body() body: UpdateUserProfileDto,
     @Req() req: RequestWithContext,
@@ -54,6 +55,7 @@ export class UsersGatewayController {
   @Patch(':id/roles')
   @ApiOperation({ summary: 'Assign roles to a user' })
   @ApiParam({ name: 'id', type: String })
+  @ApiBody({ type: AssignUserRolesDto })
   async assignUserRoles(
     @Param('id') userId: string,
     @Body() body: AssignUserRolesDto,
@@ -80,7 +82,7 @@ export class RbacGatewayController {
   constructor(
     private readonly grpc: BeCoreGrpcClientService,
     private readonly metadata: GrpcMetadataBuilder,
-  ) {}
+  ) { }
 
   @Get('roles')
   @ApiOperation({ summary: 'Get roles' })

@@ -1,15 +1,38 @@
-# AI Service Docs
+# AI Service Documentation
 
-This folder documents the target AI Service architecture derived from `docs/architechture.webp` and shaped for the current repository.
+This folder is the source of truth for the AI Service design. The service lives in
+`apps/ai-service` and is an internal runtime for orchestration, RAG, model calls,
+memory, tool execution, and AI workers.
 
-Current status:
+## Current Status
 
-- `apps/ai-service/` exists but has no implementation files yet.
-- API Gateway and BE Core already exist.
-- Gateway -> BE Core gRPC is implemented through shared contracts in `libs/contracts`.
-- AI Service runtime, AI proto contracts, workers, event bus, memory, MCP, and vector DB integrations are not implemented yet.
-- The recommended design is hybrid: gRPC for synchronous typed calls/streaming and RabbitMQ-backed DB jobs for long-running event-driven AI jobs.
+- `apps/ai-service` exists with a minimal Python skeleton: `main.py`,
+  `pyproject.toml`, `uv.lock`, and `README.md`.
+- The skeleton does not yet contain the target package structure, gRPC server,
+  workers, orchestrator, RAG pipeline, Redis/Qdrant clients, LLM provider, prompt
+  registry, MCP server, or tool registry.
+- `apps/api-gateway` is the public ingress and already calls BE Core through
+  shared gRPC contracts.
+- `apps/backend` is the BE Core and remains the source of truth for LMS domain
+  state.
+- AI contracts are defined under `libs/contracts/proto/ai`; TypeScript constants
+  live under `libs/contracts/src/grpc`.
 
-Start here:
+## Documents
 
-- [Architecture](./architecture.md)
+- [Architecture](./architecture.md): service boundaries, container diagram, module
+  layout, and ownership rules.
+- [Tech Stack](./tech-stack.md): runtime, framework, storage, RAG, queue, memory,
+  observability, and testing decisions.
+- [Research Notes](./research.md): agent, RAG, memory, tool calling, evaluation,
+  and security research notes.
+- [Runtime Flows](./runtime-flows.md): material ingestion, RAG chat, grading, and
+  roadmap generation flows.
+- [ADR Index](./adr/README.md): short architecture decision records.
+
+## Design Rule
+
+AI Service is not a public browser-facing backend and must not write LMS domain
+tables directly. Public clients enter through API Gateway; domain authorization
+and durable state stay in BE Core; AI Service receives IDs/context and writes
+final results back through BE Core gRPC.

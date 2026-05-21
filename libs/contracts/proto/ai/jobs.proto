@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package ai;
+
+import "google/protobuf/struct.proto";
+
+service AiJobsService {
+  rpc GetJobStatus(AiJobIdRequest) returns (AiJobStatus);
+  rpc CancelJob(AiJobIdRequest) returns (AiJobStatus);
+}
+
+message AiJobIdRequest {
+  string job_id = 1;
+}
+
+message AiJobStatus {
+  string job_id = 1;
+  string type = 2;
+  string status = 3;
+  string resource_id = 4;
+  string resource_type = 5;
+  int32 attempts = 6;
+  google.protobuf.Struct result = 7;
+  google.protobuf.Struct error = 8;
+  string created_at = 9;
+  string updated_at = 10;
+}

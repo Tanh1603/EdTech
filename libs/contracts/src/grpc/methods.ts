@@ -143,4 +143,18 @@ export const GrpcMethods = {
     markNotificationRead: 'MarkNotificationRead',
     markAllNotificationsRead: 'MarkAllNotificationsRead',
   },
+  aiOrchestrator: {
+    generateChatResponse: 'GenerateChatResponse',
+    streamChatResponse: 'StreamChatResponse',
+    generateRoadmap: 'GenerateRoadmap',
+    gradeSubmission: 'GradeSubmission',
+    ingestMaterial: 'IngestMaterial',
+  },
+  aiJobs: {
+    getJobStatus: 'GetJobStatus',
+    cancelJob: 'CancelJob',
+  },
+  aiRag: {
+    searchMaterialContext: 'SearchMaterialContext',
+  },
 } as const;

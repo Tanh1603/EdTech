@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+package ai;
+
+import "common/envelope.proto";
+import "google/protobuf/struct.proto";
+
+service AiOrchestratorService {
+  rpc GenerateChatResponse(ChatGenerationRequest) returns (ChatGenerationResponse);
+  rpc StreamChatResponse(ChatGenerationRequest) returns (stream ChatToken);
+  rpc GenerateRoadmap(GenerateRoadmapRequest) returns (common.JobQueuedResponse);
+  rpc GradeSubmission(GradeSubmissionRequest) returns (common.JobQueuedResponse);
+  rpc IngestMaterial(IngestMaterialRequest) returns (common.JobQueuedResponse);
+}
+
+message ChatGenerationRequest {
+  string session_id = 1;
+  string message_id = 2;
+  string user_id = 3;
+  string class_id = 4;
+  bool use_rag = 5;
+  int32 top_k = 6;
+  google.protobuf.Struct options = 7;
+}
+
+message ChatGenerationResponse {
+  string assistant_message_id = 1;
+  string content = 2;
+  repeated Citation citations = 3;
+  TokenUsage usage = 4;
+  google.protobuf.Struct metadata = 5;
+}
+
+message ChatToken {
+  string text = 1;
+  repeated Citation citations = 2;
+  TokenUsage usage_delta = 3;
+  bool is_final = 4;
+  string assistant_message_id = 5;
+  google.protobuf.Struct metadata = 6;
+}
+
+message GenerateRoadmapRequest {
+  string user_id = 1;
+  string class_id = 2;
+  string course_id = 3;
+  google.protobuf.Struct options = 4;
+}
+
+message GradeSubmissionRequest {
+  string submission_id = 1;
+  string requested_by = 2;
+  google.protobuf.Struct options = 3;
+}
+
+message IngestMaterialRequest {
+  string material_id = 1;
+  string requested_by = 2;
+  google.protobuf.Struct options = 3;
+}
+
+message Citation {
+  string material_id = 1;
+  string chunk_id = 2;
+  string title = 3;
+  int32 order_no = 4;
+  google.protobuf.Struct source = 5;
+}
+
+message TokenUsage {
+  int32 input_tokens = 1;
+  int32 output_tokens = 2;
+  int32 total_tokens = 3;
+  string model = 4;
+}

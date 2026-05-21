@@ -373,7 +373,7 @@ This matches the existing backend structure and should be preserved.
 
 Detailed AI Service documentation now lives in `docs/ai-service/architecture.md`.
 
-Current repository status: `apps/ai-service/` exists as an empty application folder. The SuA Agent runtime shown in `docs/architechture.webp` is not implemented yet: there is no AI gRPC server, FastAPI health API, orchestrator, planner, reasoner, tool selector, MCP server, prompt registry, Redis memory, AI worker, Qdrant integration, or LLM provider adapter. The sections below describe the target architecture, not current runtime code.
+Current repository status: `apps/ai-service/` exists as a minimal Python skeleton with `main.py`, `pyproject.toml`, `uv.lock`, and `README.md`. The SuA Agent runtime shown in `docs/architechture.webp` is not implemented yet: there is no AI gRPC server, FastAPI health API, orchestrator, planner, reasoner, tool selector, MCP server, prompt registry, Redis memory, AI worker, Qdrant integration, or LLM provider adapter. The sections below describe the target architecture, not current runtime code.
 
 ### Responsibility
 

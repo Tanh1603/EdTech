@@ -18,4 +18,7 @@ export const GrpcServices = {
   users: 'UsersService',
   jobs: 'JobsService',
   notifications: 'NotificationsService',
+  aiOrchestrator: 'AiOrchestratorService',
+  aiJobs: 'AiJobsService',
+  aiRag: 'AiRagService',
 } as const;

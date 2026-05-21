@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package ai;
+
+import "google/protobuf/struct.proto";
+
+service AiRagService {
+  rpc SearchMaterialContext(RagSearchRequest) returns (RagSearchResponse);
+}
+
+message RagSearchRequest {
+  string query = 1;
+  string user_id = 2;
+  string class_id = 3;
+  string course_id = 4;
+  repeated string material_ids = 5;
+  int32 top_k = 6;
+  google.protobuf.Struct filters = 7;
+}
+
+message RagSearchResponse {
+  repeated RagChunk chunks = 1;
+  google.protobuf.Struct metadata = 2;
+}
+
+message RagChunk {
+  string material_id = 1;
+  string chunk_id = 2;
+  string title = 3;
+  string content = 4;
+  int32 order_no = 5;
+  double score = 6;
+  google.protobuf.Struct source = 7;
+  google.protobuf.Struct payload = 8;
+}

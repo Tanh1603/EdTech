@@ -11,5 +11,11 @@ describe('grpc constants', () => {
     expect(GrpcMethods.jobs.getJobStatus).toBe('GetJobStatus');
     expect(GrpcServices.notifications).toBe('NotificationsService');
     expect(GrpcMethods.notifications.listMyNotifications).toBe('ListMyNotifications');
+    expect(GrpcServices.aiOrchestrator).toBe('AiOrchestratorService');
+    expect(GrpcMethods.aiOrchestrator.streamChatResponse).toBe('StreamChatResponse');
+    expect(GrpcServices.aiJobs).toBe('AiJobsService');
+    expect(GrpcMethods.aiJobs.cancelJob).toBe('CancelJob');
+    expect(GrpcServices.aiRag).toBe('AiRagService');
+    expect(GrpcMethods.aiRag.searchMaterialContext).toBe('SearchMaterialContext');
   });
 });

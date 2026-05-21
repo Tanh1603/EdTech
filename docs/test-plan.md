@@ -387,7 +387,7 @@ Exit criteria:
 
 ### Phase 6: AI Service and Agent Runtime
 
-Current status from `architecture-scan.md`: `apps/ai-service` exists but is empty; orchestrator, planner, reasoner, tool selector, MCP server, memory, Qdrant, Redis, and LLM provider adapter are missing.
+Current status from `architecture-scan.md`: `apps/ai-service` exists as a minimal Python skeleton; orchestrator, planner, reasoner, tool selector, MCP server, memory, Qdrant, Redis, and LLM provider adapter are missing.
 
 Scope when implemented:
 

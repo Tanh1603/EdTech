@@ -16,8 +16,9 @@ The current codebase is aligned with the right-side "Org System (Current)" and t
 
 The current codebase is not yet aligned with the left-side "SuA Agent" runtime:
 
-- `apps/ai-service/` exists but is empty.
-- No AI gRPC contracts exist under `libs/contracts/proto/ai`.
+- `apps/ai-service/` exists as a minimal Python skeleton only.
+- AI gRPC contracts exist under `libs/contracts/proto/ai`, but no AI gRPC server
+  implements them yet.
 - No orchestrator, planner, reasoner, tool selector, MCP server, memory interface, Redis, Qdrant, or LLM provider adapter exists.
 
 ## Component Matrix
@@ -32,7 +33,7 @@ The current codebase is not yet aligned with the left-side "SuA Agent" runtime:
 | BE Core gRPC | Internal service API | gRPC facades exist for current modules | Aligned |
 | Storage | Object storage/provider SDK | Cloudinary integration exists | Aligned |
 | Shared contracts | Central contract ownership | `libs/contracts` owns DTOs, proto, gRPC constants, mappers | Aligned |
-| SuA Agent service | Separate AI runtime | `apps/ai-service` folder is empty | Missing |
+| SuA Agent service | Separate AI runtime | `apps/ai-service` has `main.py`, `pyproject.toml`, `uv.lock`, and `README.md` only | Skeleton |
 | Orchestrator | Execution loop + agent state | Not implemented | Missing |
 | Planner | Plan generation | Not implemented | Missing |
 | Reasoner | Reason over task/context | Not implemented | Missing |
@@ -58,11 +59,11 @@ libs/contracts
 libs/contracts/proto
 ```
 
-Empty or missing:
+Skeleton or missing:
 
 ```txt
-apps/ai-service        # empty
-libs/contracts/proto/ai
+apps/ai-service        # skeleton only
+libs/contracts/proto/ai # contracts exist, server implementation missing
 Redis/Qdrant integration code
 AI worker code
 MCP server code
@@ -75,9 +76,9 @@ The repository is currently in "Gateway + BE Core foundation complete" state, no
 
 The next architecture milestone should be:
 
-1. Scaffold `apps/ai-service`.
-2. Add `libs/contracts/proto/ai`.
-3. Add AI gRPC server and BE Core/Gateway clients where needed.
+1. Move `apps/ai-service` from flat skeleton to the target package structure.
+2. Implement the AI gRPC server from `libs/contracts/proto/ai`.
+3. Add BE Core/Gateway clients where needed.
 4. Add AI workers that consume RabbitMQ queues and update BE Core job status.
 5. Add Qdrant/Redis integrations.
 6. Implement material ingestion first because BE Core already has `Material` and `MaterialChunk` models.

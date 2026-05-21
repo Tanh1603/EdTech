@@ -2,7 +2,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from ai_service.agents.clients.be_core import FakeBeCoreClient
+from ai_service.agents.clients.be_core import BeCoreGrpcClient
 
 
 @dataclass(frozen=True)
@@ -18,15 +18,15 @@ JobHandler = Callable[[JobMessage], dict[str, Any]]
 
 
 class Worker:
-    def __init__(self, be_core: FakeBeCoreClient) -> None:
+    def __init__(self, be_core: BeCoreGrpcClient) -> None:
         self.be_core = be_core
 
     def process(self, message: JobMessage, handler: JobHandler) -> dict[str, Any]:
-        self.be_core.update_job_status(message.job_id, "running")
+        self.be_core.mark_job_running(message.job_id)
         try:
             result = handler(message)
         except Exception as error:
-            self.be_core.update_job_status(message.job_id, "failed", {"message": str(error)})
+            self.be_core.mark_job_failed(message.job_id, {"message": str(error)})
             raise
-        self.be_core.update_job_status(message.job_id, "succeeded", result)
+        self.be_core.mark_job_succeeded(message.job_id, result)
         return result

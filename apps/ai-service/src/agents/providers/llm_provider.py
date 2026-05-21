@@ -3,7 +3,8 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from groq import Groq
-from grpc.errors import AiErrorCode, AiServiceError
+
+from agents.grpc.errors import AiErrorCode, AiServiceError
 
 
 @dataclass(frozen=True)

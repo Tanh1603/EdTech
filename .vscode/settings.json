@@ -1,0 +1,4 @@
+{
+  "python.defaultInterpreterPath": "apps/ai-service/.venv/Scripts/python.exe",
+  "cSpell.words": ["groq"]
+}

@@ -84,10 +84,12 @@ logged, and scoped by delegated user/job metadata.
 
 ## Evaluation
 
-Default evaluation should be deterministic and offline-first:
+Default evaluation should avoid provider cost and remote dependencies where
+possible:
 
-- Fake LLM provider returns fixture responses.
-- Fake embedding provider returns stable vectors.
+- Groq-backed LLM checks run only when `GROQ_API_KEY` is available.
+- Ollama-backed embedding checks run only when local Ollama has the configured
+  embedding model pulled.
 - RAG citation checks point to known fixture chunks.
 - Grading rubric checks use stable model output.
 - Token/latency metrics are recorded as structured records, not provider bills.

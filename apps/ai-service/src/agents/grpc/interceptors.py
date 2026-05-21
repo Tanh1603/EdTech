@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from typing import Any
 
-from ai_service.grpc.errors import AiServiceError, grpc_status_for
+from grpc.errors import AiServiceError, grpc_status_for
 
 
 def abort_for_error(context: Any, error: AiServiceError) -> None:

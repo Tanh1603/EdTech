@@ -20,8 +20,8 @@ ecosystem without becoming a separate source of LMS truth.
 | --- | --- | --- |
 | Orchestration | Custom lightweight state machine | Start simple; move to LangGraph only when branching/retry/state complexity justifies it. |
 | Tool calling | Local typed tool registry | MCP is optional after V1; keep tools auditable and typed first. |
-| LLM provider | OpenAI-compatible provider abstraction | Keep model/provider swappable and keep secrets only in AI Service. |
-| Embeddings | Provider abstraction | Store model, provider, dimension, and version metadata with embeddings. |
+| LLM provider | Groq SDK behind provider abstraction | Use fast Groq-hosted chat models now while keeping model/provider swappable. |
+| Embeddings | Ollama SDK behind provider abstraction | Use free local embeddings for development and RAG ingestion without API cost. |
 | Prompt registry | Versioned files/config | Separate system, user, tool, and business-domain policy prompts. |
 
 ## Retrieval And Memory
@@ -65,9 +65,8 @@ ecosystem without becoming a separate source of LMS truth.
 
 - Phase 0 must keep dependency install, lint/typecheck, and gRPC code generation
   working before larger runtime work.
-- Default verification uses fake LLM/embedding providers and mocked external
-  services.
-- Real OpenAI/Cloudinary/Qdrant/RabbitMQ integrations are opt-in environment
-  checks only.
+- Default verification uses SDK-backed Groq/Ollama providers when local
+  credentials/services are available, plus mocked infrastructure services.
+- Cloudinary/Qdrant/RabbitMQ integrations are opt-in environment checks only.
 - Shared contract validation stays in `libs/contracts`; AI Service consumes the
   generated Python modules from those shared proto files.

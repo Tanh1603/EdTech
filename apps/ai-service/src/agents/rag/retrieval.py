@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 from typing import Any
 
-from ai_service.agents.providers.embedding_provider import EmbeddingProvider
-from ai_service.agents.rag.citations import citation_for
-from ai_service.agents.rag.vector_store import FakeVectorStore
+from agents.providers.embedding_provider import EmbeddingProvider
+from agents.rag.citations import citation_for
+from agents.rag.vector_store import FakeVectorStore
 
 
 @dataclass(frozen=True)
@@ -15,7 +15,9 @@ class RetrievalResult:
 
 
 class Retriever:
-    def __init__(self, provider: EmbeddingProvider, vector_store: FakeVectorStore) -> None:
+    def __init__(
+        self, provider: EmbeddingProvider, vector_store: FakeVectorStore
+    ) -> None:
         self.provider = provider
         self.vector_store = vector_store
 

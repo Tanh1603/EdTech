@@ -17,11 +17,12 @@ The current codebase is aligned with the right-side "Org System (Current)" and t
 The current codebase is not yet aligned with the left-side "SuA Agent" runtime:
 
 - `apps/ai-service/` has an initial Python 3.14 foundation: package structure,
-  FastAPI ops endpoints, Nx targets, gRPC/codegen helpers, fake providers, typed
-  tools, RAG primitives, memory, workers, orchestrator, and tests.
+  FastAPI ops endpoints, Nx targets, gRPC/codegen helpers, real Groq/Ollama
+  providers, typed tools, RAG primitives, memory, workers, and orchestrator.
 - AI gRPC contracts exist under `libs/contracts/proto/ai`, but no AI gRPC server
   implements them yet.
-- No orchestrator, planner, reasoner, tool selector, MCP server, memory interface, Redis, Qdrant, or LLM provider adapter exists.
+- Planner, reasoner, tool selector, MCP server, Redis, Qdrant, and production
+  memory interfaces are still missing.
 
 ## Component Matrix
 
@@ -35,15 +36,15 @@ The current codebase is not yet aligned with the left-side "SuA Agent" runtime:
 | BE Core gRPC | Internal service API | gRPC facades exist for current modules | Aligned |
 | Storage | Object storage/provider SDK | Cloudinary integration exists | Aligned |
 | Shared contracts | Central contract ownership | `libs/contracts` owns DTOs, proto, gRPC constants, mappers | Aligned |
-| SuA Agent service | Separate AI runtime | `apps/ai-service` has the initial Python package/runtime foundation, but no real external adapters yet | Partial |
-| Orchestrator | Execution loop + agent state | Not implemented | Missing |
+| SuA Agent service | Separate AI runtime | `apps/ai-service` has the initial Python package/runtime foundation and real Groq/Ollama provider adapters | Partial |
+| Orchestrator | Execution loop + agent state | Lightweight execution loop foundation exists | Partial |
 | Planner | Plan generation | Not implemented | Missing |
 | Reasoner | Reason over task/context | Not implemented | Missing |
 | Tool selector | Choose tools and policies | Not implemented | Missing |
 | MCP server | Tool registry/protocol | Not implemented | Missing |
-| LLM server/provider | Provider abstraction and streaming | Not implemented | Missing |
-| Memory interface | Redis/session memory + retrieval memory | Not implemented | Missing |
-| Interactive memory | Current session state | Not implemented | Missing |
+| LLM server/provider | Provider abstraction and streaming | Groq SDK provider exists; self-hosted LLM server is not implemented | Partial |
+| Memory interface | Redis/session memory + retrieval memory | In-memory session foundation exists; Redis is missing | Partial |
+| Interactive memory | Current session state | In-memory session foundation exists | Partial |
 | System/User prompts | Versioned prompt registry | Not implemented | Missing |
 | Business domain policy | AI policy prompt/config | Not implemented | Missing |
 | Tool-calling prompt | Tool schemas and call prompts | Not implemented | Missing |
@@ -69,7 +70,7 @@ libs/contracts/proto/ai # contracts exist, server implementation missing
 Redis/Qdrant integration code
 AI worker code
 MCP server code
-LLM provider code
+LLM provider code      # Groq SDK foundation exists
 ```
 
 ## Alignment Decision

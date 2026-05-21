@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 
-from ai_service.api.health import router as health_router
-from ai_service.api.metrics import router as metrics_router
-from ai_service.api.readiness import router as readiness_router
+from api.health import router as health_router
+from api.metrics import router as metrics_router
+from api.readiness import router as readiness_router
 
 
 def create_app() -> FastAPI:

@@ -6,18 +6,17 @@ Internal AI orchestration, RAG, and worker service for EdTech.
 
 This app has the initial Python 3.14 foundation: package structure, internal
 FastAPI ops endpoints, Nx targets, gRPC/codegen helpers, metadata and error
-utilities, and a consolidated `agents/` runtime package for fake providers,
-typed tools, RAG primitives, in-memory session memory, worker foundations, and a
-lightweight chat orchestrator.
+utilities, and a consolidated `agents/` runtime package for real Groq/Ollama
+providers, typed tools, RAG primitives, in-memory session memory, worker
+foundations, and a lightweight chat orchestrator.
 
 It uses `libs/contracts/proto` as the only protobuf source of truth. Generated
 Python modules are emitted from that lib into `src/ai_service/contracts/generated`
 for this runtime; do not define separate AI service proto/schema files inside
 this app.
 
-It still needs real BE Core gRPC clients, real Redis/Qdrant/RabbitMQ adapters,
-OpenAI-compatible providers, MCP integration if needed, and Gateway SSE bridge
-work.
+It still needs real Redis/Qdrant/RabbitMQ adapters, MCP integration if needed,
+and Gateway SSE bridge work.
 
 ## Runtime Target
 
@@ -34,8 +33,8 @@ Detailed design lives in `docs/ai-service`.
 ## Environment
 
 Local runtime settings live in `.env`; the committed template is `.env.example`.
-Default local providers are `fake`, so local verification does not require model
-API keys.
+Default local providers are Groq for LLM calls and local Ollama for free
+embeddings. Do not commit a real `GROQ_API_KEY`.
 
 ## Local Commands
 

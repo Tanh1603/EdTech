@@ -8,13 +8,12 @@ memory, tool execution, and AI workers.
 
 - `apps/ai-service` now contains the initial Python 3.14 package structure,
   internal FastAPI ops endpoints, Nx targets, gRPC/codegen helpers, metadata and
-  error utilities, a consolidated `agents/` runtime package for fake providers,
-  typed tools, RAG primitives, in-memory session memory, worker foundations, a
-  lightweight chat orchestrator, and generated Python protobuf modules emitted
-  from shared lib contracts.
-- The service still does not contain real BE Core gRPC clients, real
-  Redis/Qdrant/RabbitMQ adapters, real OpenAI-compatible providers, MCP server,
-  Gateway SSE bridge, or production observability wiring.
+  error utilities, a consolidated `agents/` runtime package for real
+  Groq/Ollama providers, typed tools, RAG primitives, in-memory session memory,
+  worker foundations, a lightweight chat orchestrator, and generated Python
+  protobuf modules emitted from shared lib contracts.
+- The service still does not contain real Redis/Qdrant/RabbitMQ adapters, MCP
+  server, Gateway SSE bridge, or production observability wiring.
 - `apps/api-gateway` is the public ingress and already calls BE Core through
   shared gRPC contracts.
 - `apps/backend` is the BE Core and remains the source of truth for LMS domain

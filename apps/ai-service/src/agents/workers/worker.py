@@ -2,7 +2,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from ai_service.agents.clients.be_core import BeCoreGrpcClient
+from agents.clients.be_core import BeCoreGrpcClient
 
 
 @dataclass(frozen=True)

@@ -21,7 +21,7 @@ verification.
 | 03 | Baseline | [gRPC AI Server Bootstrap](./phase-03-grpc-ai-server-bootstrap.md) |
 | 04 | Baseline | [Settings, Metadata, Error Model](./phase-04-settings-metadata-errors.md) |
 | 05 | Baseline | [BE Core Client And Tool Registry](./phase-05-be-core-client-tool-registry.md) |
-| 06 | Baseline | [Fake LLM And Embedding Providers](./phase-06-fake-providers.md) |
+| 06 | Baseline | [Real Groq LLM And Ollama Embedding Providers](./phase-06-real-providers.md) |
 | 07 | Next | [RAG Core](./phase-07-rag-core.md) |
 | 08 | Next | [Redis Memory](./phase-08-redis-memory.md) |
 | 09 | Next | [RabbitMQ Worker Foundation](./phase-09-rabbitmq-worker-foundation.md) |
@@ -57,5 +57,6 @@ AI Service environment files live beside the Python app:
 - `apps/ai-service/.env` for local development defaults.
 - `apps/ai-service/.env.example` as the template for new environments.
 
-Both files use fake model providers by default; real provider keys should only be
-filled in local/private deployment environments.
+Both files default to real SDK-backed providers: Groq for LLM calls and local
+Ollama for free embeddings. Real Groq keys should only be filled in local/private
+deployment environments.

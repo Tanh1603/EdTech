@@ -4,13 +4,16 @@ from dataclasses import dataclass, field
 from importlib import import_module
 from typing import Any
 
-from google.protobuf.json_format import MessageToDict, ParseDict
-from google.protobuf.struct_pb2 import Struct
+from google.protobuf.json_format import (  # pyright: ignore[reportMissingModuleSource]
+    MessageToDict,
+    ParseDict,
+)
+from google.protobuf.struct_pb2 import Struct  # pyright: ignore[reportMissingModuleSource]
+from grpc.errors import AiErrorCode, AiServiceError
+from grpc.metadata import RequestMetadata
 
-from ai_service.config.settings import Settings, get_settings
-from ai_service.contracts.generated import ensure_generated_proto_path
-from ai_service.grpc.errors import AiErrorCode, AiServiceError
-from ai_service.grpc.metadata import RequestMetadata
+from config.settings import Settings, get_settings
+from contracts.generated import ensure_generated_proto_path
 
 
 def _load_generated_modules() -> dict[str, Any]:

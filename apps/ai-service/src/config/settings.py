@@ -14,10 +14,16 @@ class Settings(BaseSettings):
     redis_url: str = Field(default="redis://localhost:6379", alias="REDIS_URL")
     qdrant_url: str = Field(default="http://localhost:6334", alias="QDRANT_URL")
     rabbitmq_url: str = Field(default="amqp://localhost:5672", alias="RABBITMQ_URL")
-    llm_provider: str = Field(default="fake", alias="LLM_PROVIDER")
+    llm_provider: str = Field(default="groq", alias="LLM_PROVIDER")
     llm_api_key: str | None = Field(default=None, alias="LLM_API_KEY")
-    embedding_provider: str = Field(default="fake", alias="EMBEDDING_PROVIDER")
+    groq_api_key: str | None = Field(default=None, alias="GROQ_API_KEY")
+    llm_model: str = Field(default="llama-3.3-70b-versatile", alias="LLM_MODEL")
+    llm_temperature: float = Field(default=0.2, alias="LLM_TEMPERATURE")
+    llm_max_tokens: int = Field(default=1024, alias="LLM_MAX_TOKENS")
+    embedding_provider: str = Field(default="ollama", alias="EMBEDDING_PROVIDER")
     embedding_api_key: str | None = Field(default=None, alias="EMBEDDING_API_KEY")
+    ollama_host: str = Field(default="http://localhost:11434", alias="OLLAMA_HOST")
+    embedding_model: str = Field(default="nomic-embed-text", alias="EMBEDDING_MODEL")
 
     @property
     def is_local(self) -> bool:
@@ -26,6 +32,12 @@ class Settings(BaseSettings):
     def validate_runtime(self) -> None:
         if not self.is_local and not self.service_token:
             raise ValueError("SERVICE_TOKEN is required outside local development")
+        if not self.is_local and self.llm_provider == "groq" and not self.effective_groq_api_key:
+            raise ValueError("GROQ_API_KEY or LLM_API_KEY is required when LLM_PROVIDER=groq")
+
+    @property
+    def effective_groq_api_key(self) -> str | None:
+        return self.groq_api_key or self.llm_api_key
 
 
 @lru_cache(maxsize=1)

@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from ai_service.config.settings import Settings, get_settings
+from config.settings import Settings, get_settings
 
 router = APIRouter(tags=["ops"])
 

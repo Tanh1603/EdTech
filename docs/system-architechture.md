@@ -373,7 +373,7 @@ This matches the existing backend structure and should be preserved.
 
 Detailed AI Service documentation now lives in `docs/ai-service/architecture.md`.
 
-Current repository status: `apps/ai-service/` has an initial Python 3.14 foundation with package structure, FastAPI ops endpoints, Nx targets, gRPC/codegen helpers, metadata/error utilities, fake providers, typed tools, RAG primitives, in-memory session memory, worker foundations, a lightweight chat orchestrator, and unit-test scaffolding. The real SuA Agent runtime shown in `docs/architechture.webp` is still incomplete: generated protobuf modules, real BE Core clients, real Redis/Qdrant/RabbitMQ adapters, production LLM providers, MCP server, Gateway SSE bridge, and production observability are not wired yet.
+Current repository status: `apps/ai-service/` has an initial Python 3.14 foundation with package structure, FastAPI ops endpoints, Nx targets, gRPC/codegen helpers, metadata/error utilities, real BE Core gRPC client tools, real Groq/Ollama provider adapters, RAG primitives, in-memory session memory, worker foundations, and a lightweight chat orchestrator. The real SuA Agent runtime shown in `docs/architechture.webp` is still incomplete: Redis/Qdrant/RabbitMQ adapters, MCP server, Gateway SSE bridge, planner/reasoner/tool selector, and production observability are not wired yet.
 
 ### Responsibility
 

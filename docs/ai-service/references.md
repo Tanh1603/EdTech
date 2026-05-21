@@ -27,6 +27,11 @@
 
 - [Qdrant documentation](https://qdrant.tech/documentation/)
 - [Qdrant Python client](https://python-client.qdrant.tech/)
+- [Groq Python SDK](https://pypi.org/project/groq/)
+- [Groq text generation](https://console.groq.com/docs/text-chat)
+- [Ollama Python SDK](https://github.com/ollama/ollama-python)
+- [Ollama embed API](https://docs.ollama.com/api/embed)
+- [nomic-embed-text](https://ollama.com/library/nomic-embed-text)
 - [redis-py guide](https://redis.io/docs/latest/develop/clients/redis-py/)
 - [RabbitMQ Python tutorials](https://www.rabbitmq.com/tutorials)
 - [Docker Compose documentation](https://docs.docker.com/compose/)

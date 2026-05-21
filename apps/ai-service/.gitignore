@@ -1,2 +1,3 @@
 # Automatically created by ruff.
 .env
+__pycache__

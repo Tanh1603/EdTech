@@ -37,7 +37,7 @@ source of truth.
 | `apps/api-gateway` | Implemented public HTTP ingress with Gateway Swagger, Clerk auth, Cloudinary upload, realtime helpers, and BE Core gRPC client. |
 | `apps/backend` | Implemented BE Core gRPC service with Prisma/PostgreSQL, Clerk/RBAC guards, jobs, notifications, learning, chat, academic, assessment, storage, and users modules. |
 | `libs/contracts` | Implemented shared DTOs, mappers, gRPC constants, proto path helpers, and domain proto files. |
-| `apps/ai-service` | Initial Python 3.14 foundation exists: package structure, internal FastAPI ops endpoints, Nx targets, shared proto codegen, gRPC helpers, metadata/errors, and consolidated `agents/` runtime modules for fake providers, typed tools, RAG primitives, in-memory memory, workers, and lightweight orchestrator. |
+| `apps/ai-service` | Initial Python 3.14 foundation exists: package structure, internal FastAPI ops endpoints, Nx targets, shared proto codegen, gRPC helpers, metadata/errors, and consolidated `agents/` runtime modules for real Groq/Ollama providers, typed tools, RAG primitives, in-memory memory, workers, and lightweight orchestrator. |
 | `libs/contracts/proto/ai` | AI proto contracts exist for the target service boundary. |
 | Redis/RabbitMQ | Redis and RabbitMQ are present in local compose; BE Core has RabbitMQ/job foundation. |
 | Qdrant | Target vector DB; not wired into compose or code yet. |

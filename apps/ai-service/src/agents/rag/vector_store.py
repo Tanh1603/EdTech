@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from ai_service.agents.rag.chunking import TextChunk
+from agents.rag.chunking import TextChunk
 
 
 @dataclass(frozen=True)
@@ -23,9 +23,14 @@ class FakeVectorStore:
         ]
         self.records.append(VectorRecord(chunk=chunk, vector=vector))
 
-    def search(self, query_vector: list[float], top_k: int = 5) -> list[tuple[TextChunk, float]]:
+    def search(
+        self, query_vector: list[float], top_k: int = 5
+    ) -> list[tuple[TextChunk, float]]:
         ranked = sorted(
-            ((record.chunk, dot(query_vector, record.vector)) for record in self.records),
+            (
+                (record.chunk, dot(query_vector, record.vector))
+                for record in self.records
+            ),
             key=lambda item: item[1],
             reverse=True,
         )

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from ai_service.agents.rag.parsers import ParsedDocument
+from agents.rag.parsers import ParsedDocument
 
 
 @dataclass(frozen=True)

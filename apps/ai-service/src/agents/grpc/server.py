@@ -1,7 +1,7 @@
 from concurrent import futures
 from typing import Any
 
-from ai_service.config.settings import Settings, get_settings
+from config.settings import Settings, get_settings
 
 
 def create_grpc_server(settings: Settings | None = None) -> Any:

@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
-from ai_service.agents.clients.be_core import BeCoreCallContext, BeCoreGrpcClient
-from ai_service.agents.providers.llm_provider import FakeLlmProvider
-from ai_service.agents.rag.retrieval import Retriever
+from agents.clients.be_core import BeCoreCallContext, BeCoreGrpcClient
+from agents.providers.llm_provider import LlmProvider
+from agents.rag.retrieval import Retriever
 
 
 @dataclass(frozen=True)
@@ -16,7 +16,7 @@ class ChatOrchestrator:
     def __init__(
         self,
         be_core: BeCoreGrpcClient,
-        llm_provider: FakeLlmProvider,
+        llm_provider: LlmProvider,
         retriever: Retriever | None = None,
     ) -> None:
         self.be_core = be_core
@@ -30,12 +30,14 @@ class ChatOrchestrator:
         context: BeCoreCallContext,
     ) -> ChatExecutionResult:
         citations: list[dict[str, object]] = []
-        context = ""
+        rag_context_text = ""
         if self.retriever:
             results = self.retriever.search(prompt, top_k=3)
             citations = [result.citation for result in results]
-            context = "\n".join(result.content for result in results)
-        response = self.llm_provider.generate(f"{context}\n\nUser: {prompt}".strip())
+            rag_context_text = "\n".join(result.content for result in results)
+        response = self.llm_provider.generate(
+            f"{rag_context_text}\n\nUser: {prompt}".strip()
+        )
         message = self.be_core.append_assistant_message(
             session_id,
             response.text,

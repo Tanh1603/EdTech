@@ -6,8 +6,9 @@ Internal AI orchestration, RAG, and worker service for EdTech.
 
 This app has the initial Python 3.14 foundation: package structure, internal
 FastAPI ops endpoints, Nx targets, gRPC/codegen helpers, metadata and error
-utilities, fake providers, typed tools, RAG primitives, in-memory session memory,
-worker foundations, and a lightweight chat orchestrator.
+utilities, and a consolidated `agents/` runtime package for fake providers,
+typed tools, RAG primitives, in-memory session memory, worker foundations, and a
+lightweight chat orchestrator.
 
 It uses `libs/contracts/proto` as the only protobuf source of truth. Generated
 Python modules are emitted from that lib into `src/ai_service/contracts/generated`
@@ -29,6 +30,12 @@ work.
 - Qdrant for vector search.
 
 Detailed design lives in `docs/ai-service`.
+
+## Environment
+
+Local runtime settings live in `.env`; the committed template is `.env.example`.
+Default local providers are `fake`, so local verification does not require model
+API keys.
 
 ## Local Commands
 

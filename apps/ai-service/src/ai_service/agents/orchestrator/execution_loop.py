@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
-from ai_service.clients.be_core import FakeBeCoreClient
-from ai_service.providers.llm_provider import FakeLlmProvider
-from ai_service.rag.retrieval import Retriever
+from ai_service.agents.clients.be_core import FakeBeCoreClient
+from ai_service.agents.providers.llm_provider import FakeLlmProvider
+from ai_service.agents.rag.retrieval import Retriever
 
 
 @dataclass(frozen=True)

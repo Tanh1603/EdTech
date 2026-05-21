@@ -1,9 +1,9 @@
-from ai_service.providers.embedding_provider import FakeEmbeddingProvider
-from ai_service.rag.chunking import SimpleChunker
-from ai_service.rag.embeddings import EmbeddingIndexer
-from ai_service.rag.parsers import TextParser
-from ai_service.rag.vector_store import FakeVectorStore
-from ai_service.workers.worker import JobMessage
+from ai_service.agents.providers.embedding_provider import FakeEmbeddingProvider
+from ai_service.agents.rag.chunking import SimpleChunker
+from ai_service.agents.rag.embeddings import EmbeddingIndexer
+from ai_service.agents.rag.parsers import TextParser
+from ai_service.agents.rag.vector_store import FakeVectorStore
+from ai_service.agents.workers.worker import JobMessage
 
 
 class MaterialIngestWorker:

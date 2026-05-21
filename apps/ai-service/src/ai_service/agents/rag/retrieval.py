@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 from typing import Any
 
-from ai_service.providers.embedding_provider import EmbeddingProvider
-from ai_service.rag.citations import citation_for
-from ai_service.rag.vector_store import FakeVectorStore
+from ai_service.agents.providers.embedding_provider import EmbeddingProvider
+from ai_service.agents.rag.citations import citation_for
+from ai_service.agents.rag.vector_store import FakeVectorStore
 
 
 @dataclass(frozen=True)

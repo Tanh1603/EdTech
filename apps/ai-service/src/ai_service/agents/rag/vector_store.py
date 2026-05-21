@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from ai_service.rag.chunking import TextChunk
+from ai_service.agents.rag.chunking import TextChunk
 
 
 @dataclass(frozen=True)

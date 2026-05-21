@@ -1,36 +1,33 @@
-# Phase 04: Settings, Metadata, Errors
+# Phase 04: Settings, Metadata, Error Model
 
 ## Goal
 
-Centralize runtime settings, internal metadata parsing, and gRPC error mapping.
+Centralize environment settings, internal request metadata, and gRPC error
+mapping.
 
-## Status
+## Implementation
 
-Done foundation. Settings include AI, BE Core, Redis, Qdrant, RabbitMQ, LLM, and
-embedding provider configuration. Metadata parsing handles request, correlation,
-user, class, job, and service token fields.
+- Add settings for `AI_GRPC_URL`, `BE_CORE_GRPC_URL`, `SERVICE_TOKEN`,
+  `REDIS_URL`, `QDRANT_URL`, `RABBITMQ_URL`, `LLM_PROVIDER`, `LLM_API_KEY`, and
+  `EMBEDDING_PROVIDER`.
+- Add `apps/ai-service/.env` for local defaults and
+  `apps/ai-service/.env.example` as the environment template.
+- Include `EMBEDDING_API_KEY` in both env files because the settings model already
+  supports separate embedding credentials.
+- Parse metadata: `x-request-id`, `x-correlation-id`, `x-user-id`, `x-class-id`,
+  `x-ai-job-id`, and `x-service-token`.
+- Map service errors to gRPC statuses: invalid input, unauthenticated,
+  permission denied, not found, unavailable, deadline exceeded, and internal.
 
-## Related Modules
+## Acceptance
 
-- `apps/ai-service/src/ai_service/config/settings.py`
-- `apps/ai-service/src/ai_service/grpc/metadata.py`
-- `apps/ai-service/src/ai_service/grpc/errors.py`
-- `apps/ai-service/src/ai_service/grpc/interceptors.py`
+- Settings have safe local defaults where appropriate.
+- `.env` and `.env.example` contain every env var parsed by `Settings`.
+- Missing required production config fails clearly.
+- Metadata parsing produces a typed request context.
+- Error mapping returns predictable gRPC status codes.
 
-## Lib Dependencies
+## References
 
-Metadata carries IDs that reference BE Core domain state. AI Service should load
-domain data through BE Core gRPC contracts, not direct database reads.
-
-## Verify
-
-```sh
-npm exec nx lint ai-service
-npm exec nx typecheck ai-service
-```
-
-## Next Step
-
-Add real auth/service-token enforcement once BE Core client wiring and deployment
-configuration are stable.
-
+- [gRPC Python API](https://grpc.github.io/grpc/python/)
+- [OpenTelemetry Python instrumentation](https://opentelemetry.io/docs/languages/python/instrumentation/)

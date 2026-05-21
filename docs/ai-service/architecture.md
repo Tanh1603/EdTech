@@ -37,7 +37,7 @@ source of truth.
 | `apps/api-gateway` | Implemented public HTTP ingress with Gateway Swagger, Clerk auth, Cloudinary upload, realtime helpers, and BE Core gRPC client. |
 | `apps/backend` | Implemented BE Core gRPC service with Prisma/PostgreSQL, Clerk/RBAC guards, jobs, notifications, learning, chat, academic, assessment, storage, and users modules. |
 | `libs/contracts` | Implemented shared DTOs, mappers, gRPC constants, proto path helpers, and domain proto files. |
-| `apps/ai-service` | Initial Python 3.14 foundation exists: package structure, internal FastAPI ops endpoints, Nx targets, shared proto codegen, gRPC helpers, metadata/errors, fake providers, typed tools, RAG primitives, in-memory memory, worker foundation, and lightweight orchestrator. |
+| `apps/ai-service` | Initial Python 3.14 foundation exists: package structure, internal FastAPI ops endpoints, Nx targets, shared proto codegen, gRPC helpers, metadata/errors, and consolidated `agents/` runtime modules for fake providers, typed tools, RAG primitives, in-memory memory, workers, and lightweight orchestrator. |
 | `libs/contracts/proto/ai` | AI proto contracts exist for the target service boundary. |
 | Redis/RabbitMQ | Redis and RabbitMQ are present in local compose; BE Core has RabbitMQ/job foundation. |
 | Qdrant | Target vector DB; not wired into compose or code yet. |
@@ -129,45 +129,41 @@ apps/ai-service/
         orchestrator_service.py
         jobs_service.py
         rag_service.py
-      orchestrator/
-        state.py
-        execution_loop.py
-        planner.py
-        reasoner.py
-        tool_selector.py
       agents/
-        tutor_agent.py
-        material_agent.py
-        assessment_agent.py
-        roadmap_agent.py
-        analytics_agent.py
-      rag/
-        parsers.py
-        chunking.py
-        embeddings.py
-        vector_store.py
-        retrieval.py
-        citations.py
-      memory/
-        session_memory.py
-        interactive_memory.py
-        policy_memory.py
-        retrieval_memory.py
-      tools/
-        registry.py
-        be_core_tools.py
-        retrieval_tools.py
-        storage_tools.py
-        job_tools.py
-      workers/
-        worker.py
-        material_ingest_worker.py
-        grading_worker.py
-        roadmap_worker.py
-        recommendation_worker.py
-      providers/
-        llm_provider.py
-        embedding_provider.py
+        clients/
+          be_core.py
+        orchestrator/
+          execution_loop.py
+          planner.py
+          reasoner.py
+          tool_selector.py
+        providers/
+          llm_provider.py
+          embedding_provider.py
+        rag/
+          parsers.py
+          chunking.py
+          embeddings.py
+          vector_store.py
+          retrieval.py
+          citations.py
+        memory/
+          session_memory.py
+          interactive_memory.py
+          policy_memory.py
+          retrieval_memory.py
+        tools/
+          registry.py
+          be_core_tools.py
+          retrieval_tools.py
+          storage_tools.py
+          job_tools.py
+        workers/
+          worker.py
+          material_ingest_worker.py
+          grading_worker.py
+          roadmap_worker.py
+          recommendation_worker.py
       observability/
         audit.py
         telemetry.py

@@ -1,6 +1,6 @@
-from ai_service.providers.embedding_provider import EmbeddingProvider
-from ai_service.rag.chunking import TextChunk
-from ai_service.rag.vector_store import FakeVectorStore
+from ai_service.agents.providers.embedding_provider import EmbeddingProvider
+from ai_service.agents.rag.chunking import TextChunk
+from ai_service.agents.rag.vector_store import FakeVectorStore
 
 
 class EmbeddingIndexer:

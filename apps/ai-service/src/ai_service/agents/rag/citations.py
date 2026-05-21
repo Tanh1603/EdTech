@@ -1,6 +1,6 @@
 from typing import Any
 
-from ai_service.rag.chunking import TextChunk
+from ai_service.agents.rag.chunking import TextChunk
 
 
 def citation_for(chunk: TextChunk) -> dict[str, Any]:

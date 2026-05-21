@@ -1,37 +1,34 @@
-# Phase 00: Python 3.14 Compatibility
+# Phase 00: Python 3.14 Compatibility Gate
 
 ## Goal
 
-Keep `apps/ai-service` on standard CPython 3.14 with `uv` project metadata and
-without free-threaded/no-GIL assumptions in V1.
+Keep `apps/ai-service` on standard CPython 3.14 and detect dependency issues
+before adding larger runtime code. Free-threaded/no-GIL Python builds are out of
+V1.
 
-## Status
+## Implementation
 
-Done as a project baseline. `pyproject.toml` requires `>=3.14,<3.15`, runtime
-dependencies are Python 3.14 compatible, and `uv.lock` is scoped to Python
-`3.14.*`.
+- Keep `requires-python = ">=3.14,<3.15"` in `apps/ai-service/pyproject.toml`.
+- Lock and install with `uv` using Python 3.14.
+- Validate base dependencies: FastAPI, Uvicorn, Pydantic Settings, grpcio,
+  grpcio-tools, protobuf, and ruff.
+- If tests are restored later, add pytest back only after the compatibility gate
+  passes on Python 3.14.
+- If a package fails wheel/build support, upgrade to the newest compatible
+  version; if it still fails, record the blocker in
+  `docs/ai-service/references.md` and defer dependent phases.
 
-## Related Modules
+## Acceptance
 
-- `apps/ai-service/pyproject.toml`
-- `apps/ai-service/uv.lock`
-- `apps/ai-service/src/ai_service`
+- `uv sync` works with Python 3.14.
+- gRPC code generation runs.
+- `npm exec nx lint ai-service` and `npm exec nx typecheck ai-service` pass.
+- No business runtime phase depends on a package that has not passed this gate.
 
-## Lib Dependencies
+## References
 
-No app-local proto/schema source is defined. Contract compatibility depends on
-`libs/contracts/proto` and generated Python modules in the AI service runtime.
-
-## Verify
-
-```sh
-uv sync
-npm exec nx lint ai-service
-npm exec nx typecheck ai-service
-```
-
-## Next Step
-
-Keep package additions small. Any new dependency must be checked for Python 3.14
-wheel/build support before it becomes part of a runtime phase.
+- [Python 3.14 documentation](https://docs.python.org/3.14/)
+- [What's New In Python 3.14](https://docs.python.org/3.14/whatsnew/3.14.html)
+- [PEP 745: Python 3.14 Release Schedule](https://peps.python.org/pep-0745/)
+- [uv project guide](https://docs.astral.sh/uv/guides/projects/)
 

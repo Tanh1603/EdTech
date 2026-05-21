@@ -1,36 +1,26 @@
-# Phase 02: FastAPI Ops
+# Phase 02: Internal FastAPI Ops API
 
 ## Goal
 
-Expose only internal operational HTTP endpoints for the AI Service process.
+Expose internal operational HTTP endpoints only. AI Service must not become a
+public browser-facing REST backend.
 
-## Status
+## Implementation
 
-Done. The app has health, readiness, and metrics routes and no public AI REST
-surface.
+- Implement FastAPI app for `/health`, `/ready`, and `/metrics`.
+- `/health` reports process liveness.
+- `/ready` checks minimal config and later expands to dependency readiness.
+- `/metrics` returns an early placeholder in text/plain or JSON format.
+- Do not expose public chat, grading, roadmap, or RAG REST endpoints.
 
-## Related Modules
+## Acceptance
 
-- `apps/ai-service/src/ai_service/main.py`
-- `apps/ai-service/src/ai_service/api/health.py`
-- `apps/ai-service/src/ai_service/api/readiness.py`
-- `apps/ai-service/src/ai_service/api/metrics.py`
+- `uv run uvicorn ai_service.main:app` boots the ops API.
+- `/health` and `/ready` respond locally.
+- Public AI routes remain owned by API Gateway and BE Core flows.
 
-## Lib Dependencies
+## References
 
-The ops API does not own domain DTOs. Domain traffic should still flow through
-BE Core and shared gRPC contracts.
-
-## Verify
-
-```sh
-npm exec nx serve ai-service
-```
-
-Then check `/health`, `/ready`, and `/metrics` from the local host/port.
-
-## Next Step
-
-Wire readiness to real dependencies only after BE Core, Redis, Qdrant, and
-RabbitMQ adapters exist.
+- [FastAPI first steps](https://fastapi.tiangolo.com/tutorial/first-steps/)
+- [FastAPI deployment](https://fastapi.tiangolo.com/deployment/)
 

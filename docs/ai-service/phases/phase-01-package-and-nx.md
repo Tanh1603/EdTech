@@ -1,38 +1,26 @@
-# Phase 01: Package And Nx
+# Phase 01: Package Skeleton And Nx Targets
 
 ## Goal
 
-Use a normal Python package layout under `src/ai_service` and expose AI Service
-tasks through Nx.
+Use a standard Python package layout and expose AI Service commands through Nx.
 
-## Status
+## Implementation
 
-Done. The service has `src/ai_service`, a FastAPI entrypoint, package modules,
-and Nx targets for `serve`, `lint`, `typecheck`, and `proto:generate`. The local
-`test` target has been removed by design.
+- Keep package code under `apps/ai-service/src/ai_service`.
+- Use `src/ai_service/main.py` as the runtime entrypoint.
+- Keep Nx targets for `serve`, `lint`, `typecheck`, and `proto:generate`.
+- If the team decides to restore tests later, re-add a `test` target and
+  minimal `tests/unit/test_health.py` baseline in the same phase.
 
-## Related Modules
+## Acceptance
 
-- `apps/ai-service/project.json`
-- `apps/ai-service/src/ai_service/main.py`
-- `apps/ai-service/README.md`
+- `npm exec nx show project ai-service --json` shows the AI Service project.
+- `npm exec nx lint ai-service` runs against `src`.
+- `npm exec nx typecheck ai-service` compiles/checks `src`.
+- `npm exec nx run ai-service:proto:generate` runs shared proto codegen.
 
-## Lib Dependencies
+## References
 
-Nx only orchestrates the app tasks. Shared contract ownership stays in
-`libs/contracts`, and the AI service consumes those contracts through generated
-Python modules.
-
-## Verify
-
-```sh
-npm exec nx show project ai-service --json
-npm exec nx lint ai-service
-npm exec nx typecheck ai-service
-```
-
-## Next Step
-
-Keep future targets explicit and internal-service focused. Do not add public API
-targets for browser-facing AI routes in this app.
+- [Nx project configuration](https://nx.dev/reference/project-configuration)
+- [pytest fixtures](https://docs.pytest.org/en/stable/how-to/fixtures.html)
 

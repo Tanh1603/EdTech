@@ -2,7 +2,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from ai_service.clients.be_core import FakeBeCoreClient
+from ai_service.agents.clients.be_core import FakeBeCoreClient
 
 
 @dataclass(frozen=True)

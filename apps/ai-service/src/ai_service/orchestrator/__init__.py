@@ -1,0 +1,1 @@
+"""Lightweight AI orchestration loop."""

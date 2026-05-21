@@ -92,7 +92,7 @@ Rules:
 
 - The worker writes grades through BE Core.
 - Rubric and question context are loaded by ID.
-- CI uses a deterministic fake grading provider.
+- Offline validation uses a deterministic fake grading provider.
 
 ## Roadmap Generation
 

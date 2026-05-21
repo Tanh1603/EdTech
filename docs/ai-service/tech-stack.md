@@ -8,7 +8,7 @@ ecosystem without becoming a separate source of LMS truth.
 
 | Layer | Choice | Reason |
 | --- | --- | --- |
-| Language | Python 3.12 | Stable deployment target with broad AI library support. Avoid Python 3.14 for now because package and CI support is still uneven. |
+| Language | Python 3.14 | Project runtime target. Use standard CPython 3.14 first; free-threaded/no-GIL builds are out of V1. |
 | Package manager | `uv` | Fast lock/install workflow and simple app-local project management. |
 | Ops HTTP API | FastAPI + Pydantic v2 | Health, readiness, metrics, and private admin endpoints only. |
 | Internal RPC | `grpcio` + Protobuf | Typed unary calls and server-streaming for AI token/state streams. |
@@ -61,10 +61,13 @@ ecosystem without becoming a separate source of LMS truth.
 - Require `SERVICE_TOKEN` for internal gRPC outside local development; allow mTLS
   as a later hardening step.
 
-## Test Defaults
+## Verification Defaults
 
-- Default CI uses fake LLM/embedding providers and mocked external services.
+- Phase 0 must keep dependency install, lint/typecheck, and gRPC code generation
+  working before larger runtime work.
+- Default verification uses fake LLM/embedding providers and mocked external
+  services.
 - Real OpenAI/Cloudinary/Qdrant/RabbitMQ integrations are opt-in environment
-  tests only.
-- Contract tests must load every configured proto file and assert service/method
-  constants match expected names.
+  checks only.
+- Shared contract validation stays in `libs/contracts`; AI Service consumes the
+  generated Python modules from those shared proto files.

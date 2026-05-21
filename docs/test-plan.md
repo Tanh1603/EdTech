@@ -387,7 +387,7 @@ Exit criteria:
 
 ### Phase 6: AI Service and Agent Runtime
 
-Current status from `architecture-scan.md`: `apps/ai-service` exists as a minimal Python skeleton; orchestrator, planner, reasoner, tool selector, MCP server, memory, Qdrant, Redis, and LLM provider adapter are missing.
+Current status from `architecture-scan.md`: `apps/ai-service` has an initial Python 3.14 foundation with package structure, FastAPI ops endpoints, gRPC/codegen helpers, fake providers, typed tools, RAG primitives, memory, worker foundations, a lightweight chat orchestrator, and unit-test scaffolding. Real BE Core clients, generated protobuf CI flow, Redis/Qdrant/RabbitMQ adapters, production providers, MCP, and Gateway SSE bridge are still missing.
 
 Scope when implemented:
 

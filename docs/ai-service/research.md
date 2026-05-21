@@ -84,15 +84,15 @@ logged, and scoped by delegated user/job metadata.
 
 ## Evaluation
 
-Default tests should be deterministic:
+Default evaluation should be deterministic and offline-first:
 
 - Fake LLM provider returns fixture responses.
 - Fake embedding provider returns stable vectors.
-- RAG tests assert citations point to known fixture chunks.
-- Grading tests use rubric fixtures and stable model output.
-- Token/latency metrics are asserted as structured records, not provider bills.
+- RAG citation checks point to known fixture chunks.
+- Grading rubric checks use stable model output.
+- Token/latency metrics are recorded as structured records, not provider bills.
 
-Use provider-backed evaluation only in opt-in test jobs with explicit secrets.
+Use provider-backed evaluation only in opt-in jobs with explicit secrets.
 
 ## Security
 

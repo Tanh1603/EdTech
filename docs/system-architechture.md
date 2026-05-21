@@ -373,7 +373,7 @@ This matches the existing backend structure and should be preserved.
 
 Detailed AI Service documentation now lives in `docs/ai-service/architecture.md`.
 
-Current repository status: `apps/ai-service/` exists as a minimal Python skeleton with `main.py`, `pyproject.toml`, `uv.lock`, and `README.md`. The SuA Agent runtime shown in `docs/architechture.webp` is not implemented yet: there is no AI gRPC server, FastAPI health API, orchestrator, planner, reasoner, tool selector, MCP server, prompt registry, Redis memory, AI worker, Qdrant integration, or LLM provider adapter. The sections below describe the target architecture, not current runtime code.
+Current repository status: `apps/ai-service/` has an initial Python 3.14 foundation with package structure, FastAPI ops endpoints, Nx targets, gRPC/codegen helpers, metadata/error utilities, fake providers, typed tools, RAG primitives, in-memory session memory, worker foundations, a lightweight chat orchestrator, and unit-test scaffolding. The real SuA Agent runtime shown in `docs/architechture.webp` is still incomplete: generated protobuf modules, real BE Core clients, real Redis/Qdrant/RabbitMQ adapters, production LLM providers, MCP server, Gateway SSE bridge, and production observability are not wired yet.
 
 ### Responsibility
 
@@ -397,7 +397,7 @@ AI Service implements the SuA Agent runtime:
 
 | Layer | Recommendation | Notes |
 | --- | --- | --- |
-| Runtime | Python 3.12 | Strong AI ecosystem. |
+| Runtime | Python 3.14 | Requested AI Service runtime. Use standard CPython 3.14 first; free-threaded/no-GIL builds are out of V1. |
 | API framework | FastAPI + Pydantic v2 for health/admin/public compatibility | Internal service API should be gRPC. |
 | Internal RPC | `grpcio` + Protobuf | Handles unary calls and AI server-streaming responses. |
 | Server | Uvicorn / Gunicorn | Container runtime. |

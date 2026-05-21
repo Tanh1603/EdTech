@@ -16,7 +16,9 @@ The current codebase is aligned with the right-side "Org System (Current)" and t
 
 The current codebase is not yet aligned with the left-side "SuA Agent" runtime:
 
-- `apps/ai-service/` exists as a minimal Python skeleton only.
+- `apps/ai-service/` has an initial Python 3.14 foundation: package structure,
+  FastAPI ops endpoints, Nx targets, gRPC/codegen helpers, fake providers, typed
+  tools, RAG primitives, memory, workers, orchestrator, and tests.
 - AI gRPC contracts exist under `libs/contracts/proto/ai`, but no AI gRPC server
   implements them yet.
 - No orchestrator, planner, reasoner, tool selector, MCP server, memory interface, Redis, Qdrant, or LLM provider adapter exists.
@@ -33,7 +35,7 @@ The current codebase is not yet aligned with the left-side "SuA Agent" runtime:
 | BE Core gRPC | Internal service API | gRPC facades exist for current modules | Aligned |
 | Storage | Object storage/provider SDK | Cloudinary integration exists | Aligned |
 | Shared contracts | Central contract ownership | `libs/contracts` owns DTOs, proto, gRPC constants, mappers | Aligned |
-| SuA Agent service | Separate AI runtime | `apps/ai-service` has `main.py`, `pyproject.toml`, `uv.lock`, and `README.md` only | Skeleton |
+| SuA Agent service | Separate AI runtime | `apps/ai-service` has the initial Python package/runtime foundation, but no real external adapters yet | Partial |
 | Orchestrator | Execution loop + agent state | Not implemented | Missing |
 | Planner | Plan generation | Not implemented | Missing |
 | Reasoner | Reason over task/context | Not implemented | Missing |
@@ -59,10 +61,10 @@ libs/contracts
 libs/contracts/proto
 ```
 
-Skeleton or missing:
+Implemented foundation or missing:
 
 ```txt
-apps/ai-service        # skeleton only
+apps/ai-service        # foundation package exists
 libs/contracts/proto/ai # contracts exist, server implementation missing
 Redis/Qdrant integration code
 AI worker code
@@ -76,11 +78,11 @@ The repository is currently in "Gateway + BE Core foundation complete" state, no
 
 The next architecture milestone should be:
 
-1. Move `apps/ai-service` from flat skeleton to the target package structure.
-2. Implement the AI gRPC server from `libs/contracts/proto/ai`.
+1. Run Python 3.14 compatibility verification with `uv sync`, tests, and proto generation.
+2. Implement real AI gRPC handlers from `libs/contracts/proto/ai`.
 3. Add BE Core/Gateway clients where needed.
-4. Add AI workers that consume RabbitMQ queues and update BE Core job status.
+4. Replace fake workers with RabbitMQ consumers that update BE Core job status.
 5. Add Qdrant/Redis integrations.
-6. Implement material ingestion first because BE Core already has `Material` and `MaterialChunk` models.
+6. Expand material ingestion first because BE Core already has `Material` and `MaterialChunk` models.
 
 Detailed AI Service target architecture is documented in `docs/ai-service/architecture.md`.

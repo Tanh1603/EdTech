@@ -6,28 +6,37 @@ memory, tool execution, and AI workers.
 
 ## Current Status
 
-- `apps/ai-service` exists with a minimal Python skeleton: `main.py`,
-  `pyproject.toml`, `uv.lock`, and `README.md`.
-- The skeleton does not yet contain the target package structure, gRPC server,
-  workers, orchestrator, RAG pipeline, Redis/Qdrant clients, LLM provider, prompt
-  registry, MCP server, or tool registry.
+- `apps/ai-service` now contains the initial Python 3.14 package structure,
+  internal FastAPI ops endpoints, Nx targets, gRPC/codegen helpers, metadata and
+  error utilities, fake providers, a typed tool registry, RAG primitives,
+  in-memory session memory, worker foundations, a lightweight chat orchestrator,
+  and generated Python protobuf modules emitted from shared lib contracts.
+- The service still does not contain real BE Core gRPC clients, real
+  Redis/Qdrant/RabbitMQ adapters, real OpenAI-compatible providers, MCP server,
+  Gateway SSE bridge, or production observability wiring.
 - `apps/api-gateway` is the public ingress and already calls BE Core through
   shared gRPC contracts.
 - `apps/backend` is the BE Core and remains the source of truth for LMS domain
   state.
 - AI contracts are defined under `libs/contracts/proto/ai`; TypeScript constants
   live under `libs/contracts/src/grpc`.
+- `apps/ai-service` must consume those shared lib contracts through codegen; it
+  must not define duplicate proto/schema files locally.
 
 ## Documents
 
 - [Architecture](./architecture.md): service boundaries, container diagram, module
   layout, and ownership rules.
 - [Tech Stack](./tech-stack.md): runtime, framework, storage, RAG, queue, memory,
-  observability, and testing decisions.
+  observability, and verification decisions.
 - [Research Notes](./research.md): agent, RAG, memory, tool calling, evaluation,
   and security research notes.
 - [Runtime Flows](./runtime-flows.md): material ingestion, RAG chat, grading, and
   roadmap generation flows.
+- [References](./references.md): official docs, infrastructure references, and
+  research papers.
+- [Implementation Phases](./phases/README.md): completed AI Service phases and
+  next implementation slices.
 - [ADR Index](./adr/README.md): short architecture decision records.
 
 ## Design Rule

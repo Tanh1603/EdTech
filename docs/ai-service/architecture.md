@@ -37,7 +37,7 @@ source of truth.
 | `apps/api-gateway` | Implemented public HTTP ingress with Gateway Swagger, Clerk auth, Cloudinary upload, realtime helpers, and BE Core gRPC client. |
 | `apps/backend` | Implemented BE Core gRPC service with Prisma/PostgreSQL, Clerk/RBAC guards, jobs, notifications, learning, chat, academic, assessment, storage, and users modules. |
 | `libs/contracts` | Implemented shared DTOs, mappers, gRPC constants, proto path helpers, and domain proto files. |
-| `apps/ai-service` | Minimal Python skeleton only: no package structure, gRPC server, workers, orchestrator, RAG, Redis, Qdrant, prompt registry, MCP, or provider adapters yet. |
+| `apps/ai-service` | Initial Python 3.14 foundation exists: package structure, internal FastAPI ops endpoints, Nx targets, shared proto codegen, gRPC helpers, metadata/errors, fake providers, typed tools, RAG primitives, in-memory memory, worker foundation, and lightweight orchestrator. |
 | `libs/contracts/proto/ai` | AI proto contracts exist for the target service boundary. |
 | Redis/RabbitMQ | Redis and RabbitMQ are present in local compose; BE Core has RabbitMQ/job foundation. |
 | Qdrant | Target vector DB; not wired into compose or code yet. |
@@ -172,9 +172,6 @@ apps/ai-service/
         audit.py
         telemetry.py
         token_usage.py
-      tests/
-        unit/
-        integration/
 ```
 
 ## Contract Boundary
@@ -187,6 +184,9 @@ libs/contracts/proto/ai/
   jobs.proto
   rag.proto
 ```
+
+`apps/ai-service` must not define separate proto/schema files. Python generated
+modules are build artifacts generated from `libs/contracts/proto`.
 
 TypeScript callers must use:
 
@@ -241,16 +241,14 @@ agent behavior.
 
 ## Missing Implementation Backlog
 
-1. Move the flat `main.py` skeleton into the target `src/ai_service` package.
-2. Add FastAPI health/readiness endpoints.
-3. Add gRPC server bootstrap for `AiOrchestratorService`, `AiJobsService`, and
-   `AiRagService`.
-4. Add BE Core gRPC client and internal metadata handling.
-5. Add RabbitMQ worker foundation and job status updates through BE Core.
-6. Add material ingestion worker, parser, chunker, embedding provider, and Qdrant
-   vector store.
-7. Add Redis-backed interactive/session memory.
-8. Add LLM and embedding provider abstractions with deterministic fake providers
-   for tests.
-9. Add orchestrator execution loop, planner, reasoner, and tool selector.
-10. Add chat streaming, grading, roadmap, and recommendation workers.
+1. Keep the Python 3.14 compatibility gate green with `uv sync`, lint/typecheck,
+   and gRPC codegen in an environment where Python 3.14 and `uv` are available.
+2. Replace placeholder gRPC handlers with production AI service handlers.
+3. Replace fake BE Core client with real BE Core gRPC client wrappers.
+4. Replace fake vector store, memory, and worker queue with Qdrant, Redis, and
+   RabbitMQ adapters.
+5. Add real OpenAI-compatible LLM/embedding providers behind the existing fake
+   provider interfaces.
+6. Expand material ingestion to real storage URLs and PDF/DOCX/PPTX parsing.
+7. Implement production chat streaming, grading, roadmap, and recommendation
+   flows.

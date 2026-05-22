@@ -10,7 +10,7 @@
       "executor": "nx:run-commands",
       "options": {
         "cwd": "apps/ai-service",
-        "command": "uv run uvicorn --app-dir src ai_service.main:app --host localhost --port 8090"
+        "command": "uv run uvicorn --app-dir src main:app --host localhost --port 8090"
       }
     },
     "lint": {
@@ -29,10 +29,10 @@
     },
     "proto:generate": {
       "executor": "nx:run-commands",
-      "outputs": ["{projectRoot}/src/ai_service/contracts/generated"],
+      "outputs": ["{projectRoot}/src/contracts/generated"],
       "options": {
         "cwd": "apps/ai-service",
-        "command": "uv run python src/ai_service/contracts/generate_proto.py"
+        "command": "uv run python src/contracts/generate_proto.py"
       }
     }
   }

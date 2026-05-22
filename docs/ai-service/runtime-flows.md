@@ -1,6 +1,6 @@
 # AI Service Runtime Flows
 
-## Material Ingestion
+## AssessmentMaterialAgent Material Ingestion
 
 ```mermaid
 sequenceDiagram
@@ -9,7 +9,7 @@ sequenceDiagram
   participant S as Object Storage
   participant B as BE Core
   participant R as RabbitMQ
-  participant W as AI Worker
+  participant W as AssessmentMaterialAgent Worker
   participant Q as Qdrant
 
   C->>G: POST /api/storage/upload multipart
@@ -33,15 +33,17 @@ Rules:
 - BE Core creates the job record before publishing to RabbitMQ.
 - AI Worker acknowledges the message only after BE Core/Qdrant writes succeed.
 - File bytes are never sent through gRPC.
+- Material ingestion belongs to `AssessmentMaterialAgent` because quiz/exam
+  generation and grading depend on RAG-ready source material.
 
-## RAG Chat
+## TutorAgent RAG Chat
 
 ```mermaid
 sequenceDiagram
   participant C as Client
   participant G as API Gateway
   participant B as BE Core
-  participant A as AI Service
+  participant A as TutorAgent
   participant Q as Qdrant
   participant L as LLM Provider
 
@@ -66,7 +68,7 @@ Client SSE -> Gateway -> AiOrchestratorService.StreamChatResponse
 AI Service streams tokens internally with gRPC server streaming; Gateway converts
 the stream to browser-facing SSE events.
 
-## Assessment Grading
+## AssessmentMaterialAgent Grading
 
 ```mermaid
 sequenceDiagram
@@ -74,7 +76,7 @@ sequenceDiagram
   participant G as API Gateway
   participant B as BE Core
   participant R as RabbitMQ
-  participant W as Grading Worker
+  participant W as AssessmentMaterialAgent Worker
   participant L as LLM Provider
 
   C->>G: POST /api/assessments/submissions/:id/submit
@@ -92,16 +94,17 @@ Rules:
 
 - The worker writes grades through BE Core.
 - Rubric and question context are loaded by ID.
-- Offline validation uses a deterministic fake grading provider.
+- Provider-backed grading smoke checks run only when local Groq/Ollama config is
+  available.
 
-## Roadmap Generation
+## LearningPathAgent Roadmap And Recommendation
 
 ```mermaid
 sequenceDiagram
   participant B as BE Core
   participant R as RabbitMQ
-  participant W as Roadmap Worker
-  participant A as Orchestrator
+  participant W as LearningPathAgent Worker
+  participant A as LangGraph Runtime
 
   B->>R: Publish edtech.ai.roadmap.generate
   W->>R: Consume job
@@ -117,3 +120,5 @@ Rules:
 - Roadmaps are persisted by BE Core.
 - AI Service produces drafts and recommendations only.
 - Mastery and progress analytics stay BE-owned.
+- Roadmap generation and recommendation are one profile:
+  `LearningPathAgent`.

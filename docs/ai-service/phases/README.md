@@ -25,10 +25,10 @@ verification.
 | 07 | Next | [RAG Core](./phase-07-rag-core.md) |
 | 08 | Next | [Redis Memory](./phase-08-redis-memory.md) |
 | 09 | Next | [RabbitMQ Worker Foundation](./phase-09-rabbitmq-worker-foundation.md) |
-| 10 | Next | [Material Ingestion Worker](./phase-10-material-ingestion-worker.md) |
-| 11 | Next | [Orchestrator And Chat Generation](./phase-11-orchestrator-chat-generation.md) |
-| 12 | Next | [Assessment Grading And Roadmap Workers](./phase-12-grading-roadmap-workers.md) |
-| 13 | Next | [Observability And Local Compose](./phase-13-observability-local-compose.md) |
+| 10 | Next | [AssessmentMaterialAgent Material Ingestion](./phase-10-material-ingestion-worker.md) |
+| 11 | Next | [LangGraph TutorAgent Chat Generation](./phase-11-orchestrator-chat-generation.md) |
+| 12 | Next | [LearningPathAgent And AssessmentMaterialAgent Workflows](./phase-12-grading-roadmap-workers.md) |
+| 13 | Next | [Multi-Agent Observability And Local Compose](./phase-13-observability-local-compose.md) |
 
 ## Default Verification
 
@@ -46,9 +46,21 @@ definitions into `apps/ai-service`.
 
 ## Runtime Package Layout
 
-Agent execution code is consolidated under `apps/ai-service/src/ai_service/agents`.
-The top-level `api`, `config`, `contracts`, `grpc`, and `main.py` modules remain
-service shell and boundary code.
+Agent execution code is consolidated under `apps/ai-service/src/agents`.
+The top-level `api`, `config`, `contracts`, and `main.py` modules remain service
+shell and boundary code. gRPC runtime helpers currently live under
+`apps/ai-service/src/agents/grpc`.
+
+## Agent Profiles
+
+V1 uses one shared LangGraph runtime and three domain profiles:
+
+- `TutorAgent`
+- `LearningPathAgent`
+- `AssessmentMaterialAgent`
+
+Planner, reasoner, tool selector, tool executor, and persistence are runtime
+nodes, not standalone product agents.
 
 ## Environment Files
 

@@ -11,7 +11,7 @@ jobs, and storage operations go through BE Core gRPC contracts generated from
 
 ## Implementation
 
-- Use `ai_service/agents/clients/BeCoreGrpcClient` with
+- Use `src/agents/clients/BeCoreGrpcClient` with
   `grpc.insecure_channel(settings.be_core_grpc_url)` for local/internal calls.
 - Load generated Python protobuf modules only after calling
   `ensure_generated_proto_path()`.

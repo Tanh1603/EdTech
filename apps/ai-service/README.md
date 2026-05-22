@@ -7,15 +7,15 @@ Internal AI orchestration, RAG, and worker service for EdTech.
 This app has the initial Python 3.14 foundation: package structure, internal
 FastAPI ops endpoints, Nx targets, gRPC/codegen helpers, metadata and error
 utilities, and a consolidated `agents/` runtime package for real Groq/Ollama
-providers, typed tools, RAG primitives, in-memory session memory, worker
+providers, typed tools, Qdrant-backed RAG primitives, Redis session memory, worker
 foundations, and a lightweight chat orchestrator.
 
 It uses `libs/contracts/proto` as the only protobuf source of truth. Generated
-Python modules are emitted from that lib into `src/ai_service/contracts/generated`
+Python modules are emitted from that lib into `src/contracts/generated`
 for this runtime; do not define separate AI service proto/schema files inside
 this app.
 
-It still needs real Redis/Qdrant/RabbitMQ adapters, MCP integration if needed,
+It still needs real RabbitMQ adapters, MCP integration if needed,
 and Gateway SSE bridge work.
 
 ## Runtime Target
@@ -51,8 +51,8 @@ Run inside the app directory with `uv`:
 
 ```sh
 uv sync
-uv run uvicorn --app-dir src ai_service.main:app --host 0.0.0.0 --port 8090
-uv run python src/ai_service/contracts/generate_proto.py
+uv run uvicorn --app-dir src main:app --host 0.0.0.0 --port 8090
+uv run python src/contracts/generate_proto.py
 ```
 
 This service intentionally has no local test target right now. Verification is

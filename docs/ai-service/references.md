@@ -40,4 +40,6 @@
 
 - [OpenTelemetry Python documentation](https://opentelemetry.io/docs/languages/python/)
 - [Model Context Protocol specification](https://modelcontextprotocol.io/specification/latest)
+- [LangChain Python documentation](https://docs.langchain.com/oss/python/langchain/overview)
 - [LangGraph Python documentation](https://docs.langchain.com/oss/python/langgraph)
+- [LangGraph Python API reference](https://reference.langchain.com/python/langgraph/)

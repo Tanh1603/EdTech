@@ -1,12 +1,10 @@
 from agents.providers.embedding_provider import EmbeddingProvider
 from agents.rag.chunking import TextChunk
-from agents.rag.vector_store import FakeVectorStore
+from agents.rag.vector_store import VectorStore
 
 
 class EmbeddingIndexer:
-    def __init__(
-        self, provider: EmbeddingProvider, vector_store: FakeVectorStore
-    ) -> None:
+    def __init__(self, provider: EmbeddingProvider, vector_store: VectorStore) -> None:
         self.provider = provider
         self.vector_store = vector_store
 

@@ -14,6 +14,8 @@ memory, tool execution, and AI workers.
   protobuf modules emitted from shared lib contracts.
 - The service still does not contain real Redis/Qdrant/RabbitMQ adapters, MCP
   server, Gateway SSE bridge, or production observability wiring.
+- V1 architecture uses one shared LangGraph runtime with three domain profiles:
+  `TutorAgent`, `LearningPathAgent`, and `AssessmentMaterialAgent`.
 - `apps/api-gateway` is the public ingress and already calls BE Core through
   shared gRPC contracts.
 - `apps/backend` is the BE Core and remains the source of truth for LMS domain

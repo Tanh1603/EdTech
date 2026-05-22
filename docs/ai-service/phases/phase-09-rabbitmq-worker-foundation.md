@@ -8,12 +8,13 @@ write LMS database tables directly.
 ## Implementation
 
 - Connect to RabbitMQ.
-- Keep worker modules under `ai_service/agents/workers`.
+- Keep worker modules under `apps/ai-service/src/agents/workers`.
 - Consume messages and validate payloads.
 - Mark jobs running through BE Core.
 - Process jobs and mark succeeded/failed through BE Core.
 - Implement ack/nack, retry metadata, and graceful shutdown.
-- Keep fake queue/BE clients for offline verification.
+- Keep local queue doubles for offline verification, but all domain writes must
+  still go through the BE Core client boundary.
 
 ## Acceptance
 

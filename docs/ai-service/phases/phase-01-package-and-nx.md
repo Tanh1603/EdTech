@@ -6,8 +6,8 @@ Use a standard Python package layout and expose AI Service commands through Nx.
 
 ## Implementation
 
-- Keep package code under `apps/ai-service/src/ai_service`.
-- Use `src/ai_service/main.py` as the runtime entrypoint.
+- Keep package code under `apps/ai-service/src`.
+- Use `src/main.py` as the runtime entrypoint.
 - Keep Nx targets for `serve`, `lint`, `typecheck`, and `proto:generate`.
 - If the team decides to restore tests later, re-add a `test` target and
   minimal `tests/unit/test_health.py` baseline in the same phase.
@@ -23,4 +23,3 @@ Use a standard Python package layout and expose AI Service commands through Nx.
 
 - [Nx project configuration](https://nx.dev/reference/project-configuration)
 - [pytest fixtures](https://docs.pytest.org/en/stable/how-to/fixtures.html)
-

@@ -1,5 +1,4 @@
-from grpc.errors import AiErrorCode, AiServiceError
-
+from agents.grpc.errors import AiErrorCode, AiServiceError
 from agents.providers.embedding_provider import (
     EmbeddingProvider,
     OllamaEmbeddingProvider,
@@ -31,6 +30,7 @@ def create_embedding_provider(settings: Settings | None = None) -> EmbeddingProv
         return OllamaEmbeddingProvider(
             host=settings.ollama_host,
             model=settings.embedding_model,
+            api_key=settings.embedding_api_key,
         )
     raise AiServiceError(
         AiErrorCode.INVALID_ARGUMENT,

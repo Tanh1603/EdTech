@@ -7,9 +7,11 @@ budget counters without storing durable chat history in Redis.
 
 ## Implementation
 
-- Create a Redis wrapper behind the memory interface.
-- Keep memory modules under `ai_service/agents/memory`.
-- Keep an in-memory fake implementation for local/offline verification.
+- Use the `redis` Python client for the real Redis wrapper behind the memory
+  interface.
+- Keep memory modules under `apps/ai-service/src/agents/memory`.
+- Keep the in-memory implementation only for local/offline verification and
+  dependency injection.
 - Implement session scratchpad keys with TTL.
 - Implement interactive memory TTL and token budget counters.
 - Keep final chat messages and durable user-visible history in BE Core.
@@ -18,7 +20,8 @@ budget counters without storing durable chat history in Redis.
 
 - Memory key naming is consistent.
 - TTL behavior is explicit.
-- In-memory fake and Redis wrapper share the same interface.
+- In-memory memory and Redis wrapper share the same interface.
+- `docker compose up -d redis` starts the local memory/cache service.
 - Durable chat history never depends on Redis as the source of truth.
 
 ## References

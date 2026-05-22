@@ -9,9 +9,9 @@ from google.protobuf.json_format import (  # pyright: ignore[reportMissingModule
     ParseDict,
 )
 from google.protobuf.struct_pb2 import Struct  # pyright: ignore[reportMissingModuleSource]
-from grpc.errors import AiErrorCode, AiServiceError
-from grpc.metadata import RequestMetadata
 
+from agents.grpc.errors import AiErrorCode, AiServiceError
+from agents.grpc.metadata import RequestMetadata
 from config.settings import Settings, get_settings
 from contracts.generated import ensure_generated_proto_path
 

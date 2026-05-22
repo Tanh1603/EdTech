@@ -18,11 +18,25 @@ ecosystem without becoming a separate source of LMS truth.
 
 | Capability | Choice | V1 Rule |
 | --- | --- | --- |
-| Orchestration | Custom lightweight state machine | Start simple; move to LangGraph only when branching/retry/state complexity justifies it. |
+| Orchestration | LangGraph `StateGraph` | Use one shared graph runtime with routing to three domain agent profiles. |
+| Agent/profile glue | LangChain | Prompt templates, tool wrappers, retriever composition, messages, and model adapter glue. |
 | Tool calling | Local typed tool registry | MCP is optional after V1; keep tools auditable and typed first. |
 | LLM provider | Groq SDK behind provider abstraction | Use fast Groq-hosted chat models now while keeping model/provider swappable. |
 | Embeddings | Ollama SDK behind provider abstraction | Use free local embeddings for development and RAG ingestion without API cost. |
 | Prompt registry | Versioned files/config | Separate system, user, tool, and business-domain policy prompts. |
+
+## Agent Profiles
+
+V1 uses one shared runtime and three agent profiles:
+
+| Profile | Purpose |
+| --- | --- |
+| `TutorAgent` | Chat tutor, RAG answer generation, citations, assistant message persistence. |
+| `LearningPathAgent` | Roadmap generation, recommendations, next actions, mastery-aware learning paths. |
+| `AssessmentMaterialAgent` | Material ingestion, quiz generation, grading, rubric feedback, chunk sync. |
+
+Planner, reasoner, and tool selector are LangGraph runtime nodes, not product
+agents.
 
 ## Retrieval And Memory
 

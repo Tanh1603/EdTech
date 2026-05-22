@@ -12,7 +12,14 @@ class Settings(BaseSettings):
     be_core_grpc_url: str = Field(default="localhost:50051", alias="BE_CORE_GRPC_URL")
     service_token: str | None = Field(default=None, alias="SERVICE_TOKEN")
     redis_url: str = Field(default="redis://localhost:6379", alias="REDIS_URL")
-    qdrant_url: str = Field(default="http://localhost:6334", alias="QDRANT_URL")
+    redis_prefix: str = Field(default="ai-service", alias="REDIS_PREFIX")
+    qdrant_url: str = Field(default="http://localhost:6333", alias="QDRANT_URL")
+    qdrant_grpc_port: int = Field(default=6334, alias="QDRANT_GRPC_PORT")
+    qdrant_collection: str = Field(
+        default="ai_material_chunks",
+        alias="QDRANT_COLLECTION",
+    )
+    qdrant_prefer_grpc: bool = Field(default=True, alias="QDRANT_PREFER_GRPC")
     rabbitmq_url: str = Field(default="amqp://localhost:5672", alias="RABBITMQ_URL")
     llm_provider: str = Field(default="groq", alias="LLM_PROVIDER")
     llm_api_key: str | None = Field(default=None, alias="LLM_API_KEY")

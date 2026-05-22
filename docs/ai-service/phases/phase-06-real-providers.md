@@ -47,12 +47,12 @@ before using it again.
 - `OllamaEmbeddingProvider.embed()` returns a non-empty vector from local Ollama.
 - Runtime users depend on `LlmProvider` and `EmbeddingProvider` protocols, not
   concrete fake classes.
-- `MaterialIngestWorker` no longer hard-codes a fake embedding provider.
+- `MaterialIngestWorker` no longer hard-codes a local embedding stub.
 
 ## Verification
 
 ```sh
-python -m compileall apps/ai-service/src/ai_service
+python -m compileall apps/ai-service/src
 ruff check apps/ai-service/src
 rg "Fake(Llm|Embedding)Provider|PROVIDER=fake" apps/ai-service docs/ai-service
 ```

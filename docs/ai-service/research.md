@@ -5,23 +5,37 @@ practical constraints for implementation, not a literature survey.
 
 ## Agent Pattern
 
-V1 should use a small orchestrator with explicit states:
+V1 should use a LangGraph-based shared runtime with explicit states:
 
 ```txt
-receive request -> load context -> plan -> select tools -> execute tools
-  -> call model -> validate output -> persist result -> return/stream response
+receive request -> route profile -> load context -> plan -> select tools
+  -> execute tools -> call model -> validate output -> persist result
+  -> return/stream response
 ```
 
-Planner, reasoner, and tool selector should be separate components because they
-change at different speeds:
+Planner, reasoner, and tool selector are runtime nodes, not product agents:
 
 - Planner decides the steps needed for a user/job request.
 - Reasoner composes domain context, retrieval results, and prompt constraints.
 - Tool selector chooses typed tools and records audit metadata.
 
-Use LangGraph only when the workflow needs complex branching, retries,
-interrupts, or long-lived state graphs. A custom state machine is lower-risk for
-the first material ingestion, chat, grading, and roadmap flows.
+LangGraph is the target runtime for branching, retries, durable state shape, and
+multi-profile routing. LangChain is used around the graph for prompt templates,
+tool wrappers, retriever composition, and model/message glue.
+
+## Agent Profiles
+
+V1 has three domain profiles on one shared runtime:
+
+| Profile | Why it exists |
+| --- | --- |
+| `TutorAgent` | Chat tutor and RAG answers are user-facing and need fast streaming/citations. |
+| `LearningPathAgent` | Roadmaps and recommendations use the same mastery/progress signals, so they belong together. |
+| `AssessmentMaterialAgent` | Quiz/exam generation and grading depend on RAG-ready materials, so material ingestion and assessment reasoning share one profile. |
+
+Course, classroom, lesson, enrollment, user, and storage CRUD stay in BE Core.
+AI Service only reads scoped context and writes generated outputs through BE Core
+gRPC.
 
 ## RAG Design
 

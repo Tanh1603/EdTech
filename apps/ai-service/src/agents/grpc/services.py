@@ -1,6 +1,8 @@
 from collections.abc import Iterator
 from dataclasses import dataclass
 
+from agents.rag.retrieval import Retriever
+
 
 @dataclass(frozen=True)
 class PlaceholderChatResponse:
@@ -37,5 +39,40 @@ class AiJobsService:
 
 
 class AiRagService:
-    def search_material_context(self, query: str) -> dict[str, object]:
-        return {"chunks": [], "metadata": {"query": query, "source": "placeholder"}}
+    def __init__(self, retriever: Retriever | None = None) -> None:
+        self.retriever = retriever
+
+    def search_material_context(
+        self,
+        query: str,
+        top_k: int = 5,
+        material_id: str | None = None,
+    ) -> dict[str, object]:
+        if not self.retriever:
+            return {
+                "chunks": [],
+                "metadata": {
+                    "query": query,
+                    "source": "not-configured",
+                    "materialId": material_id,
+                },
+            }
+
+        results = self.retriever.search(query=query, top_k=top_k, material_id=material_id)
+        return {
+            "chunks": [
+                {
+                    "chunkId": result.chunk_id,
+                    "content": result.content,
+                    "score": result.score,
+                    "citation": result.citation,
+                }
+                for result in results
+            ],
+            "metadata": {
+                "query": query,
+                "source": "qdrant",
+                "materialId": material_id,
+                "topK": top_k,
+            },
+        }

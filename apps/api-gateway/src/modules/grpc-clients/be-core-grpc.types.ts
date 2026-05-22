@@ -106,6 +106,8 @@ export interface LearningMaterialsGrpc {
   deleteMaterial: GrpcCall;
   getMaterialChunks: GrpcCall;
   getChunkDetail: GrpcCall;
+  replaceMaterialChunks: GrpcCall;
+  updateMaterialStatus: GrpcCall;
 }
 
 export interface LearningRoadmapsGrpc {
@@ -164,4 +166,12 @@ export interface NotificationsGrpc {
   getUnreadCount: GrpcCall;
   markNotificationRead: GrpcCall;
   markAllNotificationsRead: GrpcCall;
+}
+
+export interface AiOrchestratorGrpc {
+  generateChatResponse: GrpcCall;
+  streamChatResponse: GrpcCall;
+  generateRoadmap: GrpcCall;
+  gradeSubmission: GrpcCall;
+  ingestMaterial: GrpcCall;
 }

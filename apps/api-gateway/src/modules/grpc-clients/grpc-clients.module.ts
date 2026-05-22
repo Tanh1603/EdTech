@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import {
   AllGrpcPackages,
+  GrpcPackages,
   getAllProtoPaths,
   getProtoRoot,
 } from '@edtech/contracts';
@@ -10,6 +11,10 @@ import {
   BE_CORE_GRPC_CLIENT,
   BeCoreGrpcClientService,
 } from './be-core-grpc-client.service';
+import {
+  AI_SERVICE_GRPC_CLIENT,
+  AiGrpcClientService,
+} from './ai-grpc-client.service';
 
 @Module({
   imports: [
@@ -27,9 +32,22 @@ import {
           },
         },
       },
+      {
+        name: AI_SERVICE_GRPC_CLIENT,
+        transport: Transport.GRPC,
+        options: {
+          package: GrpcPackages.ai,
+          protoPath: getAllProtoPaths(),
+          url: process.env.AI_SERVICE_GRPC_URL ?? 'localhost:50052',
+          loader: {
+            includeDirs: [getProtoRoot()],
+            keepCase: false,
+          },
+        },
+      },
     ]),
   ],
-  providers: [BeCoreGrpcClientService, GrpcMetadataBuilder],
-  exports: [BeCoreGrpcClientService, GrpcMetadataBuilder],
+  providers: [BeCoreGrpcClientService, AiGrpcClientService, GrpcMetadataBuilder],
+  exports: [BeCoreGrpcClientService, AiGrpcClientService, GrpcMetadataBuilder],
 })
 export class GrpcClientsModule {}

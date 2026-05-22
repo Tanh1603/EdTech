@@ -90,6 +90,8 @@ export const GrpcMethods = {
     deleteMaterial: 'DeleteMaterial',
     getMaterialChunks: 'GetMaterialChunks',
     getChunkDetail: 'GetChunkDetail',
+    replaceMaterialChunks: 'ReplaceMaterialChunks',
+    updateMaterialStatus: 'UpdateMaterialStatus',
   },
   learningRoadmaps: {
     createRoadmap: 'CreateRoadmap',

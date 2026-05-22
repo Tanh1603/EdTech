@@ -20,6 +20,7 @@ class Settings(BaseSettings):
         alias="QDRANT_COLLECTION",
     )
     qdrant_prefer_grpc: bool = Field(default=True, alias="QDRANT_PREFER_GRPC")
+    rag_top_k_default: int = Field(default=5, alias="RAG_TOP_K_DEFAULT")
     rabbitmq_url: str = Field(default="amqp://localhost:5672", alias="RABBITMQ_URL")
     llm_provider: str = Field(default="groq", alias="LLM_PROVIDER")
     llm_api_key: str | None = Field(default=None, alias="LLM_API_KEY")

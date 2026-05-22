@@ -14,6 +14,8 @@ service LearningMaterialsService {
   rpc DeleteMaterial(MaterialIdRequest) returns (common.DeleteResponse);
   rpc GetMaterialChunks(MaterialChunksQuery) returns (common.PageResponse);
   rpc GetChunkDetail(MaterialChunkIdRequest) returns (common.ObjectResponse);
+  rpc ReplaceMaterialChunks(ReplaceMaterialChunksRequest) returns (common.ObjectResponse);
+  rpc UpdateMaterialStatus(UpdateMaterialStatusRequest) returns (common.ObjectResponse);
 }
 
 message MaterialIdRequest {
@@ -51,4 +53,24 @@ message MaterialChunksQuery {
 message MaterialChunkIdRequest {
   string material_id = 1;
   string chunk_id = 2;
+}
+
+message MaterialChunkWrite {
+  string chunk_id = 1;
+  string content = 2;
+  int32 order_no = 3;
+  int32 token_count = 4;
+  string embedding_id = 5;
+  string checksum = 6;
+}
+
+message ReplaceMaterialChunksRequest {
+  string material_id = 1;
+  repeated MaterialChunkWrite chunks = 2;
+}
+
+message UpdateMaterialStatusRequest {
+  string material_id = 1;
+  string status = 2;
+  google.protobuf.Struct error = 3;
 }

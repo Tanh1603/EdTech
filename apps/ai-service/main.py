@@ -1,4 +1,4 @@
-from ai_service.main import main  # pyright: ignore[reportMissingImports]
+from src.main import main
 
 if __name__ == "__main__":
     main()

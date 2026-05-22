@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 import { PageDto, toIsoString } from '@edtech/contracts';
 import { PaginationQueryDto } from '@edtech/contracts';
 import { PrismaService } from '../../../common/prisma/prisma.service';
@@ -148,6 +149,70 @@ export class MaterialsService {
     });
 
     return this.toMaterialResponse(material);
+  }
+
+  async replaceMaterialChunks(
+    materialId: string,
+    chunks: Array<{
+      chunkId?: string;
+      content: string;
+      orderNo: number;
+      tokenCount?: number;
+      embeddingId?: string;
+      checksum?: string;
+    }>,
+  ) {
+    await this.prisma.material.findUniqueOrThrow({ where: { id: materialId } });
+
+    const normalized = chunks
+      .map((chunk, index) => ({
+        materialId,
+        content: chunk.content,
+        orderNo: chunk.orderNo || index + 1,
+        tokenCount: chunk.tokenCount || null,
+        embeddingId: chunk.embeddingId || chunk.chunkId || null,
+        checksum: chunk.checksum || null,
+      }))
+      .sort((left, right) => left.orderNo - right.orderNo);
+
+    const { count, material } = await this.prisma.$transaction(async (tx) => {
+      await tx.materialChunk.deleteMany({ where: { materialId } });
+      const createResult = normalized.length
+        ? await tx.materialChunk.createMany({ data: normalized })
+        : { count: 0 };
+      const material = await tx.material.update({
+        where: { id: materialId },
+        data: { status: MaterialStatus.ready },
+        include: { creator: { select: userSummarySelect } },
+      });
+      return { count: createResult.count, material };
+    });
+
+    return {
+      ...this.toMaterialResponse(material),
+      chunksCount: count,
+    };
+  }
+
+  async updateMaterialStatus(
+    materialId: string,
+    status: string,
+    error?: unknown,
+  ) {
+    if (!Object.values(MaterialStatus).includes(status as MaterialStatus)) {
+      throw new BadRequestException(`Invalid material status: ${status}`);
+    }
+
+    const material = await this.prisma.material.update({
+      where: { id: materialId },
+      data: { status: status as MaterialStatus },
+      include: { creator: { select: userSummarySelect } },
+    });
+
+    return {
+      ...this.toMaterialResponse(material),
+      error: error ?? null,
+    };
   }
 
   async deleteMaterial(materialId: string) {

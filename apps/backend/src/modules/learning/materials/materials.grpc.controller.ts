@@ -13,6 +13,7 @@ import {
 } from '@edtech/contracts';
 import { Permissions } from '../../../common/decorators/permissions.decorator';
 import { GrpcUserAuthGuard } from '../../../common/guards/grpc-user-auth.guard';
+import { GrpcServiceAuthGuard } from '../../../common/guards/grpc-service-auth.guard';
 import { getGrpcUserId } from '../../../common/grpc/metadata.mapper';
 import { MaterialsService } from './materials.service';
 
@@ -112,6 +113,46 @@ export class MaterialsGrpcController {
   getChunkDetail(payload: any) {
     return this.materialsService
       .getChunkDetail(payload.materialId, payload.chunkId)
+      .then(toObjectResponse);
+  }
+}
+
+@Controller()
+@UseGuards(GrpcServiceAuthGuard)
+export class MaterialsInternalGrpcController {
+  constructor(private readonly materialsService: MaterialsService) {}
+
+  @GrpcContractMethod(
+    GrpcServices.learningMaterials,
+    GrpcMethods.learningMaterials.replaceMaterialChunks,
+  )
+  replaceMaterialChunks(payload: any) {
+    return this.materialsService
+      .replaceMaterialChunks(
+        payload.materialId,
+        (payload.chunks ?? []).map((chunk: any) => ({
+          chunkId: chunk.chunkId,
+          content: chunk.content,
+          orderNo: chunk.orderNo,
+          tokenCount: chunk.tokenCount,
+          embeddingId: chunk.embeddingId,
+          checksum: chunk.checksum,
+        })),
+      )
+      .then(toObjectResponse);
+  }
+
+  @GrpcContractMethod(
+    GrpcServices.learningMaterials,
+    GrpcMethods.learningMaterials.updateMaterialStatus,
+  )
+  updateMaterialStatus(payload: any) {
+    return this.materialsService
+      .updateMaterialStatus(
+        payload.materialId,
+        payload.status,
+        fromProtoStruct(payload.error),
+      )
       .then(toObjectResponse);
   }
 }

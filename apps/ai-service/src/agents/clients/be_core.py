@@ -150,6 +150,40 @@ class BeCoreGrpcClient:
         )
         return self._call_object(self.materials.GetChunkDetail, request, context, True)
 
+    def replace_material_chunks(
+        self,
+        material_id: str,
+        chunks: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        request = self._materials_pb2.ReplaceMaterialChunksRequest(
+            material_id=material_id,
+            chunks=[
+                self._materials_pb2.MaterialChunkWrite(
+                    chunk_id=str(chunk.get("chunkId") or ""),
+                    content=str(chunk.get("content") or ""),
+                    order_no=int(chunk.get("orderNo") or 0),
+                    token_count=int(chunk.get("tokenCount") or 0),
+                    embedding_id=str(chunk.get("embeddingId") or ""),
+                    checksum=str(chunk.get("checksum") or ""),
+                )
+                for chunk in chunks
+            ],
+        )
+        return self._call_object(self.materials.ReplaceMaterialChunks, request, None, False)
+
+    def update_material_status(
+        self,
+        material_id: str,
+        status: str,
+        error: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        request = self._materials_pb2.UpdateMaterialStatusRequest(
+            material_id=material_id,
+            status=status,
+            error=to_struct(error),
+        )
+        return self._call_object(self.materials.UpdateMaterialStatus, request, None, False)
+
     def append_assistant_message(
         self,
         session_id: str,

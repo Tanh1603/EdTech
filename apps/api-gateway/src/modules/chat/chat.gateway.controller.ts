@@ -1,6 +1,19 @@
-import { Body, Controller, Delete, Get, Logger, Param, Patch, Post, Query, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Logger,
+  MessageEvent,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  Sse,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { lastValueFrom, Observable } from 'rxjs';
+import { catchError, concat, from, lastValueFrom, map, Observable, of, switchMap } from 'rxjs';
 import {
   ChatMessagesQueryDto,
   ChatRealtimeEvents,
@@ -12,6 +25,7 @@ import {
 import { GrpcMetadataBuilder } from '../common/grpc-metadata/grpc-metadata.builder';
 import { toProtoStruct, unwrapObjectResponse, unwrapPageResponse } from '@edtech/contracts';
 import { RequestWithContext } from '../common/types/request-with-context';
+import { AiGrpcClientService } from '../grpc-clients/ai-grpc-client.service';
 import { BeCoreGrpcClientService } from '../grpc-clients/be-core-grpc-client.service';
 import { RealtimePublisher } from '../realtime/realtime.publisher';
 import { RealtimeRooms } from '../realtime/realtime.rooms';
@@ -148,6 +162,7 @@ export class ChatMessagesGatewayController {
 
   constructor(
     private readonly grpc: BeCoreGrpcClientService,
+    private readonly aiGrpc: AiGrpcClientService,
     private readonly metadata: GrpcMetadataBuilder,
     private readonly realtime: RealtimePublisher,
   ) {}
@@ -187,6 +202,74 @@ export class ChatMessagesGatewayController {
       this.getPublishContext(req),
     );
     return result;
+  }
+
+  @Sse('sessions/:sessionId/messages/:messageId/stream')
+  @ApiOperation({ summary: 'Stream AI response for an existing user message over SSE' })
+  @ApiParam({ name: 'sessionId', format: 'uuid' })
+  @ApiParam({ name: 'messageId', format: 'uuid' })
+  @ApiQuery({ name: 'topK', required: false, type: Number })
+  streamMessage(
+    @Param('sessionId') sessionId: string,
+    @Param('messageId') messageId: string,
+    @Query('topK') topK: string | undefined,
+    @Req() req: RequestWithContext,
+  ): Observable<MessageEvent> {
+    const metadata = this.metadata.build(req);
+
+    return from(
+      this.object(this.grpc.chatSessions.getSessionDetail({ sessionId }, metadata)),
+    ).pipe(
+      switchMap((session) => {
+        const classId = this.getStringField(session, 'classId') ?? '';
+        if (classId) {
+          metadata.set('x-class-id', classId);
+        }
+
+        const started$ = of(
+          this.toMessageEvent('chat.started', {
+            sessionId,
+            messageId,
+          }, req),
+        );
+
+        const token$ = this.aiGrpc.aiOrchestrator
+          .streamChatResponse(
+            {
+              sessionId,
+              messageId,
+              userId: this.getUserId(req),
+              classId,
+              useRag: true,
+              topK: Number(topK) || 5,
+              options: toProtoStruct({}),
+            },
+            metadata,
+          )
+          .pipe(
+            map((token: Record<string, unknown>) =>
+              this.toMessageEvent(
+                token.isFinal ? 'chat.completed' : 'chat.token',
+                token,
+                req,
+              ),
+            ),
+          );
+
+        return concat(started$, token$);
+      }),
+      catchError((error: unknown) =>
+        of(
+          this.toMessageEvent(
+            'chat.failed',
+            {
+              message: error instanceof Error ? error.message : String(error),
+            },
+            req,
+          ),
+        ),
+      ),
+    );
   }
 
   @Get('messages/:messageId')
@@ -235,6 +318,29 @@ export class ChatMessagesGatewayController {
     }
     const field = (value as Record<string, unknown>)[key];
     return typeof field === 'string' ? field : undefined;
+  }
+
+  private toMessageEvent(
+    event: 'chat.started' | 'chat.token' | 'chat.completed' | 'chat.failed',
+    data: unknown,
+    req: RequestWithContext,
+  ): MessageEvent {
+    return {
+      type: event,
+      data: {
+        event,
+        version: 1,
+        requestId: req.context?.requestId ?? req.requestId ?? 'unknown',
+        correlationId:
+          req.context?.correlationId ??
+          req.correlationId ??
+          req.context?.requestId ??
+          req.requestId ??
+          'unknown',
+        occurredAt: new Date().toISOString(),
+        data,
+      },
+    };
   }
 }
 

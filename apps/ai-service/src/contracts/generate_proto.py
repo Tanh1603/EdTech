@@ -41,11 +41,11 @@ def find_workspace_root(start: Path) -> Path:
 def generate() -> None:
     from grpc_tools import protoc
 
-    app_root = Path(__file__).resolve().parents[3]
+    app_root = Path(__file__).resolve().parents[2]
     workspace_root = find_workspace_root(app_root)
     proto_root = workspace_root / "libs" / "contracts" / "proto"
     well_known_proto_root = files("grpc_tools") / "_proto"
-    output_dir = app_root / "src" / "ai_service" / "contracts" / "generated"
+    output_dir = app_root / "src" / "contracts" / "generated"
     output_dir.mkdir(parents=True, exist_ok=True)
 
     proto_files = [proto_root / relative_path for relative_path in PROTO_RELATIVE_PATHS]

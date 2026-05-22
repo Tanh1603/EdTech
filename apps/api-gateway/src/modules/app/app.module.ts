@@ -24,6 +24,7 @@ import { WebhooksGatewayModule } from '../webhooks/webhooks-gateway.module';
       validationSchema: Joi.object({
         PORT: Joi.number().optional(),
         BE_CORE_GRPC_URL: Joi.string().default('localhost:50051'),
+        AI_SERVICE_GRPC_URL: Joi.string().default('localhost:50052'),
         CLERK_PUBLISHABLE_KEY: Joi.string().optional(),
         CLERK_SECRET_KEY: Joi.string().required(),
         CLERK_WEBHOOK_SECRET: Joi.string().optional(),

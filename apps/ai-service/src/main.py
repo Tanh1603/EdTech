@@ -23,4 +23,4 @@ app = create_app()
 def main() -> None:
     import uvicorn
 
-    uvicorn.run("ai_service.main:app", host="0.0.0.0", port=8090, reload=False)
+    uvicorn.run("main:app", host="0.0.0.0", port=8090, reload=False)

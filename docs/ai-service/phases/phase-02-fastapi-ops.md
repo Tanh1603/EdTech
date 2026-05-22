@@ -15,7 +15,7 @@ public browser-facing REST backend.
 
 ## Acceptance
 
-- `uv run uvicorn ai_service.main:app` boots the ops API.
+- `uv run uvicorn --app-dir src main:app` boots the ops API.
 - `/health` and `/ready` respond locally.
 - Public AI routes remain owned by API Gateway and BE Core flows.
 
@@ -23,4 +23,3 @@ public browser-facing REST backend.
 
 - [FastAPI first steps](https://fastapi.tiangolo.com/tutorial/first-steps/)
 - [FastAPI deployment](https://fastapi.tiangolo.com/deployment/)
-

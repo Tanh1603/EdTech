@@ -89,6 +89,13 @@ def create_default_registry(be_core_client: BeCoreGrpcClient) -> ToolRegistry:
         ),
     )
     registry.register(
+        "chat.message",
+        lambda payload, context: be_core_client.get_message_detail(
+            required_str(payload, "messageId"),
+            context.to_be_core_context(),
+        ),
+    )
+    registry.register(
         "chat.messages",
         lambda payload, context: be_core_client.get_messages(
             required_str(payload, "sessionId"),
@@ -103,6 +110,50 @@ def create_default_registry(be_core_client: BeCoreGrpcClient) -> ToolRegistry:
         lambda payload, context: be_core_client.append_assistant_message(
             required_str(payload, "sessionId"),
             required_str(payload, "content"),
+            context.to_be_core_context(),
+        ),
+    )
+    registry.register(
+        "chat.classroom_analytics",
+        lambda payload, context: be_core_client.get_classroom_analytics(
+            required_str(payload, "classId"),
+            context.to_be_core_context(),
+        ),
+    )
+    registry.register(
+        "assessments.submission",
+        lambda payload, context: be_core_client.get_submission_detail(
+            required_str(payload, "submissionId"),
+            context.to_be_core_context(),
+        ),
+    )
+    registry.register(
+        "assessments.manual_grade",
+        lambda payload, context: be_core_client.manual_grade_submission(
+            required_str(payload, "submissionId"),
+            required_dict(payload, "body"),
+            context.to_be_core_context(),
+        ),
+    )
+    registry.register(
+        "learning.mastery",
+        lambda payload, context: be_core_client.get_mastery_by_class(
+            optional_str(payload, "classId") or "",
+            context.to_be_core_context(),
+        ),
+    )
+    registry.register(
+        "roadmaps.create",
+        lambda payload, context: be_core_client.create_roadmap(
+            required_dict(payload, "body"),
+            context.to_be_core_context(),
+        ),
+    )
+    registry.register(
+        "roadmaps.items.create",
+        lambda payload, context: be_core_client.create_roadmap_item(
+            required_str(payload, "roadmapId"),
+            required_dict(payload, "body"),
             context.to_be_core_context(),
         ),
     )
@@ -171,3 +222,10 @@ def optional_str(payload: dict[str, Any], key: str) -> str | None:
 def optional_dict(payload: dict[str, Any], key: str) -> dict[str, Any] | None:
     value = payload.get(key)
     return value if isinstance(value, dict) else None
+
+
+def required_dict(payload: dict[str, Any], key: str) -> dict[str, Any]:
+    value = payload.get(key)
+    if not isinstance(value, dict):
+        raise ValueError(f"Missing required tool payload field: {key}")
+    return value

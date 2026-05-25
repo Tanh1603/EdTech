@@ -9,11 +9,12 @@ memory, tool execution, and AI workers.
 - `apps/ai-service` now contains the initial Python 3.14 package structure,
   internal FastAPI ops endpoints, Nx targets, gRPC/codegen helpers, metadata and
   error utilities, a consolidated `agents/` runtime package for real
-  Groq/Ollama providers, typed tools, RAG primitives, in-memory session memory,
-  worker foundations, a lightweight chat orchestrator, and generated Python
+  Groq/Ollama providers, typed tools, Qdrant RAG, Redis session memory,
+  RabbitMQ workers, a LangGraph/LangChain shared runtime, and generated Python
   protobuf modules emitted from shared lib contracts.
-- The service still does not contain real Redis/Qdrant/RabbitMQ adapters, MCP
-  server, Gateway SSE bridge, or production observability wiring.
+- MCP server and Gateway SSE bridge remain outside V1. AI Service exposes gRPC
+  server streaming for chat tokens; Gateway translates that stream to
+  browser-facing SSE.
 - V1 architecture uses one shared LangGraph runtime with three domain profiles:
   `TutorAgent`, `LearningPathAgent`, and `AssessmentMaterialAgent`.
 - `apps/api-gateway` is the public ingress and already calls BE Core through

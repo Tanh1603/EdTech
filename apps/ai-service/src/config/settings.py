@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     qdrant_prefer_grpc: bool = Field(default=True, alias="QDRANT_PREFER_GRPC")
     rag_top_k_default: int = Field(default=5, alias="RAG_TOP_K_DEFAULT")
     rabbitmq_url: str = Field(default="amqp://localhost:5672", alias="RABBITMQ_URL")
+    rabbitmq_exchange: str = Field(default="edtech.jobs", alias="RABBITMQ_EXCHANGE")
+    rabbitmq_prefetch: int = Field(default=10, alias="RABBITMQ_PREFETCH")
     llm_provider: str = Field(default="groq", alias="LLM_PROVIDER")
     llm_api_key: str | None = Field(default=None, alias="LLM_API_KEY")
     groq_api_key: str | None = Field(default=None, alias="GROQ_API_KEY")
@@ -32,6 +34,8 @@ class Settings(BaseSettings):
     embedding_api_key: str | None = Field(default=None, alias="EMBEDDING_API_KEY")
     ollama_host: str = Field(default="http://localhost:11434", alias="OLLAMA_HOST")
     embedding_model: str = Field(default="nomic-embed-text", alias="EMBEDDING_MODEL")
+    otel_service_name: str = Field(default="edtech-ai-service", alias="OTEL_SERVICE_NAME")
+    otel_enabled: bool = Field(default=False, alias="OTEL_ENABLED")
 
     @property
     def is_local(self) -> bool:

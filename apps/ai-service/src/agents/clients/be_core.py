@@ -28,8 +28,19 @@ def _load_generated_modules() -> dict[str, Any]:
         "messages_pb2_grpc": import_module("chat.messages_pb2_grpc"),
         "sessions_pb2": import_module("chat.sessions_pb2"),
         "sessions_pb2_grpc": import_module("chat.sessions_pb2_grpc"),
+        "analytics_pb2": import_module("chat.analytics_pb2"),
+        "analytics_pb2_grpc": import_module("chat.analytics_pb2_grpc"),
         "storage_pb2": import_module("storage.storage_pb2"),
         "storage_pb2_grpc": import_module("storage.storage_pb2_grpc"),
+        "submissions_pb2": import_module("assessments.submissions_pb2"),
+        "submissions_pb2_grpc": import_module("assessments.submissions_pb2_grpc"),
+        "results_pb2": import_module("assessments.results_pb2"),
+        "results_pb2_grpc": import_module("assessments.results_pb2_grpc"),
+        "roadmaps_pb2": import_module("learning.roadmaps_pb2"),
+        "roadmaps_pb2_grpc": import_module("learning.roadmaps_pb2_grpc"),
+        "mastery_pb2": import_module("learning.mastery_pb2"),
+        "mastery_pb2_grpc": import_module("learning.mastery_pb2_grpc"),
+        "common_json_pb2": import_module("common.json_pb2"),
     }
 
 
@@ -57,6 +68,10 @@ def unwrap_page_response(response: Any) -> dict[str, Any]:
         if getattr(response, "pagination", None)
         else {},
     }
+
+
+def unwrap_list_response(response: Any) -> list[dict[str, Any]]:
+    return [from_struct(item) for item in getattr(response, "items", [])]
 
 
 def unwrap_delete_response(response: Any) -> dict[str, Any]:
@@ -98,7 +113,13 @@ class BeCoreGrpcClient:
         self._jobs_pb2 = modules["jobs_pb2"]
         self._messages_pb2 = modules["messages_pb2"]
         self._sessions_pb2 = modules["sessions_pb2"]
+        self._analytics_pb2 = modules["analytics_pb2"]
         self._storage_pb2 = modules["storage_pb2"]
+        self._submissions_pb2 = modules["submissions_pb2"]
+        self._results_pb2 = modules["results_pb2"]
+        self._roadmaps_pb2 = modules["roadmaps_pb2"]
+        self._mastery_pb2 = modules["mastery_pb2"]
+        self._common_json_pb2 = modules["common_json_pb2"]
         self.materials = modules["materials_pb2_grpc"].LearningMaterialsServiceStub(
             self._channel
         )
@@ -109,7 +130,22 @@ class BeCoreGrpcClient:
         self.chat_messages = modules["messages_pb2_grpc"].ChatMessagesServiceStub(
             self._channel
         )
+        self.chat_analytics = modules["analytics_pb2_grpc"].ChatAnalyticsServiceStub(
+            self._channel
+        )
         self.storage = modules["storage_pb2_grpc"].StorageServiceStub(self._channel)
+        self.assessment_submissions = modules[
+            "submissions_pb2_grpc"
+        ].AssessmentSubmissionsServiceStub(self._channel)
+        self.assessment_results = modules[
+            "results_pb2_grpc"
+        ].AssessmentResultsServiceStub(self._channel)
+        self.roadmaps = modules["roadmaps_pb2_grpc"].LearningRoadmapsServiceStub(
+            self._channel
+        )
+        self.mastery = modules["mastery_pb2_grpc"].LearningMasteryServiceStub(
+            self._channel
+        )
 
     def close(self) -> None:
         close = getattr(self._channel, "close", None)
@@ -212,6 +248,87 @@ class BeCoreGrpcClient:
         )
         return self._call_page(self.chat_messages.GetMessages, request, context, True)
 
+    def get_message_detail(
+        self,
+        message_id: str,
+        context: BeCoreCallContext,
+    ) -> dict[str, Any]:
+        request = self._messages_pb2.MessageIdRequest(message_id=message_id)
+        return self._call_object(self.chat_messages.GetMessageDetail, request, context, True)
+
+    def get_submission_detail(
+        self,
+        submission_id: str,
+        context: BeCoreCallContext,
+    ) -> dict[str, Any]:
+        request = self._submissions_pb2.SubmissionIdRequest(submission_id=submission_id)
+        return self._call_object(
+            self.assessment_submissions.GetSubmissionDetail,
+            request,
+            context,
+            True,
+        )
+
+    def manual_grade_submission(
+        self,
+        submission_id: str,
+        body: dict[str, Any],
+        context: BeCoreCallContext,
+    ) -> dict[str, Any]:
+        request = self._results_pb2.ManualGradeRequest(
+            submission_id=submission_id,
+            body=to_struct(body),
+        )
+        return self._call_object(self.assessment_results.ManualGrade, request, context, True)
+
+    def create_roadmap(
+        self,
+        body: dict[str, Any],
+        context: BeCoreCallContext,
+    ) -> dict[str, Any]:
+        request = self._roadmaps_pb2.RoadmapBodyRequest(body=to_struct(body))
+        return self._call_object(self.roadmaps.CreateRoadmap, request, context, True)
+
+    def create_roadmap_item(
+        self,
+        roadmap_id: str,
+        body: dict[str, Any],
+        context: BeCoreCallContext,
+    ) -> dict[str, Any]:
+        request = self._roadmaps_pb2.RoadmapItemCreateRequest(
+            roadmap_id=roadmap_id,
+            body=to_struct(body),
+        )
+        return self._call_object(self.roadmaps.CreateRoadmapItem, request, context, True)
+
+    def get_mastery_by_class(
+        self,
+        class_id: str,
+        context: BeCoreCallContext,
+    ) -> list[dict[str, Any]]:
+        if class_id:
+            request = self._mastery_pb2.ClassIdRequest(class_id=class_id)
+            return self._call_list(self.mastery.GetMasteryByClass, request, context, True)
+        return self._call_list(
+            self.mastery.GetMyMastery,
+            self._common_json_pb2.EmptyRequest(),
+            context,
+            True,
+        )
+
+    def get_classroom_analytics(
+        self,
+        class_id: str,
+        context: BeCoreCallContext,
+    ) -> dict[str, Any]:
+        request = self._analytics_pb2.ClassIdRequest(class_id=class_id)
+        return self._call_object(
+            self.chat_analytics.GetClassroomAnalytics,
+            request,
+            context,
+            True,
+        )
+
     def create_job(
         self,
         job_type: str,
@@ -294,6 +411,17 @@ class BeCoreGrpcClient:
         require_user: bool,
     ) -> dict[str, Any]:
         return unwrap_page_response(
+            self._call(method, request, context, require_user=require_user)
+        )
+
+    def _call_list(
+        self,
+        method: Any,
+        request: Any,
+        context: BeCoreCallContext | None,
+        require_user: bool,
+    ) -> list[dict[str, Any]]:
+        return unwrap_list_response(
             self._call(method, request, context, require_user=require_user)
         )
 

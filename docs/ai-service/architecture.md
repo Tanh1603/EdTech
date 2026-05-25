@@ -28,9 +28,9 @@ and writes go through BE Core gRPC.
 | `apps/api-gateway` | Public HTTP ingress with Gateway Swagger, Clerk auth, Cloudinary upload, realtime helpers, and BE Core gRPC client. |
 | `apps/backend` | BE Core source of truth with Prisma/PostgreSQL, Clerk/RBAC, jobs, notifications, learning, chat, academic, assessment, storage, and users modules. |
 | `libs/contracts` | Shared DTOs, mappers, gRPC constants, proto path helpers, and domain proto files. |
-| `apps/ai-service` | Python 3.14 foundation under `src/`: FastAPI ops, Nx targets, shared proto codegen, gRPC helpers, metadata/errors, BE Core tools, Groq/Ollama providers, RAG primitives, in-memory memory, workers, and lightweight orchestrator. |
-| Redis/RabbitMQ | Present in local infra; BE Core has RabbitMQ/job foundation. |
-| Qdrant | Target vector DB; not wired into AI Service yet. |
+| `apps/ai-service` | Python 3.14 foundation under `src/`: FastAPI ops, Nx targets, shared proto codegen, gRPC helpers, metadata/errors, BE Core tools, LangGraph runtime, LangChain prompt/model glue, Groq/Ollama providers, Qdrant RAG, Redis memory, RabbitMQ workers, and domain profiles. |
+| Redis/RabbitMQ | Present in local infra and wired into AI Service memory/workers. |
+| Qdrant | Wired as the AI Service vector DB for material chunks. |
 
 ## Agent Model
 
@@ -227,8 +227,9 @@ apps/ai-service/
         token_usage.py
 ```
 
-Current code has a subset of this layout. Missing folders are target structure
-for upcoming phases.
+Current code implements the V1 baseline subset of this layout. MCP wrappers,
+Gateway SSE translation, and deeper prompt registry files remain later
+hardening work.
 
 ## Contract Boundary
 
@@ -249,18 +250,11 @@ Rules:
 - Use server streaming only for token/state streams.
 - Use RabbitMQ + BE Core `jobs` for durable background workflows.
 
-## Missing Implementation Backlog
+## Remaining Hardening Backlog
 
-1. Add LangGraph/LangChain dependencies after the Python 3.14 compatibility gate
-   is green.
-2. Build shared runtime nodes: planner, reasoner, tool selector, tool executor,
-   persistence, and graph state.
-3. Implement `TutorAgent` on the shared runtime first, then add
-   `LearningPathAgent` and `AssessmentMaterialAgent`.
-4. Replace placeholder gRPC handlers with production handlers that route to the
-   shared runtime.
-5. Replace fake vector store, memory, and queue with Qdrant, Redis, and RabbitMQ
-   adapters.
-6. Expand material ingestion to real storage URLs and PDF/DOCX/PPTX parsing.
-7. Add production chat streaming, grading, roadmap/recommendation, and
-   observability.
+1. Add Gateway SSE translation for `AiOrchestratorService.StreamChatResponse`.
+2. Add prompt registry files and prompt versioning around the current LangChain
+   templates.
+3. Add MCP wrappers only after local typed tools stabilize.
+4. Add broader evaluation and provider-backed smoke coverage when local
+   credentials and infra are available.

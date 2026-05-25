@@ -14,7 +14,7 @@
     "prisma:migrate": "npx prisma migrate deploy",
     "db:studio": "npx prisma studio --config apps/backend/prisma.config.ts",
     "db:test": "npx tsx scripts/test-database.ts",
-    "compose:infra:up": "docker compose up -d postgres redis rabbitmq",
+    "compose:infra:up": "docker compose up -d postgres redis rabbitmq qdrant",
     "compose:app:up": "docker compose --profile app up -d --build",
     "compose:down": "docker compose down"
   },

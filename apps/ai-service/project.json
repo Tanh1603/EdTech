@@ -13,6 +13,14 @@
         "command": "uv run uvicorn --app-dir src main:app --host localhost --port 8090"
       }
     },
+    "worker": {
+      "continuous": true,
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/ai-service",
+        "command": "uv run python -m agents.workers.main"
+      }
+    },
     "lint": {
       "executor": "nx:run-commands",
       "options": {

@@ -12,6 +12,22 @@ class JsonFormatter(logging.Formatter):
         }
         if record.exc_info:
             payload["exc_info"] = self.formatException(record.exc_info)
+        for key in (
+            "requestId",
+            "correlationId",
+            "jobId",
+            "userId",
+            "agentProfile",
+            "graphNode",
+            "toolName",
+            "model",
+            "latencyMs",
+            "inputTokens",
+            "outputTokens",
+        ):
+            value = getattr(record, key, None)
+            if value is not None:
+                payload[key] = value
         return json.dumps(payload, ensure_ascii=False)
 
 

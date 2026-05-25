@@ -22,13 +22,13 @@ verification.
 | 04 | Baseline | [Settings, Metadata, Error Model](./phase-04-settings-metadata-errors.md) |
 | 05 | Baseline | [BE Core Client And Tool Registry](./phase-05-be-core-client-tool-registry.md) |
 | 06 | Baseline | [Real Groq LLM And Ollama Embedding Providers](./phase-06-real-providers.md) |
-| 07 | Next | [RAG Core](./phase-07-rag-core.md) |
-| 08 | Next | [Redis Memory](./phase-08-redis-memory.md) |
-| 09 | Next | [RabbitMQ Worker Foundation](./phase-09-rabbitmq-worker-foundation.md) |
-| 10 | Next | [AssessmentMaterialAgent Material Ingestion](./phase-10-material-ingestion-worker.md) |
-| 11 | Next | [LangGraph TutorAgent Chat Generation](./phase-11-orchestrator-chat-generation.md) |
-| 12 | Next | [LearningPathAgent And AssessmentMaterialAgent Workflows](./phase-12-grading-roadmap-workers.md) |
-| 13 | Next | [Multi-Agent Observability And Local Compose](./phase-13-observability-local-compose.md) |
+| 07 | Baseline | [RAG Core](./phase-07-rag-core.md) |
+| 08 | Baseline | [Redis Memory](./phase-08-redis-memory.md) |
+| 09 | Baseline | [RabbitMQ Worker Foundation](./phase-09-rabbitmq-worker-foundation.md) |
+| 10 | Baseline | [AssessmentMaterialAgent Material Ingestion](./phase-10-material-ingestion-worker.md) |
+| 11 | Baseline | [LangGraph TutorAgent Chat Generation](./phase-11-orchestrator-chat-generation.md) |
+| 12 | Baseline | [LearningPathAgent And AssessmentMaterialAgent Workflows](./phase-12-grading-roadmap-workers.md) |
+| 13 | Baseline | [Multi-Agent Observability And Local Compose](./phase-13-observability-local-compose.md) |
 
 ## Default Verification
 

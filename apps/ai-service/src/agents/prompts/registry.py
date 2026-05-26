@@ -52,6 +52,30 @@ class PromptRegistry:
                     "WARNINGS:\n$warnings\n"
                 ),
             ),
+            "tutor.summary_partial": PromptTemplate(
+                "v1",
+                Template(
+                    "SYSTEM:\n"
+                    "You are TutorAgent. Summarize this ordered material segment in Vietnamese. "
+                    "Keep the original sequence, key concepts, definitions, examples, and warnings. "
+                    "Do not add facts outside the segment.\n\n"
+                    "SEGMENT:\n$index/$total\n\n"
+                    "LEARNING_CONTEXT:\n$learning_context\n\n"
+                    "ORDERED_CONTEXT:\n$ordered_context\n"
+                ),
+            ),
+            "tutor.summary_reduce": PromptTemplate(
+                "v1",
+                Template(
+                    "SYSTEM:\n"
+                    "You are TutorAgent. Combine the partial summaries into one concise Vietnamese "
+                    "lesson/material summary. Preserve the learning order, remove duplicates, and "
+                    "mention that the material has no usable context if the summaries are empty.\n\n"
+                    "LEARNING_CONTEXT:\n$learning_context\n\n"
+                    "STUDENT_QUESTION:\n$student_question\n\n"
+                    "PARTIAL_SUMMARIES:\n$partial_summaries\n"
+                ),
+            ),
             "learning_path.prompt": PromptTemplate(
                 "v1",
                 Template(

@@ -13,3 +13,5 @@ class RuntimeDependencies:
     retriever: Retriever | None = None
     memory: MemoryStore | None = None
     key_builder: MemoryKeyBuilder | None = None
+    rag_min_score: float = 0.2
+    rag_summary_chunk_limit: int = 24

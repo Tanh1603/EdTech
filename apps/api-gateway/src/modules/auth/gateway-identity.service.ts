@@ -21,14 +21,17 @@ export class GatewayIdentityService {
     });
 
     const snapshot = parseRbacSnapshot(payload);
-    if (snapshot && snapshot.st !== 'active') {
+    if (!snapshot) {
+      throw new Error('Missing RBAC snapshot');
+    }
+    if (snapshot.st !== 'active') {
       throw new Error('User is not active');
     }
 
     return {
       userId: payload.sub,
-      roles: snapshot?.r ?? [UserRole.student],
-      permissions: snapshot?.p ?? [],
+      roles: snapshot.r,
+      permissions: snapshot.p,
     };
   }
 

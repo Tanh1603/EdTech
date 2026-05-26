@@ -12,6 +12,7 @@ import {
   Req,
   Sse,
 } from '@nestjs/common';
+import { Metadata } from '@grpc/grpc-js';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { catchError, concat, from, lastValueFrom, map, Observable, of, switchMap } from 'rxjs';
 import {
@@ -19,11 +20,17 @@ import {
   ChatRealtimeEvents,
   ChatSessionsQueryDto,
   CreateChatSessionDto,
+  MaterialStatus,
   SendMessageDto,
   UpdateChatSessionDto,
 } from '@edtech/contracts';
 import { GrpcMetadataBuilder } from '../common/grpc-metadata/grpc-metadata.builder';
-import { toProtoStruct, unwrapObjectResponse, unwrapPageResponse } from '@edtech/contracts';
+import {
+  toProtoStruct,
+  unwrapListResponse,
+  unwrapObjectResponse,
+  unwrapPageResponse,
+} from '@edtech/contracts';
 import { RequestWithContext } from '../common/types/request-with-context';
 import { AiGrpcClientService } from '../grpc-clients/ai-grpc-client.service';
 import { BeCoreGrpcClientService } from '../grpc-clients/be-core-grpc-client.service';
@@ -210,11 +217,13 @@ export class ChatMessagesGatewayController {
   @ApiParam({ name: 'messageId', format: 'uuid' })
   @ApiQuery({ name: 'topK', required: false, type: Number })
   @ApiQuery({ name: 'materialId', required: false, type: String })
+  @ApiQuery({ name: 'lessonId', required: false, type: String })
   streamMessage(
     @Param('sessionId') sessionId: string,
     @Param('messageId') messageId: string,
     @Query('topK') topK: string | undefined,
     @Query('materialId') materialId: string | undefined,
+    @Query('lessonId') lessonId: string | undefined,
     @Req() req: RequestWithContext,
   ): Observable<MessageEvent> {
     const metadata = this.metadata.build(req);
@@ -228,39 +237,60 @@ export class ChatMessagesGatewayController {
           metadata.set('x-class-id', classId);
         }
 
-        const started$ = of(
-          this.toMessageEvent('chat.started', {
-            sessionId,
-            messageId,
-          }, req),
-        );
-
-        const token$ = this.aiGrpc.aiOrchestrator
-          .streamChatResponse(
-            {
-              sessionId,
-              messageId,
-              userId: this.getUserId(req),
-              classId,
-              useRag: true,
-              topK: Number(topK) || 5,
-              options: toProtoStruct({
-                ...(materialId ? { materialId } : {}),
-              }),
-            },
+        return from(
+          this.resolveRagMaterial({
+            materialId,
+            lessonId,
+            classId,
             metadata,
-          )
-          .pipe(
-            map((token: Record<string, unknown>) =>
-              this.toMessageEvent(
-                token.isFinal ? 'chat.completed' : 'chat.token',
-                token,
-                req,
-              ),
-            ),
-          );
+          }),
+        ).pipe(
+          switchMap((resolvedMaterial) => {
+            const started$ = of(
+              this.toMessageEvent('chat.started', {
+                sessionId,
+                messageId,
+                materialId: this.getStringField(resolvedMaterial, 'id') || materialId || '',
+                materialAutoResolved: Boolean(resolvedMaterial && !materialId),
+              }, req),
+            );
 
-        return concat(started$, token$);
+            const resolvedMaterialId = this.getStringField(resolvedMaterial, 'id');
+            const token$ = this.aiGrpc.aiOrchestrator
+              .streamChatResponse(
+                {
+                  sessionId,
+                  messageId,
+                  userId: this.getUserId(req),
+                  classId,
+                  useRag: true,
+                  topK: Number(topK) || 5,
+                  options: toProtoStruct({
+                    ...(resolvedMaterialId ? { materialId: resolvedMaterialId } : {}),
+                    ...(lessonId ? { lessonId } : {}),
+                    ...(resolvedMaterial
+                      ? {
+                          materialTitle: this.getStringField(resolvedMaterial, 'title') || '',
+                          materialAutoResolved: !materialId,
+                        }
+                      : { materialStatus: 'missing' }),
+                  }),
+                },
+                metadata,
+              )
+              .pipe(
+                map((token: Record<string, unknown>) =>
+                  this.toMessageEvent(
+                    token.isFinal ? 'chat.completed' : 'chat.token',
+                    token,
+                    req,
+                  ),
+                ),
+              );
+
+            return concat(started$, token$);
+          }),
+        );
       }),
       catchError((error: unknown) =>
         of(
@@ -322,6 +352,97 @@ export class ChatMessagesGatewayController {
     }
     const field = (value as Record<string, unknown>)[key];
     return typeof field === 'string' ? field : undefined;
+  }
+
+  private async resolveRagMaterial(input: {
+    materialId?: string;
+    lessonId?: string;
+    classId?: string;
+    metadata: Metadata;
+  }): Promise<Record<string, unknown> | null> {
+    if (input.materialId) {
+      return this.object(
+        this.grpc.learningMaterials.getMaterialDetail(
+          { materialId: input.materialId },
+          input.metadata,
+        ),
+      ) as Promise<Record<string, unknown>>;
+    }
+
+    if (input.lessonId) {
+      return this.getLatestReadyMaterialForLesson(input.lessonId, input.metadata);
+    }
+
+    if (!input.classId) {
+      return null;
+    }
+
+    const lessonResponse = unwrapListResponse(
+      await lastValueFrom(
+        this.grpc.lessons.getClassroomLessons(
+          { classroomId: input.classId, publishedOnly: true },
+          input.metadata,
+        ),
+      ),
+    );
+    const lessons = (lessonResponse.items ?? [])
+      .filter((item): item is Record<string, unknown> => typeof item === 'object' && item !== null)
+      .sort((left, right) => {
+        const publishedDelta =
+          Date.parse(this.getStringField(right, 'publishedAt') || '') -
+          Date.parse(this.getStringField(left, 'publishedAt') || '');
+        if (Number.isFinite(publishedDelta) && publishedDelta !== 0) {
+          return publishedDelta;
+        }
+        return this.getNumberField(right, 'orderNo') - this.getNumberField(left, 'orderNo');
+      });
+
+    for (const lesson of lessons) {
+      const resolved = await this.getLatestReadyMaterialForLesson(
+        this.getStringField(lesson, 'lessonId') || '',
+        input.metadata,
+      );
+      if (resolved) {
+        return resolved;
+      }
+    }
+
+    return null;
+  }
+
+  private async getLatestReadyMaterialForLesson(
+    lessonId: string,
+    metadata: Metadata,
+  ): Promise<Record<string, unknown> | null> {
+    if (!lessonId) {
+      return null;
+    }
+
+    const page = unwrapPageResponse(
+      await lastValueFrom(
+        this.grpc.learningMaterials.getMaterials(
+          {
+            lessonId,
+            status: MaterialStatus.ready,
+            page: 1,
+            limit: 1,
+          },
+          metadata,
+        ),
+      ),
+    );
+    const first = page.items?.[0];
+    return typeof first === 'object' && first !== null
+      ? (first as Record<string, unknown>)
+      : null;
+  }
+
+  private getNumberField(value: unknown, key: string): number {
+    if (typeof value !== 'object' || value === null) {
+      return 0;
+    }
+    const field = (value as Record<string, unknown>)[key];
+    return typeof field === 'number' ? field : Number(field) || 0;
   }
 
   private toMessageEvent(

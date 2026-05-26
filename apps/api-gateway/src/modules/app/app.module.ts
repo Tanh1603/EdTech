@@ -28,7 +28,7 @@ import { WebhooksGatewayModule } from '../webhooks/webhooks-gateway.module';
         CLERK_PUBLISHABLE_KEY: Joi.string().optional(),
         CLERK_SECRET_KEY: Joi.string().required(),
         CLERK_WEBHOOK_SECRET: Joi.string().optional(),
-        SERVICE_TOKEN: Joi.string().optional(),
+        SERVICE_TOKEN: Joi.string().required(),
         CLOUDINARY_NAME: Joi.string().required(),
         CLOUDINARY_API_KEY: Joi.string().required(),
         CLOUDINARY_API_SECRET: Joi.string().required(),

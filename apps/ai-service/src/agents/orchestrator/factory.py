@@ -19,5 +19,7 @@ def create_agent_runtime(settings: Settings | None = None) -> AgentRuntime:
             retriever=create_retriever(active_settings),
             memory=create_memory_store(active_settings),
             key_builder=create_memory_key_builder(active_settings),
+            rag_min_score=active_settings.rag_min_score,
+            rag_summary_chunk_limit=active_settings.rag_summary_chunk_limit,
         )
     )

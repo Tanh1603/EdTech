@@ -1,7 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { BadRequestException } from '@nestjs/common';
-import { PageDto, toIsoString } from '@edtech/contracts';
+import { PageDto, toIsoString, UserRole } from '@edtech/contracts';
 import { PaginationQueryDto } from '@edtech/contracts';
+import { AccessPolicyService } from '../../../common/access/access-policy.service';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import { toUserSummary, userSummarySelect } from '../../../common/rbac/rbac.mapper';
 import { MaterialStatus, Prisma } from '../../../generated/prisma/client';
@@ -19,6 +20,7 @@ export class MaterialsService {
     private readonly prisma: PrismaService,
     private readonly storageService: StorageService,
     private readonly jobsService: JobsService,
+    private readonly accessPolicy: AccessPolicyService,
   ) {}
 
   async uploadMaterial(
@@ -60,7 +62,14 @@ export class MaterialsService {
       size?: number;
     },
     createdBy: string,
+    roles: UserRole[] = [],
   ) {
+    await this.accessPolicy.assertLessonMaterialManageAccess(
+      payload.lessonId,
+      createdBy,
+      roles,
+    );
+
     const material = await this.prisma.material.create({
       data: {
         lessonId: payload.lessonId,
@@ -80,15 +89,24 @@ export class MaterialsService {
     return this.toMaterialResponse(material);
   }
 
-  async getMaterials(query: MaterialQueryDto): Promise<PageDto<unknown>> {
+  async getMaterials(
+    query: MaterialQueryDto,
+    userId: string,
+    roles: UserRole[] = [],
+  ): Promise<PageDto<unknown>> {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
     const where: Prisma.MaterialWhereInput = {
-      ...(query.lessonId ? { lessonId: query.lessonId } : {}),
-      ...(query.status ? { status: query.status } : {}),
-      ...(query.search
-        ? { title: { contains: query.search, mode: 'insensitive' } }
-        : {}),
+      AND: [
+        {
+          ...(query.lessonId ? { lessonId: query.lessonId } : {}),
+          ...(query.status ? { status: query.status } : {}),
+          ...(query.search
+            ? { title: { contains: query.search, mode: 'insensitive' } }
+            : {}),
+        },
+        this.accessPolicy.materialReadWhere(userId, roles),
+      ],
     };
 
     const [items, total] = await this.prisma.$transaction([
@@ -110,7 +128,13 @@ export class MaterialsService {
     );
   }
 
-  async getMaterialDetail(materialId: string) {
+  async getMaterialDetail(
+    materialId: string,
+    userId: string,
+    roles: UserRole[] = [],
+  ) {
+    await this.accessPolicy.assertMaterialReadAccess(materialId, userId, roles);
+
     const material = await this.prisma.material.findUniqueOrThrow({
       where: { id: materialId },
       include: {
@@ -128,7 +152,14 @@ export class MaterialsService {
     };
   }
 
-  async updateMaterial(materialId: string, payload: UpdateMaterialDto) {
+  async updateMaterial(
+    materialId: string,
+    payload: UpdateMaterialDto,
+    userId: string,
+    roles: UserRole[] = [],
+  ) {
+    await this.accessPolicy.assertMaterialManageAccess(materialId, userId, roles);
+
     const material = await this.prisma.material.update({
       where: { id: materialId },
       data: { title: payload.title },
@@ -277,7 +308,15 @@ export class MaterialsService {
     };
   }
 
-  async deleteMaterial(materialId: string) {
+  async deleteMaterial(
+    materialId: string,
+    userId?: string,
+    roles: UserRole[] = [],
+  ) {
+    if (userId) {
+      await this.accessPolicy.assertMaterialManageAccess(materialId, userId, roles);
+    }
+
     const material = await this.prisma.material.findUniqueOrThrow({
       where: { id: materialId },
       select: { id: true, publicId: true },
@@ -298,7 +337,11 @@ export class MaterialsService {
   async getMaterialChunks(
     materialId: string,
     query: PaginationQueryDto,
+    userId: string,
+    roles: UserRole[] = [],
   ): Promise<PageDto<unknown>> {
+    await this.accessPolicy.assertMaterialReadAccess(materialId, userId, roles);
+
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
     const where: Prisma.MaterialChunkWhereInput = { materialId };
@@ -316,7 +359,14 @@ export class MaterialsService {
     return this.toPage(items, page, limit, total);
   }
 
-  async getChunkDetail(materialId: string, chunkId: string) {
+  async getChunkDetail(
+    materialId: string,
+    chunkId: string,
+    userId: string,
+    roles: UserRole[] = [],
+  ) {
+    await this.accessPolicy.assertMaterialReadAccess(materialId, userId, roles);
+
     return this.prisma.materialChunk.findFirstOrThrow({
       where: { id: chunkId, materialId },
     });

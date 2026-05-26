@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Post, Req, UploadedFile, UseInterceptors } from '@nestjs/common';
+import {
+  BadGatewayException,
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Post,
+  Req,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { memoryStorage } from 'multer';
@@ -25,14 +35,18 @@ export class StorageGatewayController {
   @ApiConsumes('multipart/form-data')
   @ApiBody({ schema: { type: 'object', required: ['file'], properties: { file: { type: 'string', format: 'binary' } } } })
   @UseInterceptors(FileInterceptor('file', { storage: memoryStorage(), limits: { fileSize: 1024 * 1024 * 100 } }))
-  uploadFile(@UploadedFile() file: any) {
+  async uploadFile(@UploadedFile() file: any) {
+    if (!file) {
+      throw new BadRequestException('File is required');
+    }
+
     try {
-      return this.storage.uploadFile(file);
+      return await this.storage.uploadFile(file);
 
     } catch (error) {
-      console.log(error);
-
-      return error
+      throw new BadGatewayException(
+        error instanceof Error ? `File upload failed: ${error.message}` : 'File upload failed',
+      );
     }
   }
 

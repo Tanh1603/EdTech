@@ -2,6 +2,7 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { UserRole } from '@edtech/contracts';
 import { AppHttpException } from '../errors/app-http.exception';
 import { PrismaService } from '../prisma/prisma.service';
+import { Prisma } from '../../generated/prisma/client';
 
 @Injectable()
 export class AccessPolicyService {
@@ -158,6 +159,109 @@ export class AccessPolicyService {
     }
 
     await this.assertClassTeacherOrAdmin(exam.classId, userId, roles);
+  }
+
+  materialReadWhere(
+    userId: string,
+    roles: UserRole[] = [],
+  ): Prisma.MaterialWhereInput {
+    if (this.isAdmin(roles)) {
+      return {};
+    }
+
+    return {
+      OR: [
+        { createdBy: userId },
+        { lesson: { course: { teacherId: userId } } },
+        {
+          lesson: {
+            classroomLessons: {
+              some: {
+                isPublished: true,
+                classroom: {
+                  enrollments: { some: { userId } },
+                },
+              },
+            },
+          },
+        },
+      ],
+    };
+  }
+
+  async assertMaterialReadAccess(
+    materialId: string,
+    userId: string,
+    roles: UserRole[] = [],
+  ): Promise<void> {
+    if (this.isAdmin(roles)) {
+      return;
+    }
+
+    await this.prisma.material.findFirstOrThrow({
+      where: { id: materialId, ...this.materialReadWhere(userId, roles) },
+      select: { id: true },
+    });
+  }
+
+  async assertMaterialManageAccess(
+    materialId: string,
+    userId: string,
+    roles: UserRole[] = [],
+  ): Promise<void> {
+    if (this.isAdmin(roles)) {
+      return;
+    }
+
+    await this.prisma.material.findFirstOrThrow({
+      where: {
+        id: materialId,
+        OR: [
+          { lesson: { course: { teacherId: userId } } },
+          {
+            lesson: {
+              classroomLessons: {
+                some: {
+                  classroom: {
+                    enrollments: { some: { userId, role: 'teacher' } },
+                  },
+                },
+              },
+            },
+          },
+        ],
+      },
+      select: { id: true },
+    });
+  }
+
+  async assertLessonMaterialManageAccess(
+    lessonId: string,
+    userId: string,
+    roles: UserRole[] = [],
+  ): Promise<void> {
+    if (this.isAdmin(roles)) {
+      return;
+    }
+
+    await this.prisma.lesson.findFirstOrThrow({
+      where: {
+        id: lessonId,
+        OR: [
+          { course: { teacherId: userId } },
+          {
+            classroomLessons: {
+              some: {
+                classroom: {
+                  enrollments: { some: { userId, role: 'teacher' } },
+                },
+              },
+            },
+          },
+        ],
+      },
+      select: { id: true },
+    });
   }
 
   async assertSubmissionAccess(

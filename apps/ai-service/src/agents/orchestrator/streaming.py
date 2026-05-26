@@ -18,6 +18,7 @@ from agents.orchestrator.persistence import PersistenceNode
 from agents.orchestrator.planner import plan_node
 from agents.orchestrator.reasoner import reason_node
 from agents.orchestrator.state import RuntimeState
+from agents.orchestrator.summary import generate_map_reduce_summary
 from agents.orchestrator.tool_executor import ToolExecutorNode
 from agents.orchestrator.tool_selector import select_tools_node
 
@@ -38,7 +39,11 @@ def stream_tutor_response(
         intent_router_node,
         query_rewriter_node,
         BusinessPolicyNode(),
-        RetrievalRouterNode(dependencies.retriever),
+        RetrievalRouterNode(
+            dependencies.retriever,
+            min_score=dependencies.rag_min_score,
+            summary_chunk_limit=dependencies.rag_summary_chunk_limit,
+        ),
         prompt_builder_node,
     ):
         state = node(state)
@@ -48,6 +53,21 @@ def stream_tutor_response(
     session_id = str(state.get("session_id") or "")
     message_id = str(state.get("message_id") or "")
     chunks: list[str] = []
+    if state.get("intent") == "summary_material" and len(state.get("summary_batches", [])) > 1:
+        content, usage = generate_map_reduce_summary(dependencies.llm_provider, state)
+        guarded_state = response_guard_node(
+            {**state, "content": content, "citations": citations, "usage": usage}
+        )
+        final_state = PersistenceNode(dependencies.registry)(guarded_state)
+        for chunk in _chunk_text(str(final_state.get("content") or "")):
+            yield {"text": chunk, "citations": [], "isFinal": False}
+        yield {
+            "text": "",
+            "citations": final_state.get("citations", citations),
+            "isFinal": True,
+            "assistantMessageId": final_state.get("assistant_message_id", ""),
+        }
+        return
     logger.info(
         "Tutor model stream started",
         extra={
@@ -75,3 +95,8 @@ def stream_tutor_response(
         "isFinal": True,
         "assistantMessageId": final_state.get("assistant_message_id", ""),
     }
+
+
+def _chunk_text(value: str, size: int = 500) -> Iterator[str]:
+    for index in range(0, len(value), size):
+        yield value[index : index + size]

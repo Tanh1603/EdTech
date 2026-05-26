@@ -6,6 +6,7 @@ from typing import Any
 
 from agents.orchestrator.nodes.common import material_id
 from agents.orchestrator.state import RuntimeState
+from agents.orchestrator.summary import summary_batches
 from agents.rag.retrieval import RetrievalResult, Retriever
 
 logger = logging.getLogger(__name__)
@@ -63,6 +64,7 @@ class RetrievalRouterNode:
                 )
                 for chunk in chunks
             ]
+            batches = summary_batches(results)
             logger.info(
                 "Tutor ordered material retrieval completed",
                 extra={
@@ -70,9 +72,15 @@ class RetrievalRouterNode:
                     "step": "retrieval.summary",
                     "materialId": active_material_id,
                     "chunkCount": len(results),
+                    "batchCount": len(batches),
                 },
             )
-            return _retrieval_state(state, "summary_ordered", results)
+            return _retrieval_state(
+                state,
+                "summary_ordered",
+                results,
+                summary_batch_items=batches,
+            )
 
         query = str(state.get("standalone_question") or state.get("current_message") or "")
         results = [
@@ -101,18 +109,26 @@ def _retrieval_state(
     state: RuntimeState,
     mode: str,
     results: list[RetrievalResult],
+    summary_batch_items: list[str] | None = None,
 ) -> RuntimeState:
+    retrieved_context = "\n\n".join(
+        f"[{index + 1}] chunkId={result.chunk_id} score={result.score:.4f}\n"
+        f"{result.content}"
+        for index, result in enumerate(results)
+    )
+    if summary_batch_items and len(summary_batch_items) > 1:
+        retrieved_context = (
+            f"{len(results)} ordered chunks loaded for map-reduce summary "
+            f"across {len(summary_batch_items)} batches."
+        )
     return {
         **state,
         "retrieval_mode": mode,
-        "retrieved_context": "\n\n".join(
-            f"[{index + 1}] chunkId={result.chunk_id} score={result.score:.4f}\n"
-            f"{result.content}"
-            for index, result in enumerate(results)
-        ),
+        "retrieved_context": retrieved_context,
         "retrieval_results": results,
         "citations": [result.citation for result in results],
         "rag_scores": [result.score for result in results],
+        "summary_batches": summary_batch_items or [],
     }
 
 

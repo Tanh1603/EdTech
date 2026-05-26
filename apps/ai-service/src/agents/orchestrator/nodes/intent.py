@@ -31,10 +31,14 @@ def intent_router_node(state: RuntimeState) -> RuntimeState:
     question = sanitize_text(str(state.get("current_message") or ""))
     normalized = normalize_text(question)
     active_material_id = material_id(state)
-    if active_material_id and any(term in normalized for term in SUMMARY_TERMS):
+    options = state.get("options", {})
+    material_missing = isinstance(options, dict) and options.get("materialStatus") == "missing"
+    if any(term in normalized for term in SUMMARY_TERMS):
         intent = "summary_material"
     elif any(term in normalized for term in FOLLOW_UP_TERMS):
         intent = "follow_up"
+    elif material_missing and bool(state.get("use_rag", True)):
+        intent = "qa_material"
     elif active_material_id and bool(state.get("use_rag", True)):
         intent = "qa_material"
     else:

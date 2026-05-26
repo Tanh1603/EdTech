@@ -38,7 +38,7 @@ import { LoggingInterceptor } from '../../common/grpc/logging.interceptor';
         CLOUDINARY_API_KEY: Joi.string().required(),
         CLOUDINARY_API_SECRET: Joi.string().required(),
         BACKEND_GRPC_URL: Joi.string().optional(),
-        SERVICE_TOKEN: Joi.string().optional(),
+        SERVICE_TOKEN: Joi.string().required(),
         RBAC_BOOTSTRAP_ADMIN_EMAILS: Joi.string().allow('').optional(),
         ENABLE_BE_WORKERS: Joi.boolean().optional(),
         RABBITMQ_URL: Joi.string().optional(),

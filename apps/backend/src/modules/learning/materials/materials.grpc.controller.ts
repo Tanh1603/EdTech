@@ -14,7 +14,7 @@ import {
 import { Permissions } from '../../../common/decorators/permissions.decorator';
 import { GrpcUserAuthGuard } from '../../../common/guards/grpc-user-auth.guard';
 import { GrpcServiceAuthGuard } from '../../../common/guards/grpc-service-auth.guard';
-import { getGrpcUserId } from '../../../common/grpc/metadata.mapper';
+import { getGrpcIdentity, getGrpcUserId } from '../../../common/grpc/metadata.mapper';
 import { MaterialsService } from './materials.service';
 
 @Controller()
@@ -39,6 +39,7 @@ export class MaterialsGrpcController {
           size: payload.size || undefined,
         },
         getGrpcUserId(metadata),
+        getGrpcIdentity(metadata).roles,
       )
       .then(toObjectResponse);
   }
@@ -48,7 +49,8 @@ export class MaterialsGrpcController {
     GrpcMethods.learningMaterials.getMaterials,
   )
   @Permissions(RolePermissions.learningRead, RolePermissions.lessonsManage)
-  getMaterials(payload: any) {
+  getMaterials(payload: any, metadata: Metadata) {
+    const identity = getGrpcIdentity(metadata);
     return this.materialsService
       .getMaterials({
         lessonId: payload.lessonId || undefined,
@@ -56,7 +58,7 @@ export class MaterialsGrpcController {
         page: payload.page || undefined,
         limit: payload.limit || undefined,
         search: payload.search || undefined,
-      })
+      }, identity.userId, identity.roles)
       .then((page) => toPageResponse(page as any));
   }
 
@@ -65,9 +67,10 @@ export class MaterialsGrpcController {
     GrpcMethods.learningMaterials.getMaterialDetail,
   )
   @Permissions(RolePermissions.learningRead, RolePermissions.lessonsManage)
-  getMaterialDetail(payload: any) {
+  getMaterialDetail(payload: any, metadata: Metadata) {
+    const identity = getGrpcIdentity(metadata);
     return this.materialsService
-      .getMaterialDetail(payload.materialId)
+      .getMaterialDetail(payload.materialId, identity.userId, identity.roles)
       .then(toObjectResponse);
   }
 
@@ -76,9 +79,15 @@ export class MaterialsGrpcController {
     GrpcMethods.learningMaterials.updateMaterial,
   )
   @Permissions(RolePermissions.lessonsManage)
-  updateMaterial(payload: any) {
+  updateMaterial(payload: any, metadata: Metadata) {
+    const identity = getGrpcIdentity(metadata);
     return this.materialsService
-      .updateMaterial(payload.materialId, fromProtoStruct(payload.body) as any)
+      .updateMaterial(
+        payload.materialId,
+        fromProtoStruct(payload.body) as any,
+        identity.userId,
+        identity.roles,
+      )
       .then(toObjectResponse);
   }
 
@@ -87,8 +96,13 @@ export class MaterialsGrpcController {
     GrpcMethods.learningMaterials.deleteMaterial,
   )
   @Permissions(RolePermissions.lessonsManage)
-  deleteMaterial(payload: any) {
-    return this.materialsService.deleteMaterial(payload.materialId);
+  deleteMaterial(payload: any, metadata: Metadata) {
+    const identity = getGrpcIdentity(metadata);
+    return this.materialsService.deleteMaterial(
+      payload.materialId,
+      identity.userId,
+      identity.roles,
+    );
   }
 
   @GrpcContractMethod(
@@ -96,12 +110,13 @@ export class MaterialsGrpcController {
     GrpcMethods.learningMaterials.getMaterialChunks,
   )
   @Permissions(RolePermissions.learningRead, RolePermissions.lessonsManage)
-  getMaterialChunks(payload: any) {
+  getMaterialChunks(payload: any, metadata: Metadata) {
+    const identity = getGrpcIdentity(metadata);
     return this.materialsService
       .getMaterialChunks(payload.materialId, {
         page: payload.page || undefined,
         limit: payload.limit || undefined,
-      })
+      }, identity.userId, identity.roles)
       .then((page) => toPageResponse(page as any));
   }
 
@@ -110,9 +125,15 @@ export class MaterialsGrpcController {
     GrpcMethods.learningMaterials.getChunkDetail,
   )
   @Permissions(RolePermissions.learningRead, RolePermissions.lessonsManage)
-  getChunkDetail(payload: any) {
+  getChunkDetail(payload: any, metadata: Metadata) {
+    const identity = getGrpcIdentity(metadata);
     return this.materialsService
-      .getChunkDetail(payload.materialId, payload.chunkId)
+      .getChunkDetail(
+        payload.materialId,
+        payload.chunkId,
+        identity.userId,
+        identity.roles,
+      )
       .then(toObjectResponse);
   }
 }

@@ -36,7 +36,14 @@ def build_runtime_graph(
     graph.add_node("intent_router", intent_router_node)
     graph.add_node("query_rewriter", query_rewriter_node)
     graph.add_node("business_policy", BusinessPolicyNode())
-    graph.add_node("retrieval_router", RetrievalRouterNode(dependencies.retriever))
+    graph.add_node(
+        "retrieval_router",
+        RetrievalRouterNode(
+            dependencies.retriever,
+            min_score=dependencies.rag_min_score,
+            summary_chunk_limit=dependencies.rag_summary_chunk_limit,
+        ),
+    )
     graph.add_node("prompt_builder", prompt_builder_node)
     graph.add_node("profile", profile_node)
     graph.add_node("response_guard", response_guard_node)

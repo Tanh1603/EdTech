@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 from io import BytesIO
 
@@ -37,7 +38,7 @@ class DocumentParser:
             text = self._pptx_text(content)
         else:
             text = content.decode("utf-8", errors="ignore")
-        return ParsedDocument(material_id=material_id, title=title, text=text.strip())
+        return ParsedDocument(material_id=material_id, title=title, text=_clean_text(text))
 
     def _pdf_text(self, content: bytes) -> str:
         reader = PdfReader(BytesIO(content))
@@ -56,3 +57,10 @@ class DocumentParser:
                 if text:
                     lines.append(text)
         return "\n".join(lines)
+
+
+def _clean_text(text: str) -> str:
+    cleaned = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", " ", text)
+    cleaned = re.sub(r"[ \t]+", " ", cleaned)
+    cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
+    return cleaned.strip()

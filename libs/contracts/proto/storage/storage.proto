@@ -6,8 +6,21 @@ import "common/json.proto";
 
 service StorageService {
   rpc DeleteFile(DeleteFileRequest) returns (common.ObjectResponse);
+  rpc ResolveFileAccess(ResolveFileAccessRequest) returns (ResolveFileAccessResponse);
 }
 
 message DeleteFileRequest {
   string public_id = 1;
+}
+
+message ResolveFileAccessRequest {
+  string material_id = 1;
+  string public_id = 2;
+}
+
+message ResolveFileAccessResponse {
+  string download_url = 1;
+  string mime_type = 2;
+  string filename = 3;
+  string expires_at = 4;
 }

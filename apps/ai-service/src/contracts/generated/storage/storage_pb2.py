@@ -25,7 +25,7 @@ _sym_db = _symbol_database.Default()
 from common import json_pb2 as common_dot_json__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x15storage/storage.proto\x12\x07storage\x1a\x11\x63ommon/json.proto\"&\n\x11\x44\x65leteFileRequest\x12\x11\n\tpublic_id\x18\x01 \x01(\t2R\n\x0eStorageService\x12@\n\nDeleteFile\x12\x1a.storage.DeleteFileRequest\x1a\x16.common.ObjectResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x15storage/storage.proto\x12\x07storage\x1a\x11\x63ommon/json.proto\"&\n\x11\x44\x65leteFileRequest\x12\x11\n\tpublic_id\x18\x01 \x01(\t\"B\n\x18ResolveFileAccessRequest\x12\x13\n\x0bmaterial_id\x18\x01 \x01(\t\x12\x11\n\tpublic_id\x18\x02 \x01(\t\"j\n\x19ResolveFileAccessResponse\x12\x14\n\x0c\x64ownload_url\x18\x01 \x01(\t\x12\x11\n\tmime_type\x18\x02 \x01(\t\x12\x10\n\x08\x66ilename\x18\x03 \x01(\t\x12\x12\n\nexpires_at\x18\x04 \x01(\t2\xae\x01\n\x0eStorageService\x12@\n\nDeleteFile\x12\x1a.storage.DeleteFileRequest\x1a\x16.common.ObjectResponse\x12Z\n\x11ResolveFileAccess\x12!.storage.ResolveFileAccessRequest\x1a\".storage.ResolveFileAccessResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -34,6 +34,10 @@ if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
   _globals['_DELETEFILEREQUEST']._serialized_start=53
   _globals['_DELETEFILEREQUEST']._serialized_end=91
-  _globals['_STORAGESERVICE']._serialized_start=93
-  _globals['_STORAGESERVICE']._serialized_end=175
+  _globals['_RESOLVEFILEACCESSREQUEST']._serialized_start=93
+  _globals['_RESOLVEFILEACCESSREQUEST']._serialized_end=159
+  _globals['_RESOLVEFILEACCESSRESPONSE']._serialized_start=161
+  _globals['_RESOLVEFILEACCESSRESPONSE']._serialized_end=267
+  _globals['_STORAGESERVICE']._serialized_start=270
+  _globals['_STORAGESERVICE']._serialized_end=444
 # @@protoc_insertion_point(module_scope)

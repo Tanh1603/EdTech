@@ -1,8 +1,12 @@
+import logging
 from collections.abc import Callable
 from dataclasses import dataclass
+from time import perf_counter
 from typing import Any
 
 from agents.clients.be_core import BeCoreGrpcClient
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -48,13 +52,56 @@ class Worker:
         self.be_core = be_core
 
     def process(self, message: JobMessage, handler: JobHandler) -> dict[str, Any]:
+        started = perf_counter()
+        logger.info(
+            "Job processing started",
+            extra={
+                "component": "worker",
+                "step": "job.running",
+                "jobId": message.job_id,
+                "jobType": message.type,
+                "materialId": message.resource_id
+                if message.type == "ai.material.ingest"
+                else None,
+                "requestId": message.request_id,
+                "correlationId": message.correlation_id,
+            },
+        )
         self.be_core.mark_job_running(message.job_id)
         try:
             result = handler(message)
         except Exception as error:
+            duration_ms = round((perf_counter() - started) * 1000)
+            logger.exception(
+                "Job processing failed",
+                extra={
+                    "component": "worker",
+                    "step": "job.failed",
+                    "jobId": message.job_id,
+                    "jobType": message.type,
+                    "materialId": message.resource_id
+                    if message.type == "ai.material.ingest"
+                    else None,
+                    "durationMs": duration_ms,
+                },
+            )
             self.be_core.mark_job_failed(message.job_id, {"message": str(error)})
             raise
         self.be_core.mark_job_succeeded(message.job_id, result)
+        duration_ms = round((perf_counter() - started) * 1000)
+        logger.info(
+            "Job processing succeeded",
+            extra={
+                "component": "worker",
+                "step": "job.succeeded",
+                "jobId": message.job_id,
+                "jobType": message.type,
+                "materialId": message.resource_id
+                if message.type == "ai.material.ingest"
+                else None,
+                "durationMs": duration_ms,
+            },
+        )
         return result
 
 

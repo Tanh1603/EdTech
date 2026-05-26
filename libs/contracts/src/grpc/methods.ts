@@ -91,6 +91,8 @@ export const GrpcMethods = {
     getMaterialChunks: 'GetMaterialChunks',
     getChunkDetail: 'GetChunkDetail',
     replaceMaterialChunks: 'ReplaceMaterialChunks',
+    clearMaterialChunks: 'ClearMaterialChunks',
+    appendMaterialChunks: 'AppendMaterialChunks',
     updateMaterialStatus: 'UpdateMaterialStatus',
   },
   learningRoadmaps: {
@@ -118,6 +120,7 @@ export const GrpcMethods = {
   },
   storage: {
     deleteFile: 'DeleteFile',
+    resolveFileAccess: 'ResolveFileAccess',
   },
   users: {
     getUsers: 'GetUsers',

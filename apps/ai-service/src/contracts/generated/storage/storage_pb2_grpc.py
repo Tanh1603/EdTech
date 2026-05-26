@@ -40,12 +40,23 @@ class StorageServiceStub(object):
                 request_serializer=storage_dot_storage__pb2.DeleteFileRequest.SerializeToString,
                 response_deserializer=common_dot_json__pb2.ObjectResponse.FromString,
                 _registered_method=True)
+        self.ResolveFileAccess = channel.unary_unary(
+                '/storage.StorageService/ResolveFileAccess',
+                request_serializer=storage_dot_storage__pb2.ResolveFileAccessRequest.SerializeToString,
+                response_deserializer=storage_dot_storage__pb2.ResolveFileAccessResponse.FromString,
+                _registered_method=True)
 
 
 class StorageServiceServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def DeleteFile(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ResolveFileAccess(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -58,6 +69,11 @@ def add_StorageServiceServicer_to_server(servicer, server):
                     servicer.DeleteFile,
                     request_deserializer=storage_dot_storage__pb2.DeleteFileRequest.FromString,
                     response_serializer=common_dot_json__pb2.ObjectResponse.SerializeToString,
+            ),
+            'ResolveFileAccess': grpc.unary_unary_rpc_method_handler(
+                    servicer.ResolveFileAccess,
+                    request_deserializer=storage_dot_storage__pb2.ResolveFileAccessRequest.FromString,
+                    response_serializer=storage_dot_storage__pb2.ResolveFileAccessResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -87,6 +103,33 @@ class StorageService(object):
             '/storage.StorageService/DeleteFile',
             storage_dot_storage__pb2.DeleteFileRequest.SerializeToString,
             common_dot_json__pb2.ObjectResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ResolveFileAccess(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/storage.StorageService/ResolveFileAccess',
+            storage_dot_storage__pb2.ResolveFileAccessRequest.SerializeToString,
+            storage_dot_storage__pb2.ResolveFileAccessResponse.FromString,
             options,
             channel_credentials,
             insecure,

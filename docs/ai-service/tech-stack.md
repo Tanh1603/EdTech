@@ -10,9 +10,8 @@ ecosystem without becoming a separate source of LMS truth.
 | --- | --- | --- |
 | Language | Python 3.14 | Project runtime target. Use standard CPython 3.14 first; free-threaded/no-GIL builds are out of V1. |
 | Package manager | `uv` | Fast lock/install workflow and simple app-local project management. |
-| Ops HTTP API | FastAPI + Pydantic v2 | Health, readiness, metrics, and private admin endpoints only. |
 | Internal RPC | `grpcio` + Protobuf | Typed unary calls and server-streaming for AI token/state streams. |
-| App server | Uvicorn/Gunicorn | Standard container runtime for FastAPI health endpoints. |
+| Worker runtime | RabbitMQ consumers | Durable async material ingestion, grading, and roadmap jobs. |
 
 ## AI Runtime
 

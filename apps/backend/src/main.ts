@@ -20,6 +20,10 @@ async function bootstrap() {
         package: [...AllGrpcPackages],
         protoPath: getAllProtoPaths(),
         url: grpcUrl,
+        channelOptions: {
+          'grpc.max_receive_message_length': 32 * 1024 * 1024,
+          'grpc.max_send_message_length': 32 * 1024 * 1024,
+        },
         loader: {
           includeDirs: [getProtoRoot()],
           keepCase: false,

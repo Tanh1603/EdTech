@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import Joi from 'joi';
 import { GrpcServiceAuthGuard } from '../../common/guards/grpc-service-auth.guard';
 import { PermissionsGuard } from '../../common/guards/permissions.guard';
@@ -14,6 +14,7 @@ import { LearningModule } from '../learning/learning.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { StorageModule } from '../storage/storage.module';
 import { UsersModule } from '../users/users.module';
+import { LoggingInterceptor } from '../../common/grpc/logging.interceptor';
 
 @Module({
   imports: [
@@ -56,6 +57,10 @@ import { UsersModule } from '../users/users.module';
       provide: APP_GUARD,
       useClass: PermissionsGuard,
     },
+    // {
+    //   provide: APP_INTERCEPTOR,
+    //   useClass: LoggingInterceptor
+    // }
   ],
 })
 export class AppModule {}

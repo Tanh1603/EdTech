@@ -10,8 +10,8 @@ V1.
 
 - Keep `requires-python = ">=3.14,<3.15"` in `apps/ai-service/pyproject.toml`.
 - Lock and install with `uv` using Python 3.14.
-- Validate base dependencies: FastAPI, Uvicorn, Pydantic Settings, grpcio,
-  grpcio-tools, protobuf, and ruff.
+- Validate base dependencies: Pydantic Settings, grpcio, grpcio-tools,
+  protobuf, RabbitMQ/Qdrant/Ollama clients, and ruff.
 - If tests are restored later, add pytest back only after the compatibility gate
   passes on Python 3.14.
 - If a package fails wheel/build support, upgrade to the newest compatible
@@ -31,4 +31,3 @@ V1.
 - [What's New In Python 3.14](https://docs.python.org/3.14/whatsnew/3.14.html)
 - [PEP 745: Python 3.14 Release Schedule](https://peps.python.org/pep-0745/)
 - [uv project guide](https://docs.astral.sh/uv/guides/projects/)
-

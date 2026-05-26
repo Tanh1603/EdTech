@@ -22,7 +22,10 @@ import { AssessmentsGrpcController } from '../../modules/assessments/shared/asse
 import { NotificationsGrpcController } from '../../modules/notifications/notifications.grpc.controller';
 
 describe('gRPC permission mapping', () => {
-  function methodPermissions(controller: Function, methodName: string) {
+  function methodPermissions(
+    controller: { prototype: Record<string, unknown> },
+    methodName: string,
+  ) {
     return Reflect.getMetadata(
       PERMISSIONS_KEY,
       controller.prototype[methodName],

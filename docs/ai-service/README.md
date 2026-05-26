@@ -6,8 +6,8 @@ memory, tool execution, and AI workers.
 
 ## Current Status
 
-- `apps/ai-service` now contains the initial Python 3.14 package structure,
-  internal FastAPI ops endpoints, Nx targets, gRPC/codegen helpers, metadata and
+- `apps/ai-service` now contains the Python 3.14 package structure, Nx targets,
+  gRPC/codegen helpers, metadata and
   error utilities, a consolidated `agents/` runtime package for real
   Groq/Ollama providers, typed tools, Qdrant RAG, Redis session memory,
   RabbitMQ workers, a LangGraph/LangChain shared runtime, and generated Python

@@ -1,3 +1,4 @@
+import logging
 from concurrent import futures
 from typing import Any
 
@@ -8,8 +9,11 @@ from agents.grpc.services import (
     context_from_grpc,
     options_from_struct,
 )
+from config.logging import configure_logging
 from config.settings import Settings, get_settings
 from contracts.generated import ensure_generated_proto_path
+
+logger = logging.getLogger(__name__)
 
 
 def create_grpc_server(settings: Settings | None = None) -> Any:
@@ -23,23 +27,41 @@ def create_grpc_server(settings: Settings | None = None) -> Any:
     import grpc
 
     active_settings = settings or get_settings()
+    active_settings.validate_runtime("grpc")
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     _register_ai_services(server)
-    server.add_insecure_port(active_settings.ai_grpc_url)
+    bound_port = server.add_insecure_port(active_settings.ai_grpc_url)
+    if bound_port == 0:
+        raise RuntimeError(f"Failed to bind AI gRPC server to {active_settings.ai_grpc_url}")
     return server
 
 
 def serve(settings: Settings | None = None) -> None:
+    configure_logging()
+    active_settings = settings or get_settings()
     server = create_grpc_server(settings)
     server.start()
+    logger.info(
+        "AI gRPC server listening",
+        extra={
+            "component": "grpc.server",
+            "step": "server.started",
+            "host": active_settings.ai_grpc_url,
+        },
+    )
     server.wait_for_termination()
 
 
 def _register_ai_services(server: Any) -> None:
     ensure_generated_proto_path()
 
-    from ai import orchestrator_pb2, orchestrator_pb2_grpc, rag_pb2, rag_pb2_grpc
-    from common import envelope_pb2
+    from contracts.generated.ai import (
+        orchestrator_pb2,
+        orchestrator_pb2_grpc,
+        rag_pb2,
+        rag_pb2_grpc,
+    )
+    from contracts.generated.common import envelope_pb2
 
     class OrchestratorServicer(orchestrator_pb2_grpc.AiOrchestratorServiceServicer):
         def __init__(self) -> None:

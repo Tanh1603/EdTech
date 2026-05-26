@@ -4,8 +4,8 @@ Internal AI orchestration, RAG, and worker service for EdTech.
 
 ## Current Status
 
-This app has the initial Python 3.14 foundation: package structure, internal
-FastAPI ops endpoints, Nx targets, gRPC/codegen helpers, metadata and error
+This app has the Python 3.14 foundation: package structure, Nx targets,
+gRPC/codegen helpers, metadata and error
 utilities, and a consolidated `agents/` runtime package for real Groq/Ollama
 providers, typed tools, Qdrant-backed RAG primitives, Redis session memory, worker
 foundations, and a LangGraph/LangChain shared runtime for TutorAgent,
@@ -22,7 +22,6 @@ MCP integration and the Gateway SSE bridge remain separate follow-up work.
 
 - Python 3.14 on standard CPython. Free-threaded/no-GIL builds are out of V1.
 - `uv` for dependency management.
-- FastAPI for internal health/readiness/metrics endpoints.
 - `grpcio` + Protobuf for internal service APIs.
 - RabbitMQ + BE Core DB `jobs` for long-running AI work.
 - Redis for short-lived execution/session memory.
@@ -44,16 +43,17 @@ Run from the repository root through Nx once dependencies are synced:
 npm exec nx lint ai-service
 npm exec nx typecheck ai-service
 npm exec nx run ai-service:proto:generate
-npm exec nx serve ai-service
+npm exec nx run ai-service:grpc
+npm exec nx run ai-service:worker
 ```
 
 Run inside the app directory with `uv`:
 
 ```sh
 uv sync
-uv run uvicorn --app-dir src main:app --host 0.0.0.0 --port 8090
 uv run python src/contracts/generate_proto.py
-uv run python -m agents.workers.main
+uv run python -c "import sys; sys.path.insert(0, 'src'); from agents.grpc.server import serve; serve()"
+uv run python -c "import sys; sys.path.insert(0, 'src'); from agents.workers.main import main; main()"
 ```
 
 This service intentionally has no local test target right now. Verification is

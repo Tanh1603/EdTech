@@ -38,7 +38,7 @@ export class RabbitMqPublisher implements OnModuleDestroy {
   ): Promise<void> {
     const channel = await this.getChannel();
     if (!channel) {
-      return;
+      throw new Error('RabbitMQ publishing is disabled: RABBITMQ_URL is not configured.');
     }
 
     const exchange = this.getExchange();
@@ -62,7 +62,7 @@ export class RabbitMqPublisher implements OnModuleDestroy {
   async publishDeadLetter(message: PublishJobMessage): Promise<void> {
     const channel = await this.getChannel();
     if (!channel) {
-      return;
+      throw new Error('RabbitMQ publishing is disabled: RABBITMQ_URL is not configured.');
     }
 
     const exchange = this.getDeadLetterExchange();
@@ -109,9 +109,9 @@ export class RabbitMqPublisher implements OnModuleDestroy {
     try {
       // amqplib is an optional runtime dependency for local development.
       amqp = require('amqplib');
-    } catch {
-      this.logger.warn('RABBITMQ_URL is set but amqplib is not installed; RabbitMQ publishing is disabled.');
-      return undefined;
+    } catch (error) {
+      this.logger.error('RABBITMQ_URL is set but amqplib is not installed.');
+      throw error;
     }
 
     this.connection = await amqp.connect(url);

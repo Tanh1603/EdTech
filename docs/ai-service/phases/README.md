@@ -17,7 +17,7 @@ verification.
 | --- | --- | --- |
 | 00 | Baseline | [Python 3.14 Compatibility Gate](./phase-00-python-314-compatibility.md) |
 | 01 | Baseline | [Package Skeleton And Nx Targets](./phase-01-package-and-nx.md) |
-| 02 | Baseline | [Internal FastAPI Ops API](./phase-02-fastapi-ops.md) |
+| 02 | Removed | [Internal FastAPI Ops API](./phase-02-fastapi-ops.md) |
 | 03 | Baseline | [gRPC AI Server Bootstrap](./phase-03-grpc-ai-server-bootstrap.md) |
 | 04 | Baseline | [Settings, Metadata, Error Model](./phase-04-settings-metadata-errors.md) |
 | 05 | Baseline | [BE Core Client And Tool Registry](./phase-05-be-core-client-tool-registry.md) |

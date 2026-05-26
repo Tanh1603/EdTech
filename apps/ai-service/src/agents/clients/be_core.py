@@ -193,19 +193,24 @@ class BeCoreGrpcClient:
     ) -> dict[str, Any]:
         request = self._materials_pb2.ReplaceMaterialChunksRequest(
             material_id=material_id,
-            chunks=[
-                self._materials_pb2.MaterialChunkWrite(
-                    chunk_id=str(chunk.get("chunkId") or ""),
-                    content=str(chunk.get("content") or ""),
-                    order_no=int(chunk.get("orderNo") or 0),
-                    token_count=int(chunk.get("tokenCount") or 0),
-                    embedding_id=str(chunk.get("embeddingId") or ""),
-                    checksum=str(chunk.get("checksum") or ""),
-                )
-                for chunk in chunks
-            ],
+            chunks=self._chunk_writes(chunks),
         )
         return self._call_object(self.materials.ReplaceMaterialChunks, request, None, False)
+
+    def clear_material_chunks(self, material_id: str) -> dict[str, Any]:
+        request = self._materials_pb2.MaterialIdRequest(material_id=material_id)
+        return self._call_object(self.materials.ClearMaterialChunks, request, None, False)
+
+    def append_material_chunks(
+        self,
+        material_id: str,
+        chunks: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        request = self._materials_pb2.AppendMaterialChunksRequest(
+            material_id=material_id,
+            chunks=self._chunk_writes(chunks),
+        )
+        return self._call_object(self.materials.AppendMaterialChunks, request, None, False)
 
     def update_material_status(
         self,
@@ -392,6 +397,28 @@ class BeCoreGrpcClient:
         request = self._storage_pb2.DeleteFileRequest(public_id=public_id)
         return self._call_delete(self.storage.DeleteFile, request, context, True)
 
+    def resolve_file_access(
+        self,
+        material_id: str | None = None,
+        public_id: str | None = None,
+    ) -> dict[str, str]:
+        request = self._storage_pb2.ResolveFileAccessRequest(
+            material_id=material_id or "",
+            public_id=public_id or "",
+        )
+        response = self._call(
+            self.storage.ResolveFileAccess,
+            request,
+            None,
+            require_user=False,
+        )
+        return {
+            "downloadUrl": getattr(response, "download_url", ""),
+            "mimeType": getattr(response, "mime_type", ""),
+            "filename": getattr(response, "filename", ""),
+            "expiresAt": getattr(response, "expires_at", ""),
+        }
+
     def _call_object(
         self,
         method: Any,
@@ -447,6 +474,7 @@ class BeCoreGrpcClient:
             return method(
                 request,
                 metadata=self._metadata(context, require_user=require_user),
+                timeout=self.settings.be_core_grpc_timeout_seconds,
             )
         except self._grpc.RpcError as error:
             raise AiServiceError(
@@ -486,6 +514,19 @@ class BeCoreGrpcClient:
         if context.job_id:
             metadata.append(("x-ai-job-id", context.job_id))
         return metadata
+
+    def _chunk_writes(self, chunks: list[dict[str, Any]]) -> list[Any]:
+        return [
+            self._materials_pb2.MaterialChunkWrite(
+                chunk_id=str(chunk.get("chunkId") or ""),
+                content=str(chunk.get("content") or ""),
+                order_no=int(chunk.get("orderNo") or 0),
+                token_count=int(chunk.get("tokenCount") or 0),
+                embedding_id=str(chunk.get("embeddingId") or ""),
+                checksum=str(chunk.get("checksum") or ""),
+            )
+            for chunk in chunks
+        ]
 
 
 def _ai_code_for_grpc_status(status_code: Any) -> AiErrorCode:

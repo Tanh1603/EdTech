@@ -8,6 +8,8 @@ from agents.grpc.errors import AiErrorCode, AiServiceError
 class EmbeddingProvider(Protocol):
     def embed(self, text: str) -> list[float]: ...
 
+    def embed_many(self, texts: list[str]) -> list[list[float]]: ...
+
 
 class OllamaEmbeddingProvider(EmbeddingProvider):
     def __init__(
@@ -30,15 +32,23 @@ class OllamaEmbeddingProvider(EmbeddingProvider):
         self.model = model
 
     def embed(self, text: str) -> list[float]:
+        return self.embed_many([text])[0]
+
+    def embed_many(self, texts: list[str]) -> list[list[float]]:
+        if not texts:
+            return []
         try:
             response = self.client.embed(
                 model=self.model,
-                input=text,
+                input=texts,
             )
         except Exception as exc:
             raise AiServiceError(
                 AiErrorCode.UNAVAILABLE,
-                f"Ollama embedding request failed for model {self.model}: {exc}",
+                "Ollama embedding request failed "
+                f"(host={self.host}, model={self.model}). "
+                f"Verify Ollama is running and run `ollama pull {self.model}`. "
+                f"Cause: {exc}",
             ) from exc
 
         embeddings = (
@@ -53,4 +63,4 @@ class OllamaEmbeddingProvider(EmbeddingProvider):
                 f"Ollama returned no embeddings for model {self.model}",
             )
 
-        return [float(value) for value in embeddings[0]]
+        return [[float(value) for value in embedding] for embedding in embeddings]

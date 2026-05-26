@@ -1,1 +1,0 @@
-"""Internal operational HTTP endpoints."""

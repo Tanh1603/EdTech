@@ -209,10 +209,12 @@ export class ChatMessagesGatewayController {
   @ApiParam({ name: 'sessionId', format: 'uuid' })
   @ApiParam({ name: 'messageId', format: 'uuid' })
   @ApiQuery({ name: 'topK', required: false, type: Number })
+  @ApiQuery({ name: 'materialId', required: false, type: String })
   streamMessage(
     @Param('sessionId') sessionId: string,
     @Param('messageId') messageId: string,
     @Query('topK') topK: string | undefined,
+    @Query('materialId') materialId: string | undefined,
     @Req() req: RequestWithContext,
   ): Observable<MessageEvent> {
     const metadata = this.metadata.build(req);
@@ -242,7 +244,9 @@ export class ChatMessagesGatewayController {
               classId,
               useRag: true,
               topK: Number(topK) || 5,
-              options: toProtoStruct({}),
+              options: toProtoStruct({
+                ...(materialId ? { materialId } : {}),
+              }),
             },
             metadata,
           )

@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 from uuid import NAMESPACE_URL, uuid5
@@ -14,6 +15,8 @@ from qdrant_client.models import (
 
 from agents.rag.chunking import TextChunk
 
+logger = logging.getLogger(__name__)
+
 
 @dataclass(frozen=True)
 class VectorRecord:
@@ -23,6 +26,8 @@ class VectorRecord:
 
 class VectorStore(Protocol):
     def upsert(self, chunk: TextChunk, vector: list[float]) -> None: ...
+
+    def upsert_many(self, records: list[tuple[TextChunk, list[float]]]) -> None: ...
 
     def search(
         self,
@@ -67,6 +72,10 @@ class InMemoryVectorStore:
         ]
         self.records.append(VectorRecord(chunk=chunk, vector=vector))
 
+    def upsert_many(self, records: list[tuple[TextChunk, list[float]]]) -> None:
+        for chunk, vector in records:
+            self.upsert(chunk, vector)
+
     def search(
         self,
         query_vector: list[float],
@@ -92,15 +101,48 @@ class QdrantVectorStore:
         collection_name: str,
         grpc_port: int = 6334,
         prefer_grpc: bool = True,
+        api_key: str | None = None,
     ) -> None:
         self.client = QdrantClient(
             url=url,
             grpc_port=grpc_port,
             prefer_grpc=prefer_grpc,
+            api_key=api_key,
         )
         self.collection_name = collection_name
 
     def upsert(self, chunk: TextChunk, vector: list[float]) -> None:
+        self.upsert_many([(chunk, vector)])
+
+    def upsert_many(self, records: list[tuple[TextChunk, list[float]]]) -> None:
+        if not records:
+            return
+        vector_size = len(records[0][1])
+        self._ensure_collection(vector_size)
+        self.client.upsert(
+            collection_name=self.collection_name,
+            points=[
+                PointStruct(
+                    id=str(uuid5(NAMESPACE_URL, chunk.chunk_id)),
+                    vector=vector,
+                    payload=_chunk_payload(chunk),
+                )
+                for chunk, vector in records
+            ],
+        )
+        logger.info(
+            "Qdrant points upserted",
+            extra={
+                "component": "qdrant",
+                "step": "points.upsert.batch",
+                "collection": self.collection_name,
+                "materialId": records[0][0].material_id,
+                "pointCount": len(records),
+                "vectorSize": vector_size,
+            },
+        )
+
+    def _upsert_one_legacy(self, chunk: TextChunk, vector: list[float]) -> None:
         self._ensure_collection(len(vector))
         self.client.upsert(
             collection_name=self.collection_name,
@@ -112,6 +154,16 @@ class QdrantVectorStore:
                 )
             ],
         )
+        logger.debug(
+            "Qdrant point upserted",
+            extra={
+                "component": "qdrant",
+                "step": "point.upsert",
+                "collection": self.collection_name,
+                "materialId": chunk.material_id,
+                "vectorSize": len(vector),
+            },
+        )
 
     def search(
         self,
@@ -119,6 +171,16 @@ class QdrantVectorStore:
         top_k: int = 5,
         material_id: str | None = None,
     ) -> list[tuple[TextChunk, float]]:
+        if not self.client.collection_exists(self.collection_name):
+            logger.info(
+                "Qdrant collection missing; returning empty search results",
+                extra={
+                    "component": "qdrant",
+                    "step": "search.collection_missing",
+                    "collection": self.collection_name,
+                },
+            )
+            return []
         query_filter = None
         if material_id:
             query_filter = Filter(
@@ -130,13 +192,26 @@ class QdrantVectorStore:
                 ]
             )
 
-        response = self.client.query_points(
-            collection_name=self.collection_name,
-            query=query_vector,
-            query_filter=query_filter,
-            limit=top_k,
-            with_payload=True,
-        )
+        try:
+            response = self.client.query_points(
+                collection_name=self.collection_name,
+                query=query_vector,
+                query_filter=query_filter,
+                limit=top_k,
+                with_payload=True,
+            )
+        except Exception as error:
+            if _is_missing_collection_error(error):
+                logger.info(
+                    "Qdrant collection missing during search; returning empty results",
+                    extra={
+                        "component": "qdrant",
+                        "step": "search.collection_missing",
+                        "collection": self.collection_name,
+                    },
+                )
+                return []
+            raise
 
         results: list[tuple[TextChunk, float]] = []
         for point in response.points:
@@ -151,3 +226,19 @@ class QdrantVectorStore:
             collection_name=self.collection_name,
             vectors_config=VectorParams(size=vector_size, distance=Distance.COSINE),
         )
+        logger.info(
+            "Qdrant collection created",
+            extra={
+                "component": "qdrant",
+                "step": "collection.created",
+                "collection": self.collection_name,
+                "vectorSize": vector_size,
+            },
+        )
+
+
+def _is_missing_collection_error(error: Exception) -> bool:
+    message = str(error).lower()
+    return "collection" in message and (
+        "doesn't exist" in message or "not found" in message
+    )

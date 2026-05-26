@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+import logging
 import signal
+import time
 from collections.abc import Callable
 from typing import Any
 
@@ -11,6 +13,7 @@ from agents.workers.worker import JobMessage
 from config.settings import Settings, get_settings
 
 JobHandler = Callable[[JobMessage], dict[str, Any]]
+logger = logging.getLogger(__name__)
 
 JOB_QUEUES = {
     "ai.material.ingest": "edtech.ai.material.ingest",
@@ -27,6 +30,25 @@ class RabbitMqWorkerRunner:
         self._stopping = False
 
     def run(self, handlers: dict[str, JobHandler]) -> None:
+        signal.signal(signal.SIGINT, self._request_stop)
+        signal.signal(signal.SIGTERM, self._request_stop)
+        while not self._stopping:
+            try:
+                self._run_once(handlers)
+            except Exception:
+                if self._stopping:
+                    break
+                logger.exception(
+                    "RabbitMQ consumer connection lost; reconnecting",
+                    extra={
+                        "component": "rabbitmq.worker",
+                        "step": "consumer.reconnect",
+                    },
+                )
+                self.close()
+                time.sleep(5)
+
+    def _run_once(self, handlers: dict[str, JobHandler]) -> None:
         parameters = pika.URLParameters(self.settings.rabbitmq_url)
         self.connection = pika.BlockingConnection(parameters)
         self.channel = self.connection.channel()
@@ -34,12 +56,19 @@ class RabbitMqWorkerRunner:
         self._assert_topology()
         for job_type, handler in handlers.items():
             queue = JOB_QUEUES[job_type]
+            logger.info(
+                "RabbitMQ consumer registered",
+                extra={
+                    "component": "rabbitmq.worker",
+                    "step": "consumer.registered",
+                    "jobType": job_type,
+                    "queue": queue,
+                },
+            )
             self.channel.basic_consume(
                 queue=queue,
                 on_message_callback=self._consume(handler),
             )
-        signal.signal(signal.SIGINT, self._request_stop)
-        signal.signal(signal.SIGTERM, self._request_stop)
         self.channel.start_consuming()
 
     def close(self) -> None:
@@ -55,14 +84,65 @@ class RabbitMqWorkerRunner:
             _properties: pika.BasicProperties,
             body: bytes,
         ) -> None:
+            message: JobMessage | None = None
             try:
                 payload = json.loads(body.decode("utf-8"))
                 if not isinstance(payload, dict):
                     raise ValueError("RabbitMQ job payload must be a JSON object")
-                handler(JobMessage.from_payload(payload))
+                message = JobMessage.from_payload(payload)
+                logger.info(
+                    "RabbitMQ message received",
+                    extra={
+                        "component": "rabbitmq.worker",
+                        "step": "consume.received",
+                        "jobId": message.job_id,
+                        "jobType": message.type,
+                        "materialId": message.resource_id
+                        if message.type == "ai.material.ingest"
+                        else None,
+                        "requestId": message.request_id,
+                        "correlationId": message.correlation_id,
+                    },
+                )
+                handler(message)
             except Exception:
-                channel.basic_nack(delivery_tag=_method.delivery_tag, requeue=False)
+                logger.exception(
+                    "RabbitMQ message failed",
+                    extra={
+                        "component": "rabbitmq.worker",
+                        "step": "consume.nack",
+                        "jobId": message.job_id if message else None,
+                        "jobType": message.type if message else None,
+                        "materialId": message.resource_id if message else None,
+                    },
+                )
+                try:
+                    channel.basic_nack(delivery_tag=_method.delivery_tag, requeue=False)
+                except Exception:
+                    logger.exception(
+                        "RabbitMQ nack failed",
+                        extra={
+                            "component": "rabbitmq.worker",
+                            "step": "consume.nack_failed",
+                            "jobId": message.job_id if message else None,
+                            "jobType": message.type if message else None,
+                            "materialId": message.resource_id if message else None,
+                        },
+                    )
+                    raise
                 return
+            logger.info(
+                "RabbitMQ message acknowledged",
+                extra={
+                    "component": "rabbitmq.worker",
+                    "step": "consume.ack",
+                    "jobId": message.job_id,
+                    "jobType": message.type,
+                    "materialId": message.resource_id
+                    if message.type == "ai.material.ingest"
+                    else None,
+                },
+            )
             channel.basic_ack(delivery_tag=_method.delivery_tag)
 
         return callback

@@ -5,12 +5,12 @@
   "projectType": "application",
   "tags": [],
   "targets": {
-    "serve": {
+    "grpc": {
       "continuous": true,
       "executor": "nx:run-commands",
       "options": {
         "cwd": "apps/ai-service",
-        "command": "uv run uvicorn --app-dir src main:app --host localhost --port 8090"
+        "command": "uv run python -c \"import sys; sys.path.insert(0, 'src'); from agents.grpc.server import serve; serve()\""
       }
     },
     "worker": {
@@ -18,7 +18,7 @@
       "executor": "nx:run-commands",
       "options": {
         "cwd": "apps/ai-service",
-        "command": "uv run python -m agents.workers.main"
+        "command": "uv run python -c \"import sys; sys.path.insert(0, 'src'); from agents.workers.main import main; main()\""
       }
     },
     "lint": {

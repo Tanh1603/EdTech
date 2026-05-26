@@ -76,6 +76,16 @@ class LearningMaterialsServiceStub(object):
                 request_serializer=learning_dot_materials__pb2.ReplaceMaterialChunksRequest.SerializeToString,
                 response_deserializer=common_dot_json__pb2.ObjectResponse.FromString,
                 _registered_method=True)
+        self.ClearMaterialChunks = channel.unary_unary(
+                '/learning.LearningMaterialsService/ClearMaterialChunks',
+                request_serializer=learning_dot_materials__pb2.MaterialIdRequest.SerializeToString,
+                response_deserializer=common_dot_json__pb2.ObjectResponse.FromString,
+                _registered_method=True)
+        self.AppendMaterialChunks = channel.unary_unary(
+                '/learning.LearningMaterialsService/AppendMaterialChunks',
+                request_serializer=learning_dot_materials__pb2.AppendMaterialChunksRequest.SerializeToString,
+                response_deserializer=common_dot_json__pb2.ObjectResponse.FromString,
+                _registered_method=True)
         self.UpdateMaterialStatus = channel.unary_unary(
                 '/learning.LearningMaterialsService/UpdateMaterialStatus',
                 request_serializer=learning_dot_materials__pb2.UpdateMaterialStatusRequest.SerializeToString,
@@ -134,6 +144,18 @@ class LearningMaterialsServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def ClearMaterialChunks(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def AppendMaterialChunks(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def UpdateMaterialStatus(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -181,6 +203,16 @@ def add_LearningMaterialsServiceServicer_to_server(servicer, server):
             'ReplaceMaterialChunks': grpc.unary_unary_rpc_method_handler(
                     servicer.ReplaceMaterialChunks,
                     request_deserializer=learning_dot_materials__pb2.ReplaceMaterialChunksRequest.FromString,
+                    response_serializer=common_dot_json__pb2.ObjectResponse.SerializeToString,
+            ),
+            'ClearMaterialChunks': grpc.unary_unary_rpc_method_handler(
+                    servicer.ClearMaterialChunks,
+                    request_deserializer=learning_dot_materials__pb2.MaterialIdRequest.FromString,
+                    response_serializer=common_dot_json__pb2.ObjectResponse.SerializeToString,
+            ),
+            'AppendMaterialChunks': grpc.unary_unary_rpc_method_handler(
+                    servicer.AppendMaterialChunks,
+                    request_deserializer=learning_dot_materials__pb2.AppendMaterialChunksRequest.FromString,
                     response_serializer=common_dot_json__pb2.ObjectResponse.SerializeToString,
             ),
             'UpdateMaterialStatus': grpc.unary_unary_rpc_method_handler(
@@ -404,6 +436,60 @@ class LearningMaterialsService(object):
             target,
             '/learning.LearningMaterialsService/ReplaceMaterialChunks',
             learning_dot_materials__pb2.ReplaceMaterialChunksRequest.SerializeToString,
+            common_dot_json__pb2.ObjectResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ClearMaterialChunks(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/learning.LearningMaterialsService/ClearMaterialChunks',
+            learning_dot_materials__pb2.MaterialIdRequest.SerializeToString,
+            common_dot_json__pb2.ObjectResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def AppendMaterialChunks(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/learning.LearningMaterialsService/AppendMaterialChunks',
+            learning_dot_materials__pb2.AppendMaterialChunksRequest.SerializeToString,
             common_dot_json__pb2.ObjectResponse.FromString,
             options,
             channel_credentials,

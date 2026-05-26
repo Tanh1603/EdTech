@@ -10,8 +10,6 @@
 
 ## Service APIs And Contracts
 
-- [FastAPI documentation](https://fastapi.tiangolo.com/)
-- [FastAPI first steps](https://fastapi.tiangolo.com/tutorial/first-steps/)
 - [gRPC Python quickstart](https://grpc.io/docs/languages/python/quickstart/)
 - [gRPC Python basics](https://grpc.io/docs/languages/python/basics/)
 - [Protocol Buffers proto3 specification](https://protobuf.dev/reference/protobuf/proto3-spec/)

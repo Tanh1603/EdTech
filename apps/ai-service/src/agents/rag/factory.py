@@ -11,6 +11,7 @@ def create_vector_store(settings: Settings | None = None) -> VectorStore:
         collection_name=active_settings.qdrant_collection,
         grpc_port=active_settings.qdrant_grpc_port,
         prefer_grpc=active_settings.qdrant_prefer_grpc,
+        api_key=active_settings.qdrant_api_key,
     )
 
 

@@ -20,8 +20,10 @@ export class CoursesService {
     userId: string,
     roles: UserRole[] = [],
   ): Promise<PageDto<unknown>> {
+
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
+
     const where: Prisma.CourseWhereInput = {
       ...(roles.includes(UserRole.admin)
         ? query.teacherId
@@ -29,9 +31,15 @@ export class CoursesService {
           : {}
         : roles.includes(UserRole.teacher)
           ? { teacherId: userId }
-          : { classrooms: { some: { enrollments: { some: { userId } } } } }),
+          : {}),
+
       ...(query.search
-        ? { name: { contains: query.search, mode: 'insensitive' } }
+        ? {
+          name: {
+            contains: query.search,
+            mode: 'insensitive',
+          },
+        }
         : {}),
     };
 
@@ -41,13 +49,20 @@ export class CoursesService {
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { createdAt: 'desc' },
-        include: { teacher: { select: userSummarySelect } },
+        include: {
+          teacher: {
+            select: userSummarySelect,
+          },
+        },
       }),
+
       this.prisma.course.count({ where }),
     ]);
 
     return this.toPage(
-      items.map((course) => this.toCourseResponse(course)),
+      items.map((course) =>
+        this.toCourseResponse(course),
+      ),
       page,
       limit,
       total,
@@ -76,31 +91,45 @@ export class CoursesService {
     userId: string,
     roles: UserRole[] = [],
   ) {
-    if (!roles.includes(UserRole.admin)) {
-      const course = await this.prisma.course.findUniqueOrThrow({
-        where: { id: courseId },
-        select: {
-          teacherId: true,
-          classrooms: {
-            where: { enrollments: { some: { userId } } },
-            select: { id: true },
-            take: 1,
-          },
-        },
-      });
-      if (course.teacherId !== userId && course.classrooms.length === 0) {
-        await this.accessPolicy.assertCourseTeacherOrAdmin(courseId, userId, roles);
-      }
-    }
 
     const course = await this.prisma.course.findUniqueOrThrow({
       where: { id: courseId },
+
       include: {
-        teacher: { select: userSummarySelect },
+        teacher: {
+          select: userSummarySelect,
+        },
+
         classrooms: true,
-        lessons: { orderBy: { orderNo: 'asc' } },
+
+        lessons: {
+          orderBy: {
+            orderNo: 'asc',
+          },
+        },
       },
     });
+
+    const isAdmin =
+      roles.includes(UserRole.admin);
+
+    const isTeacher =
+      course.teacherId === userId;
+
+    const isEnrolled =
+      await this.prisma.enrollment.findFirst({
+        where: {
+          userId,
+          classroom: { courseId },
+        },
+        select: { id: true },
+      });
+
+    // Public course
+    // Hide classroom info if not enrolled
+    if (!isAdmin && !isTeacher && !isEnrolled) {
+      course.classrooms = [];
+    }
 
     return this.toCourseDetailResponse(course);
   }

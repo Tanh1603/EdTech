@@ -4,13 +4,25 @@ import {
   Catch,
   HttpException,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { Observable, throwError } from 'rxjs';
 
 @Catch()
 export class GrpcExceptionFilter {
+  private readonly logger = new Logger(GrpcExceptionFilter.name);
+
   catch(exception: unknown, _host: ArgumentsHost): Observable<never> {
+    this.logger.error({
+      type: 'GRPC_EXCEPTION',
+      message: exception instanceof Error ? exception.message : String(exception),
+      stack: exception instanceof Error ? exception.stack : undefined,
+      code:
+        exception && typeof exception === 'object' && 'code' in exception
+          ? (exception as { code?: unknown }).code
+          : undefined,
+    });
     const rpcException = toRpcException(exception);
     return throwError(() => rpcException.getError());
   }

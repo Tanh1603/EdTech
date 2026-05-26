@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { BadRequestException } from '@nestjs/common';
 import { PageDto, toIsoString } from '@edtech/contracts';
 import { PaginationQueryDto } from '@edtech/contracts';
@@ -8,11 +8,13 @@ import { MaterialStatus, Prisma } from '../../../generated/prisma/client';
 import { StorageService } from '../../storage/storage.service';
 import { MaterialQueryDto } from '@edtech/contracts';
 import { UpdateMaterialDto } from '@edtech/contracts';
-import { JobTypes } from '@edtech/contracts';
+import { JobStatuses, JobTypes } from '@edtech/contracts';
 import { JobsService } from '../../jobs/jobs.service';
 
 @Injectable()
 export class MaterialsService {
+  private readonly logger = new Logger(MaterialsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly storageService: StorageService,
@@ -43,6 +45,8 @@ export class MaterialsService {
       include: { creator: { select: userSummarySelect } },
     });
 
+    await this.enqueueMaterialIngestJob(material, createdBy);
+
     return this.toMaterialResponse(material);
   }
 
@@ -57,40 +61,23 @@ export class MaterialsService {
     },
     createdBy: string,
   ) {
-    try {
-
-      const material = await this.prisma.material.create({
-        data: {
-          lessonId: payload.lessonId,
-          title: payload.title,
-          storageUrl: payload.storageUrl,
-          publicId: payload.publicId,
-          mimeType: payload.mimeType,
-          size: payload.size,
-          status: MaterialStatus.uploaded,
-          createdBy,
-        },
-        include: { creator: { select: userSummarySelect } },
-      });
-
-      await this.jobsService.enqueue({
-        type: JobTypes.aiMaterialIngest,
-        payload: {
-          materialId: material.id,
-          lessonId: material.lessonId,
-          storageUrl: material.storageUrl,
-          mimeType: material.mimeType,
-        },
+    const material = await this.prisma.material.create({
+      data: {
+        lessonId: payload.lessonId,
+        title: payload.title,
+        storageUrl: payload.storageUrl,
+        publicId: payload.publicId,
+        mimeType: payload.mimeType,
+        size: payload.size,
+        status: MaterialStatus.uploaded,
         createdBy,
-        resourceType: 'material',
-        resourceId: material.id,
-      });
+      },
+      include: { creator: { select: userSummarySelect } },
+    });
 
-      return this.toMaterialResponse(material);
-    } catch (error) {
-      console.log(error);
+    await this.enqueueMaterialIngestJob(material, createdBy);
 
-    }
+    return this.toMaterialResponse(material);
   }
 
   async getMaterials(query: MaterialQueryDto): Promise<PageDto<unknown>> {
@@ -180,9 +167,8 @@ export class MaterialsService {
       const createResult = normalized.length
         ? await tx.materialChunk.createMany({ data: normalized })
         : { count: 0 };
-      const material = await tx.material.update({
+      const material = await tx.material.findUniqueOrThrow({
         where: { id: materialId },
-        data: { status: MaterialStatus.ready },
         include: { creator: { select: userSummarySelect } },
       });
       return { count: createResult.count, material };
@@ -191,6 +177,66 @@ export class MaterialsService {
     return {
       ...this.toMaterialResponse(material),
       chunksCount: count,
+    };
+  }
+
+  async clearMaterialChunks(materialId: string) {
+    const material = await this.prisma.material.findUniqueOrThrow({
+      where: { id: materialId },
+      include: { creator: { select: userSummarySelect } },
+    });
+    const result = await this.prisma.materialChunk.deleteMany({ where: { materialId } });
+    this.logger.log({
+      type: 'MATERIAL_CHUNKS_CLEARED',
+      materialId,
+      deletedCount: result.count,
+    });
+    return {
+      ...this.toMaterialResponse(material),
+      chunksCount: 0,
+      deletedCount: result.count,
+    };
+  }
+
+  async appendMaterialChunks(
+    materialId: string,
+    chunks: Array<{
+      chunkId?: string;
+      content: string;
+      orderNo: number;
+      tokenCount?: number;
+      embeddingId?: string;
+      checksum?: string;
+    }>,
+  ) {
+    const material = await this.prisma.material.findUniqueOrThrow({
+      where: { id: materialId },
+      include: { creator: { select: userSummarySelect } },
+    });
+    const normalized = chunks
+      .map((chunk, index) => ({
+        materialId,
+        content: chunk.content,
+        orderNo: chunk.orderNo || index + 1,
+        tokenCount: chunk.tokenCount || null,
+        embeddingId: chunk.embeddingId || chunk.chunkId || null,
+        checksum: chunk.checksum || null,
+      }))
+      .sort((left, right) => left.orderNo - right.orderNo);
+    const createResult = normalized.length
+      ? await this.prisma.materialChunk.createMany({ data: normalized })
+      : { count: 0 };
+    const totalCount = await this.prisma.materialChunk.count({ where: { materialId } });
+    this.logger.log({
+      type: 'MATERIAL_CHUNKS_APPENDED',
+      materialId,
+      appendedCount: createResult.count,
+      totalCount,
+    });
+    return {
+      ...this.toMaterialResponse(material),
+      chunksCount: totalCount,
+      appendedCount: createResult.count,
     };
   }
 
@@ -275,6 +321,60 @@ export class MaterialsService {
         totalPages: Math.ceil(total / limit),
       },
     };
+  }
+
+  private async enqueueMaterialIngestJob(
+    material: {
+      id: string;
+      lessonId: string;
+      title: string;
+      storageUrl: string;
+      publicId: string | null;
+      mimeType: string | null;
+      size: number | null;
+    },
+    createdBy: string,
+  ) {
+    const activeJob = await this.prisma.job.findFirst({
+      where: {
+        type: JobTypes.aiMaterialIngest,
+        resourceId: material.id,
+        status: {
+          in: [JobStatuses.queued, JobStatuses.running, JobStatuses.retrying],
+        },
+      },
+      select: { id: true, status: true },
+    });
+
+    if (activeJob) {
+      this.logger.log(
+        `Skipping duplicate material ingest job materialId=${material.id} jobId=${activeJob.id} status=${activeJob.status}`,
+      );
+      return activeJob;
+    }
+
+    const job = await this.jobsService.enqueue({
+      type: JobTypes.aiMaterialIngest,
+      payload: {
+        materialId: material.id,
+        lessonId: material.lessonId,
+        title: material.title,
+        storageUrl: material.storageUrl,
+        publicId: material.publicId,
+        mimeType: material.mimeType,
+        size: material.size,
+        createdBy,
+        requestedBy: createdBy,
+      },
+      createdBy,
+      resourceType: 'material',
+      resourceId: material.id,
+    });
+
+    this.logger.log(
+      `Queued material ingest job materialId=${material.id} jobId=${job.jobId} mimeType=${material.mimeType ?? ''}`,
+    );
+    return job;
   }
 
   private toMaterialResponse(material: {

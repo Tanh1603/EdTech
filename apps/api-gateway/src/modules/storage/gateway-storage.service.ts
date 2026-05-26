@@ -13,7 +13,7 @@ export class GatewayStorageService {
   uploadFile(file: any, folder = 'edtech-ai'): Promise<UploadApiResponse> {
     return new Promise((resolve, reject) => {
       const uploadStream = this.cloudinary.uploader.upload_stream(
-        { folder, resource_type: 'auto' },
+        { folder, resource_type: this.getUploadResourceType(file.mimetype) },
         (error, result) => {
           if (error || !result) {
             reject(error);
@@ -25,5 +25,20 @@ export class GatewayStorageService {
 
       streamifier.createReadStream(file.buffer).pipe(uploadStream);
     });
+  }
+
+  private getUploadResourceType(mimeType?: string): 'auto' | 'raw' {
+    if (!mimeType) {
+      return 'auto';
+    }
+    if (
+      mimeType === 'application/pdf' ||
+      mimeType.startsWith('text/') ||
+      mimeType.includes('wordprocessingml') ||
+      mimeType.includes('presentationml')
+    ) {
+      return 'raw';
+    }
+    return 'auto';
   }
 }

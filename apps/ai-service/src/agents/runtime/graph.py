@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from collections.abc import Iterator
 from dataclasses import dataclass
 from typing import Any
@@ -120,8 +121,11 @@ class AgentRuntime:
             prompt, citations = self.tutor.build_stream_prompt(state)
             chunks: list[str] = []
             for token in self.dependencies.llm_provider.stream(prompt):
-                chunks.append(token)
-                yield {"text": token, "citations": [], "isFinal": False}
+                clean_token = _clean_stream_token(token)
+                if not clean_token:
+                    continue
+                chunks.append(clean_token)
+                yield {"text": clean_token, "citations": [], "isFinal": False}
 
             content = "".join(chunks)
             final_state = PersistenceNode(self.dependencies.registry)(
@@ -213,3 +217,7 @@ def _tool_context(context: BeCoreCallContext) -> ToolContext:
         permissions=context.permissions,
         job_id=context.job_id,
     )
+
+
+def _clean_stream_token(token: str) -> str:
+    return re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", token)

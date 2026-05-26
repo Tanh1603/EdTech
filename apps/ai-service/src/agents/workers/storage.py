@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
 import httpx
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -15,7 +18,14 @@ class StorageContent:
     source: str = "fixture"
 
 
+class FileAccessResolver(Protocol):
+    def __call__(self, material: dict[str, Any], payload: dict[str, Any]) -> dict[str, str]: ...
+
+
 class MaterialContentLoader:
+    def __init__(self, resolve_file_access: FileAccessResolver | None = None) -> None:
+        self.resolve_file_access = resolve_file_access
+
     def load(self, material: dict[str, Any], payload: dict[str, Any]) -> StorageContent:
         inline_content = payload.get("content") or material.get("content")
         if isinstance(inline_content, str) and inline_content:
@@ -43,15 +53,76 @@ class MaterialContentLoader:
             or payload.get("storage_url")
         )
         if isinstance(storage_url, str) and storage_url:
-            with httpx.Client(timeout=30.0, follow_redirects=True) as client:
-                response = client.get(storage_url)
-                response.raise_for_status()
-                return StorageContent(
-                    content=response.content,
-                    mime_type=response.headers.get("content-type")
-                    or str(material.get("mimeType") or payload.get("mimeType") or ""),
-                    filename=storage_url.rsplit("/", 1)[-1],
-                    source=storage_url,
-                )
+            return self._download_with_resolved_fallback(storage_url, material, payload)
 
         raise ValueError("Material content requires inline content, filePath, or storageUrl")
+
+    def _download_with_resolved_fallback(
+        self,
+        storage_url: str,
+        material: dict[str, Any],
+        payload: dict[str, Any],
+    ) -> StorageContent:
+        try:
+            return self._download(
+                storage_url,
+                mime_type=str(material.get("mimeType") or payload.get("mimeType") or ""),
+            )
+        except httpx.HTTPStatusError as error:
+            if error.response.status_code not in (401, 403) or not self.resolve_file_access:
+                raise
+            logger.info(
+                "Material storage URL requires resolved access",
+                extra={
+                    "component": "material_content_loader",
+                    "step": "download.unauthorized",
+                    "materialId": str(material.get("id") or payload.get("materialId") or ""),
+                    "status": str(error.response.status_code),
+                },
+            )
+
+        access = self.resolve_file_access(material, payload)
+        download_url = access.get("downloadUrl") or access.get("download_url") or ""
+        if not download_url:
+            raise ValueError("Material file is not accessible: BE Core returned no download URL")
+
+        logger.info(
+            "Resolved material file access",
+            extra={
+                "component": "material_content_loader",
+                "step": "storage.resolve_access",
+                "materialId": str(material.get("id") or payload.get("materialId") or ""),
+            },
+        )
+        return self._download(
+            download_url,
+            mime_type=access.get("mimeType")
+            or access.get("mime_type")
+            or str(material.get("mimeType") or payload.get("mimeType") or ""),
+            filename=access.get("filename") or "",
+        )
+
+    def _download(
+        self,
+        url: str,
+        mime_type: str = "",
+        filename: str = "",
+    ) -> StorageContent:
+        with httpx.Client(timeout=30.0, follow_redirects=True) as client:
+            response = client.get(url)
+            response.raise_for_status()
+            logger.info(
+                "Material content downloaded",
+                extra={
+                    "component": "material_content_loader",
+                    "step": "download.ok",
+                    "byteSize": len(response.content),
+                    "status": response.headers.get("content-type") or mime_type,
+                },
+            )
+            return StorageContent(
+                content=response.content,
+                mime_type=response.headers.get("content-type") or mime_type,
+                filename=filename or url.rsplit("/", 1)[-1].split("?", 1)[0],
+                source=url,
+            )

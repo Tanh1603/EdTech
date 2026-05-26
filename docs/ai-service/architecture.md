@@ -28,7 +28,7 @@ and writes go through BE Core gRPC.
 | `apps/api-gateway` | Public HTTP ingress with Gateway Swagger, Clerk auth, Cloudinary upload, realtime helpers, and BE Core gRPC client. |
 | `apps/backend` | BE Core source of truth with Prisma/PostgreSQL, Clerk/RBAC, jobs, notifications, learning, chat, academic, assessment, storage, and users modules. |
 | `libs/contracts` | Shared DTOs, mappers, gRPC constants, proto path helpers, and domain proto files. |
-| `apps/ai-service` | Python 3.14 foundation under `src/`: FastAPI ops, Nx targets, shared proto codegen, gRPC helpers, metadata/errors, BE Core tools, LangGraph runtime, LangChain prompt/model glue, Groq/Ollama providers, Qdrant RAG, Redis memory, RabbitMQ workers, and domain profiles. |
+| `apps/ai-service` | Python 3.14 foundation under `src/`: gRPC runtime, RabbitMQ workers, shared proto codegen, metadata/errors, BE Core tools, LangGraph runtime, LangChain prompt/model glue, Groq/Ollama providers, Qdrant RAG, Redis memory, and domain profiles. |
 | Redis/RabbitMQ | Present in local infra and wired into AI Service memory/workers. |
 | Qdrant | Wired as the AI Service vector DB for material chunks. |
 
@@ -55,7 +55,7 @@ flowchart LR
   Client["Web / Mobile Client"]
   Gateway["API Gateway\nNestJS public edge"]
   BE["BE Core\nNestJS + Prisma"]
-  AI["AI Service\nPython + FastAPI ops + gRPC"]
+  AI["AI Service\nPython gRPC runtime"]
   Worker["AI Workers\nRabbitMQ consumers"]
   PG[("PostgreSQL\nLMS source of truth")]
   Rabbit[("RabbitMQ\nDurable work queues")]

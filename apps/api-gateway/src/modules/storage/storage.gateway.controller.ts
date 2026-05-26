@@ -26,7 +26,14 @@ export class StorageGatewayController {
   @ApiBody({ schema: { type: 'object', required: ['file'], properties: { file: { type: 'string', format: 'binary' } } } })
   @UseInterceptors(FileInterceptor('file', { storage: memoryStorage(), limits: { fileSize: 1024 * 1024 * 100 } }))
   uploadFile(@UploadedFile() file: any) {
-    return this.storage.uploadFile(file);
+    try {
+      return this.storage.uploadFile(file);
+
+    } catch (error) {
+      console.log(error);
+
+      return error
+    }
   }
 
   @Delete('delete')

@@ -1,5 +1,5 @@
 import { Metadata } from '@grpc/grpc-js';
-import { Controller, UseGuards } from '@nestjs/common';
+import { Controller, Logger, UseGuards } from '@nestjs/common';
 import {
   GrpcContractMethod,
   GrpcMethods,
@@ -120,6 +120,8 @@ export class MaterialsGrpcController {
 @Controller()
 @UseGuards(GrpcServiceAuthGuard)
 export class MaterialsInternalGrpcController {
+  private readonly logger = new Logger(MaterialsInternalGrpcController.name);
+
   constructor(private readonly materialsService: MaterialsService) {}
 
   @GrpcContractMethod(
@@ -127,8 +129,52 @@ export class MaterialsInternalGrpcController {
     GrpcMethods.learningMaterials.replaceMaterialChunks,
   )
   replaceMaterialChunks(payload: any) {
+    this.logger.log({
+      type: 'REPLACE_MATERIAL_CHUNKS',
+      materialId: payload.materialId,
+      chunkCount: payload.chunks?.length ?? 0,
+    });
     return this.materialsService
       .replaceMaterialChunks(
+        payload.materialId,
+        (payload.chunks ?? []).map((chunk: any) => ({
+          chunkId: chunk.chunkId,
+          content: chunk.content,
+          orderNo: chunk.orderNo,
+          tokenCount: chunk.tokenCount,
+          embeddingId: chunk.embeddingId,
+          checksum: chunk.checksum,
+        })),
+      )
+      .then(toObjectResponse);
+  }
+
+  @GrpcContractMethod(
+    GrpcServices.learningMaterials,
+    GrpcMethods.learningMaterials.clearMaterialChunks,
+  )
+  clearMaterialChunks(payload: any) {
+    this.logger.log({
+      type: 'CLEAR_MATERIAL_CHUNKS',
+      materialId: payload.materialId,
+    });
+    return this.materialsService
+      .clearMaterialChunks(payload.materialId)
+      .then(toObjectResponse);
+  }
+
+  @GrpcContractMethod(
+    GrpcServices.learningMaterials,
+    GrpcMethods.learningMaterials.appendMaterialChunks,
+  )
+  appendMaterialChunks(payload: any) {
+    this.logger.log({
+      type: 'APPEND_MATERIAL_CHUNKS',
+      materialId: payload.materialId,
+      chunkCount: payload.chunks?.length ?? 0,
+    });
+    return this.materialsService
+      .appendMaterialChunks(
         payload.materialId,
         (payload.chunks ?? []).map((chunk: any) => ({
           chunkId: chunk.chunkId,

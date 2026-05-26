@@ -3,7 +3,8 @@ from typing import Any
 
 from agents.providers.embedding_provider import EmbeddingProvider
 from agents.rag.citations import citation_for
-from agents.rag.vector_store import VectorStore
+
+from .vector_stores import VectorStore
 
 
 @dataclass(frozen=True)
@@ -35,3 +36,6 @@ class Retriever:
             )
             for chunk, score in self.vector_store.search(query_vector, top_k, material_id)
         ]
+
+    def material_chunks(self, material_id: str, limit: int = 24):
+        return self.vector_store.material_chunks(material_id, limit)

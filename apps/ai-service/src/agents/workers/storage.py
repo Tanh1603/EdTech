@@ -15,7 +15,7 @@ class StorageContent:
     content: bytes
     mime_type: str | None = None
     filename: str | None = None
-    source: str = "fixture"
+    source: str = "storage"
 
 
 class FileAccessResolver(Protocol):
@@ -32,7 +32,7 @@ class MaterialContentLoader:
             return StorageContent(
                 content=inline_content.encode("utf-8"),
                 mime_type=str(material.get("mimeType") or payload.get("mimeType") or "text/plain"),
-                filename=str(material.get("title") or payload.get("title") or "fixture.txt"),
+                filename=str(material.get("title") or payload.get("title") or "inline.txt"),
                 source="inline",
             )
 

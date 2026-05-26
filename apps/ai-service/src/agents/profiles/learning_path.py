@@ -2,11 +2,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from langchain_core.prompts import ChatPromptTemplate
-
+from agents.orchestrator.state import RuntimeState
 from agents.profiles.common import parse_json_object
+from agents.prompts import get_prompt_registry
 from agents.providers.llm_provider import LlmProvider
-from agents.runtime.state import RuntimeState
 from agents.tools.registry import ToolRegistry
 
 
@@ -14,27 +13,13 @@ class LearningPathAgentProfile:
     def __init__(self, llm_provider: LlmProvider, registry: ToolRegistry) -> None:
         self.llm_provider = llm_provider
         self.registry = registry
-        self.prompt = ChatPromptTemplate.from_messages(
-            [
-                (
-                    "system",
-                    "You are LearningPathAgent. Produce a JSON object with title, "
-                    "description, and items. Each item should include title, "
-                    "description, orderNo, and estimatedMinutes.",
-                ),
-                (
-                    "human",
-                    "Student/user id: {user_id}\nClass id: {class_id}\nCourse id: "
-                    "{course_id}\nMastery context: {mastery}\nAnalytics context: "
-                    "{analytics}\nOptions: {options}",
-                ),
-            ]
-        )
+        self.prompts = get_prompt_registry()
 
     def run(self, state: RuntimeState) -> RuntimeState:
         context = state.get("tool_context")
         tool_results = state.get("tool_results", {})
-        prompt_value = self.prompt.invoke(
+        prompt = self.prompts.render(
+            "learning_path.prompt",
             {
                 "user_id": state.get("user_id", ""),
                 "class_id": state.get("class_id", ""),
@@ -42,9 +27,9 @@ class LearningPathAgentProfile:
                 "mastery": tool_results.get("learning.mastery", {}),
                 "analytics": tool_results.get("chat.classroom_analytics", {}),
                 "options": state.get("options", {}),
-            }
+            },
         )
-        response = self.llm_provider.generate(prompt_value.to_string())
+        response = self.llm_provider.generate(prompt)
         draft = parse_json_object(response.text)
         roadmap_body = self._roadmap_body(state, draft, response.text)
         roadmap: dict[str, Any] = {}

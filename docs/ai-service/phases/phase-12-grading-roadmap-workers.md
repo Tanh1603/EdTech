@@ -19,8 +19,8 @@ assessment grading, quiz support, and rubric feedback.
 
 ## Acceptance
 
-- Rubric fixture grading is deterministic.
-- Roadmap fixture output is deterministic.
+- Rubric-backed grading output is deterministic for controlled inputs.
+- Roadmap output is deterministic for controlled mastery and analytics inputs.
 - Recommendations and roadmap outputs are produced by the same profile.
 - Missing context marks job failed.
 - No worker writes directly to PostgreSQL LMS tables.

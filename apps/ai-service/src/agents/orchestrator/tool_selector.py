@@ -1,4 +1,4 @@
-from agents.runtime.state import RuntimeState, ToolCall
+from agents.orchestrator.state import RuntimeState, ToolCall
 
 
 def select_tools_node(state: RuntimeState) -> RuntimeState:
@@ -8,6 +8,8 @@ def select_tools_node(state: RuntimeState) -> RuntimeState:
     if action in {"chat", "stream_chat"}:
         message_id = state.get("message_id")
         session_id = state.get("session_id")
+        options = state.get("options", {})
+        material_id = options.get("materialId") if isinstance(options, dict) else None
         if message_id:
             calls.append({"name": "chat.message", "payload": {"messageId": message_id}})
         if session_id:
@@ -17,6 +19,8 @@ def select_tools_node(state: RuntimeState) -> RuntimeState:
                     "payload": {"sessionId": session_id, "page": 1, "limit": 20},
                 }
             )
+        if material_id:
+            calls.append({"name": "materials.get", "payload": {"materialId": str(material_id)}})
     elif action == "grade_submission":
         resource_id = state.get("resource_id")
         if resource_id:

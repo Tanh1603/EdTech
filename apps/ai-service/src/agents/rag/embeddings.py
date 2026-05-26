@@ -2,7 +2,8 @@ import logging
 
 from agents.providers.embedding_provider import EmbeddingProvider
 from agents.rag.chunking import TextChunk
-from agents.rag.vector_store import VectorStore
+
+from .vector_stores import VectorStore
 
 logger = logging.getLogger(__name__)
 

@@ -1,5 +1,9 @@
-from agents.runtime.state import RuntimeState
+import logging
+
+from agents.orchestrator.state import RuntimeState
 from agents.tools.registry import ToolRegistry
+
+logger = logging.getLogger(__name__)
 
 
 class PersistenceNode:
@@ -20,5 +24,14 @@ class PersistenceNode:
             "chat.append_assistant",
             {"sessionId": session_id, "content": state["content"]},
             context,
+        )
+        logger.info(
+            "Assistant message persisted",
+            extra={
+                "component": "tutor.orchestrator",
+                "step": "persistence.saved",
+                "sessionId": session_id,
+                "messageId": str(message.get("id") or ""),
+            },
         )
         return {**state, "assistant_message_id": str(message.get("id") or "")}

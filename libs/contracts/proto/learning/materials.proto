@@ -64,6 +64,10 @@ message MaterialChunkWrite {
   int32 token_count = 4;
   string embedding_id = 5;
   string checksum = 6;
+  string preview = 7;
+  string storage_key = 8;
+  int32 page_no = 9;
+  google.protobuf.Struct source = 10;
 }
 
 message ReplaceMaterialChunksRequest {

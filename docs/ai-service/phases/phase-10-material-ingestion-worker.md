@@ -11,19 +11,28 @@ and grading depend on RAG-ready material.
 
 - Load material metadata by ID from BE Core.
 - Keep material ingestion code under `apps/ai-service/src/agents/workers`.
-- Download/read content through a fixture storage adapter first.
-- Parse, chunk, embed, and upsert vectors.
-- Update BE Core with chunks, citations, material status, and job status.
-- Add Cloudinary or signed URL storage adapters after the local fixture path is
-  stable.
+- Download/read content through direct storage URL first, then BE Core signed
+  access when storage returns 401/403.
+- Parse, chunk with a larger token budget, embed, and upsert vectors in batches.
+- Update BE Core with chunk manifest/preview metadata, material status, and job
+  status.
+- Delete existing Qdrant points for the material before fresh upsert.
+- Do not send full chunk text through BE Core gRPC; Qdrant payload owns full
+  chunk text for retrieval.
+- Keep Cloudinary credentials in BE Core; AI Service resolves access through BE
+  Core when direct download is not public.
 - Expose the workflow as an `AssessmentMaterialAgent` capability in the shared
   LangGraph runtime later, while keeping the worker process as the async
   execution mechanism.
 
 ## Acceptance
 
-- Deterministic fixture material creates expected chunks and citations.
+- Deterministic material ingest creates expected manifest rows, Qdrant points,
+  and citations.
 - Vector upsert receives expected payload metadata.
+- BE Core `material_chunks` rows are manifest/preview records, not full text
+  duplicates.
+- Re-ingest leaves no stale Qdrant points for the material.
 - Failure marks the job failed with structured error details.
 - File bytes are never sent over gRPC.
 

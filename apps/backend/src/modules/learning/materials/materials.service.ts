@@ -143,9 +143,13 @@ export class MaterialsService {
     chunks: Array<{
       chunkId?: string;
       content: string;
+      preview?: string;
       orderNo: number;
       tokenCount?: number;
       embeddingId?: string;
+      storageKey?: string;
+      pageNo?: number;
+      source?: Prisma.InputJsonValue;
       checksum?: string;
     }>,
   ) {
@@ -154,10 +158,14 @@ export class MaterialsService {
     const normalized = chunks
       .map((chunk, index) => ({
         materialId,
-        content: chunk.content,
+        content: chunk.preview || chunk.content.slice(0, 500),
+        preview: chunk.preview || chunk.content.slice(0, 500),
         orderNo: chunk.orderNo || index + 1,
         tokenCount: chunk.tokenCount || null,
         embeddingId: chunk.embeddingId || chunk.chunkId || null,
+        storageKey: chunk.storageKey || null,
+        pageNo: chunk.pageNo || null,
+        source: chunk.source || Prisma.JsonNull,
         checksum: chunk.checksum || null,
       }))
       .sort((left, right) => left.orderNo - right.orderNo);
@@ -203,9 +211,13 @@ export class MaterialsService {
     chunks: Array<{
       chunkId?: string;
       content: string;
+      preview?: string;
       orderNo: number;
       tokenCount?: number;
       embeddingId?: string;
+      storageKey?: string;
+      pageNo?: number;
+      source?: Prisma.InputJsonValue;
       checksum?: string;
     }>,
   ) {
@@ -216,10 +228,14 @@ export class MaterialsService {
     const normalized = chunks
       .map((chunk, index) => ({
         materialId,
-        content: chunk.content,
+        content: chunk.preview || chunk.content.slice(0, 500),
+        preview: chunk.preview || chunk.content.slice(0, 500),
         orderNo: chunk.orderNo || index + 1,
         tokenCount: chunk.tokenCount || null,
         embeddingId: chunk.embeddingId || chunk.chunkId || null,
+        storageKey: chunk.storageKey || null,
+        pageNo: chunk.pageNo || null,
+        source: chunk.source || Prisma.JsonNull,
         checksum: chunk.checksum || null,
       }))
       .sort((left, right) => left.orderNo - right.orderNo);

@@ -1,5 +1,5 @@
 from agents.observability.telemetry import span
-from agents.runtime.state import RuntimeState
+from agents.orchestrator.state import RuntimeState
 from agents.tools.registry import ToolRegistry
 
 

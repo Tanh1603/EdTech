@@ -1,17 +1,27 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from importlib import import_module
 from typing import Any
 
-from google.protobuf.json_format import (  # pyright: ignore[reportMissingModuleSource]
-    MessageToDict,
-    ParseDict,
+from agents.clients.be_core_common import (
+    BeCoreCallContext,
+    ai_code_for_grpc_status,
+    from_struct,
+    to_struct,
+    unwrap_delete_response,
+    unwrap_list_response,
+    unwrap_object_response,
+    unwrap_page_response,
 )
-from google.protobuf.struct_pb2 import Struct  # pyright: ignore[reportMissingModuleSource]
-
+from agents.clients.be_core_domains import (
+    AssessmentClientMixin,
+    ChatClientMixin,
+    JobsClientMixin,
+    LearningClientMixin,
+    MaterialsClientMixin,
+    StorageClientMixin,
+)
 from agents.grpc.errors import AiErrorCode, AiServiceError
-from agents.grpc.metadata import RequestMetadata
 from config.settings import Settings, get_settings
 from contracts.generated import ensure_generated_proto_path
 
@@ -44,65 +54,14 @@ def _load_generated_modules() -> dict[str, Any]:
     }
 
 
-def to_struct(value: dict[str, Any] | None) -> Struct:
-    return ParseDict(value or {}, Struct())
-
-
-def from_struct(value: Struct | None) -> dict[str, Any]:
-    if value is None:
-        return {}
-    return MessageToDict(value, preserving_proto_field_name=False)
-
-
-def unwrap_object_response(response: Any) -> dict[str, Any]:
-    return from_struct(getattr(response, "data", None))
-
-
-def unwrap_page_response(response: Any) -> dict[str, Any]:
-    return {
-        "items": [from_struct(item) for item in getattr(response, "items", [])],
-        "pagination": MessageToDict(
-            getattr(response, "pagination", None),
-            preserving_proto_field_name=True,
-        )
-        if getattr(response, "pagination", None)
-        else {},
-    }
-
-
-def unwrap_list_response(response: Any) -> list[dict[str, Any]]:
-    return [from_struct(item) for item in getattr(response, "items", [])]
-
-
-def unwrap_delete_response(response: Any) -> dict[str, Any]:
-    return {
-        "id": getattr(response, "id", ""),
-        "deleted": bool(getattr(response, "deleted", False)),
-    }
-
-
-@dataclass(frozen=True)
-class BeCoreCallContext:
-    request_id: str | None = None
-    correlation_id: str | None = None
-    user_id: str | None = None
-    roles: tuple[str, ...] = field(default_factory=tuple)
-    permissions: tuple[str, ...] = field(default_factory=tuple)
-    job_id: str | None = None
-
-    @classmethod
-    def from_request_metadata(cls, metadata: RequestMetadata) -> BeCoreCallContext:
-        return cls(
-            request_id=metadata.request_id,
-            correlation_id=metadata.correlation_id,
-            user_id=metadata.user_id,
-            roles=tuple(metadata.roles),
-            permissions=tuple(metadata.permissions),
-            job_id=metadata.ai_job_id,
-        )
-
-
-class BeCoreGrpcClient:
+class BeCoreGrpcClient(
+    MaterialsClientMixin,
+    ChatClientMixin,
+    AssessmentClientMixin,
+    LearningClientMixin,
+    JobsClientMixin,
+    StorageClientMixin,
+):
     def __init__(self, settings: Settings | None = None, channel: Any | None = None) -> None:
         self.settings = settings or get_settings()
         modules = _load_generated_modules()
@@ -151,273 +110,6 @@ class BeCoreGrpcClient:
         close = getattr(self._channel, "close", None)
         if close:
             close()
-
-    def get_material(
-        self,
-        material_id: str,
-        context: BeCoreCallContext,
-    ) -> dict[str, Any]:
-        request = self._materials_pb2.MaterialIdRequest(material_id=material_id)
-        return self._call_object(self.materials.GetMaterialDetail, request, context, True)
-
-    def get_material_chunks(
-        self,
-        material_id: str,
-        context: BeCoreCallContext,
-        page: int = 1,
-        limit: int = 50,
-    ) -> dict[str, Any]:
-        request = self._materials_pb2.MaterialChunksQuery(
-            material_id=material_id,
-            page=page,
-            limit=limit,
-        )
-        return self._call_page(self.materials.GetMaterialChunks, request, context, True)
-
-    def get_chunk_detail(
-        self,
-        material_id: str,
-        chunk_id: str,
-        context: BeCoreCallContext,
-    ) -> dict[str, Any]:
-        request = self._materials_pb2.MaterialChunkIdRequest(
-            material_id=material_id,
-            chunk_id=chunk_id,
-        )
-        return self._call_object(self.materials.GetChunkDetail, request, context, True)
-
-    def replace_material_chunks(
-        self,
-        material_id: str,
-        chunks: list[dict[str, Any]],
-    ) -> dict[str, Any]:
-        request = self._materials_pb2.ReplaceMaterialChunksRequest(
-            material_id=material_id,
-            chunks=self._chunk_writes(chunks),
-        )
-        return self._call_object(self.materials.ReplaceMaterialChunks, request, None, False)
-
-    def clear_material_chunks(self, material_id: str) -> dict[str, Any]:
-        request = self._materials_pb2.MaterialIdRequest(material_id=material_id)
-        return self._call_object(self.materials.ClearMaterialChunks, request, None, False)
-
-    def append_material_chunks(
-        self,
-        material_id: str,
-        chunks: list[dict[str, Any]],
-    ) -> dict[str, Any]:
-        request = self._materials_pb2.AppendMaterialChunksRequest(
-            material_id=material_id,
-            chunks=self._chunk_writes(chunks),
-        )
-        return self._call_object(self.materials.AppendMaterialChunks, request, None, False)
-
-    def update_material_status(
-        self,
-        material_id: str,
-        status: str,
-        error: dict[str, Any] | None = None,
-    ) -> dict[str, Any]:
-        request = self._materials_pb2.UpdateMaterialStatusRequest(
-            material_id=material_id,
-            status=status,
-            error=to_struct(error),
-        )
-        return self._call_object(self.materials.UpdateMaterialStatus, request, None, False)
-
-    def append_assistant_message(
-        self,
-        session_id: str,
-        content: str,
-        context: BeCoreCallContext,
-    ) -> dict[str, Any]:
-        request = self._messages_pb2.MessageCreateRequest(
-            session_id=session_id,
-            body=to_struct({"role": "assistant", "content": content}),
-        )
-        return self._call_object(self.chat_messages.CreateMessage, request, context, True)
-
-    def get_messages(
-        self,
-        session_id: str,
-        context: BeCoreCallContext,
-        page: int = 1,
-        limit: int = 50,
-        before: str | None = None,
-    ) -> dict[str, Any]:
-        request = self._messages_pb2.MessagesQuery(
-            session_id=session_id,
-            page=page,
-            limit=limit,
-            before=before or "",
-        )
-        return self._call_page(self.chat_messages.GetMessages, request, context, True)
-
-    def get_message_detail(
-        self,
-        message_id: str,
-        context: BeCoreCallContext,
-    ) -> dict[str, Any]:
-        request = self._messages_pb2.MessageIdRequest(message_id=message_id)
-        return self._call_object(self.chat_messages.GetMessageDetail, request, context, True)
-
-    def get_submission_detail(
-        self,
-        submission_id: str,
-        context: BeCoreCallContext,
-    ) -> dict[str, Any]:
-        request = self._submissions_pb2.SubmissionIdRequest(submission_id=submission_id)
-        return self._call_object(
-            self.assessment_submissions.GetSubmissionDetail,
-            request,
-            context,
-            True,
-        )
-
-    def manual_grade_submission(
-        self,
-        submission_id: str,
-        body: dict[str, Any],
-        context: BeCoreCallContext,
-    ) -> dict[str, Any]:
-        request = self._results_pb2.ManualGradeRequest(
-            submission_id=submission_id,
-            body=to_struct(body),
-        )
-        return self._call_object(self.assessment_results.ManualGrade, request, context, True)
-
-    def create_roadmap(
-        self,
-        body: dict[str, Any],
-        context: BeCoreCallContext,
-    ) -> dict[str, Any]:
-        request = self._roadmaps_pb2.RoadmapBodyRequest(body=to_struct(body))
-        return self._call_object(self.roadmaps.CreateRoadmap, request, context, True)
-
-    def create_roadmap_item(
-        self,
-        roadmap_id: str,
-        body: dict[str, Any],
-        context: BeCoreCallContext,
-    ) -> dict[str, Any]:
-        request = self._roadmaps_pb2.RoadmapItemCreateRequest(
-            roadmap_id=roadmap_id,
-            body=to_struct(body),
-        )
-        return self._call_object(self.roadmaps.CreateRoadmapItem, request, context, True)
-
-    def get_mastery_by_class(
-        self,
-        class_id: str,
-        context: BeCoreCallContext,
-    ) -> list[dict[str, Any]]:
-        if class_id:
-            request = self._mastery_pb2.ClassIdRequest(class_id=class_id)
-            return self._call_list(self.mastery.GetMasteryByClass, request, context, True)
-        return self._call_list(
-            self.mastery.GetMyMastery,
-            self._common_json_pb2.EmptyRequest(),
-            context,
-            True,
-        )
-
-    def get_classroom_analytics(
-        self,
-        class_id: str,
-        context: BeCoreCallContext,
-    ) -> dict[str, Any]:
-        request = self._analytics_pb2.ClassIdRequest(class_id=class_id)
-        return self._call_object(
-            self.chat_analytics.GetClassroomAnalytics,
-            request,
-            context,
-            True,
-        )
-
-    def create_job(
-        self,
-        job_type: str,
-        payload: dict[str, Any] | None = None,
-        context: BeCoreCallContext | None = None,
-        priority: int = 0,
-        max_attempts: int = 0,
-        created_by: str | None = None,
-        resource_type: str | None = None,
-        resource_id: str | None = None,
-    ) -> dict[str, Any]:
-        request = self._jobs_pb2.CreateJobRequest(
-            type=job_type,
-            payload=to_struct(payload),
-            priority=priority,
-            max_attempts=max_attempts,
-            request_id=context.request_id if context else "",
-            correlation_id=context.correlation_id if context else "",
-            created_by=created_by or (context.user_id if context else "") or "",
-            resource_type=resource_type or "",
-            resource_id=resource_id or "",
-        )
-        return self._call_object(self.jobs.CreateJob, request, context, False)
-
-    def get_job_status(
-        self,
-        job_id: str,
-        context: BeCoreCallContext,
-    ) -> dict[str, Any]:
-        request = self._jobs_pb2.JobIdRequest(job_id=job_id)
-        return self._call_object(self.jobs.GetJobStatus, request, context, True)
-
-    def mark_job_running(self, job_id: str) -> dict[str, Any]:
-        request = self._jobs_pb2.JobIdRequest(job_id=job_id)
-        return self._call_object(self.jobs.MarkJobRunning, request, None, False)
-
-    def mark_job_succeeded(
-        self,
-        job_id: str,
-        result: dict[str, Any] | None = None,
-    ) -> dict[str, Any]:
-        request = self._jobs_pb2.CompleteJobRequest(
-            job_id=job_id,
-            result=to_struct(result),
-        )
-        return self._call_object(self.jobs.MarkJobSucceeded, request, None, False)
-
-    def mark_job_failed(
-        self,
-        job_id: str,
-        error: dict[str, Any] | None = None,
-    ) -> dict[str, Any]:
-        request = self._jobs_pb2.FailJobRequest(job_id=job_id, error=to_struct(error))
-        return self._call_object(self.jobs.MarkJobFailed, request, None, False)
-
-    def delete_storage_file(
-        self,
-        public_id: str,
-        context: BeCoreCallContext,
-    ) -> dict[str, Any]:
-        request = self._storage_pb2.DeleteFileRequest(public_id=public_id)
-        return self._call_delete(self.storage.DeleteFile, request, context, True)
-
-    def resolve_file_access(
-        self,
-        material_id: str | None = None,
-        public_id: str | None = None,
-    ) -> dict[str, str]:
-        request = self._storage_pb2.ResolveFileAccessRequest(
-            material_id=material_id or "",
-            public_id=public_id or "",
-        )
-        response = self._call(
-            self.storage.ResolveFileAccess,
-            request,
-            None,
-            require_user=False,
-        )
-        return {
-            "downloadUrl": getattr(response, "download_url", ""),
-            "mimeType": getattr(response, "mime_type", ""),
-            "filename": getattr(response, "filename", ""),
-            "expiresAt": getattr(response, "expires_at", ""),
-        }
 
     def _call_object(
         self,
@@ -478,7 +170,7 @@ class BeCoreGrpcClient:
             )
         except self._grpc.RpcError as error:
             raise AiServiceError(
-                _ai_code_for_grpc_status(error.code()),
+                ai_code_for_grpc_status(error.code()),
                 error.details() or "BE Core gRPC call failed",
             ) from error
 
@@ -515,27 +207,10 @@ class BeCoreGrpcClient:
             metadata.append(("x-ai-job-id", context.job_id))
         return metadata
 
-    def _chunk_writes(self, chunks: list[dict[str, Any]]) -> list[Any]:
-        return [
-            self._materials_pb2.MaterialChunkWrite(
-                chunk_id=str(chunk.get("chunkId") or ""),
-                content=str(chunk.get("content") or ""),
-                order_no=int(chunk.get("orderNo") or 0),
-                token_count=int(chunk.get("tokenCount") or 0),
-                embedding_id=str(chunk.get("embeddingId") or ""),
-                checksum=str(chunk.get("checksum") or ""),
-            )
-            for chunk in chunks
-        ]
 
-
-def _ai_code_for_grpc_status(status_code: Any) -> AiErrorCode:
-    name = getattr(status_code, "name", "")
-    return {
-        "INVALID_ARGUMENT": AiErrorCode.INVALID_ARGUMENT,
-        "UNAUTHENTICATED": AiErrorCode.UNAUTHENTICATED,
-        "PERMISSION_DENIED": AiErrorCode.PERMISSION_DENIED,
-        "NOT_FOUND": AiErrorCode.NOT_FOUND,
-        "DEADLINE_EXCEEDED": AiErrorCode.DEADLINE_EXCEEDED,
-        "UNAVAILABLE": AiErrorCode.UNAVAILABLE,
-    }.get(name, AiErrorCode.INTERNAL)
+__all__ = [
+    "BeCoreCallContext",
+    "BeCoreGrpcClient",
+    "from_struct",
+    "to_struct",
+]

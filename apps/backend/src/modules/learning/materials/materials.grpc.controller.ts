@@ -140,9 +140,13 @@ export class MaterialsInternalGrpcController {
         (payload.chunks ?? []).map((chunk: any) => ({
           chunkId: chunk.chunkId,
           content: chunk.content,
+          preview: chunk.preview,
           orderNo: chunk.orderNo,
           tokenCount: chunk.tokenCount,
           embeddingId: chunk.embeddingId,
+          storageKey: chunk.storageKey,
+          pageNo: chunk.pageNo,
+          source: fromProtoStruct(chunk.source),
           checksum: chunk.checksum,
         })),
       )
@@ -179,9 +183,13 @@ export class MaterialsInternalGrpcController {
         (payload.chunks ?? []).map((chunk: any) => ({
           chunkId: chunk.chunkId,
           content: chunk.content,
+          preview: chunk.preview,
           orderNo: chunk.orderNo,
           tokenCount: chunk.tokenCount,
           embeddingId: chunk.embeddingId,
+          storageKey: chunk.storageKey,
+          pageNo: chunk.pageNo,
+          source: fromProtoStruct(chunk.source),
           checksum: chunk.checksum,
         })),
       )

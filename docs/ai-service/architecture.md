@@ -28,7 +28,7 @@ and writes go through BE Core gRPC.
 | `apps/api-gateway` | Public HTTP ingress with Gateway Swagger, Clerk auth, Cloudinary upload, realtime helpers, and BE Core gRPC client. |
 | `apps/backend` | BE Core source of truth with Prisma/PostgreSQL, Clerk/RBAC, jobs, notifications, learning, chat, academic, assessment, storage, and users modules. |
 | `libs/contracts` | Shared DTOs, mappers, gRPC constants, proto path helpers, and domain proto files. |
-| `apps/ai-service` | Python 3.14 foundation under `src/`: gRPC runtime, RabbitMQ workers, shared proto codegen, metadata/errors, BE Core tools, LangGraph runtime, LangChain prompt/model glue, Groq/Ollama providers, Qdrant RAG, Redis memory, and domain profiles. |
+| `apps/ai-service` | Python 3.14 foundation under `src/`: gRPC runtime, RabbitMQ workers, shared proto codegen, metadata/errors, BE Core tools, LangGraph runtime, Groq/Ollama providers, Qdrant RAG, Redis memory, and domain profiles. |
 | Redis/RabbitMQ | Present in local infra and wired into AI Service memory/workers. |
 | Qdrant | Wired as the AI Service vector DB for material chunks. |
 
@@ -93,39 +93,67 @@ flowchart TB
   REASON["Reasoner node"]
   SELECT["ToolSelector node"]
   EXEC["ToolExecutor node"]
+  LOAD["LoadContext node"]
+  MEMORY["Memory node"]
+  INTENT["IntentRouter node"]
+  REWRITE["QueryRewriter node"]
+  RETRIEVE["RetrievalRouter node"]
+  PROMPT["PromptBuilder node"]
+  GUARD["ResponseGuard node"]
   PERSIST["Persistence node"]
   TUTOR["TutorAgent profile"]
   PATH["LearningPathAgent profile"]
   ASSESS["AssessmentMaterialAgent profile"]
   TOOLS["Shared Tool Registry"]
   RAG["RAG / Retriever"]
-  MEMORY["Memory Interface"]
-  PROMPTS["LangChain Prompt Templates"]
+  MEMIF["Memory Interface"]
   MODEL["Groq/Ollama Providers"]
   BE["BE Core gRPC Tools"]
 
   GRPC --> GRAPH
   GRAPH --> PLAN --> REASON --> SELECT --> EXEC
-  EXEC --> TUTOR
+  EXEC --> LOAD --> MEMORY --> INTENT --> REWRITE --> RETRIEVE --> PROMPT
+  PROMPT --> TUTOR
   EXEC --> PATH
   EXEC --> ASSESS
-  TUTOR --> PERSIST
+  TUTOR --> GUARD --> PERSIST
   PATH --> PERSIST
   ASSESS --> PERSIST
   SELECT --> TOOLS
   TOOLS --> BE
-  TOOLS --> RAG
-  GRAPH --> MEMORY
-  GRAPH --> PROMPTS
+  RETRIEVE --> RAG
+  MEMORY --> MEMIF
   GRAPH --> MODEL
 ```
 
 LangGraph owns state transitions, branching, retries, and agent profile routing.
-LangChain is used for prompt templates, tool wrappers, retriever composition,
-message abstractions, and model integration glue.
+TutorAgent prompts are built by explicit orchestrator nodes so retrieval mode,
+memory, and business policy are visible in state. AI Service does not use
+LangChain prompt templates; prompt text is rendered through the local prompt
+registry.
 
 MCP is optional after V1. The first implementation uses a local typed tool
 registry with a contract shape that can later be wrapped by MCP.
+
+## Data Ownership For Material Chunks
+
+- BE Core owns material lifecycle and chunk manifest rows.
+- `material_chunks` is a manifest table, not the primary full-text store. It
+  keeps order, preview, checksum, storage key, source metadata, and embedding ID.
+- Qdrant owns vectors and the full chunk payload used for semantic QA.
+- Ordered summaries read ordered material context from Qdrant scroll in V1; a
+  chunk JSONL object-storage manifest can replace this later without changing
+  public APIs.
+
+## Known Failure Modes And Guards
+
+- Summary questions must not use semantic topK search; they use ordered
+  material chunks.
+- Chat history is sanitized before prompting because corrupted assistant output
+  can otherwise poison later turns.
+- Re-ingest deletes Qdrant points for the material before fresh upsert to avoid
+  stale citations.
+- Material status must be `ready` before RAG retrieval.
 
 ## Public And Internal Flow
 
@@ -163,32 +191,44 @@ apps/ai-service/
   pyproject.toml
   README.md
   src/
-    main.py
     config/
       settings.py
       logging.py
-    api/
-      health.py
-      readiness.py
-      metrics.py
     contracts/
       generate_proto.py
       generated/
     agents/
-      runtime/
+      orchestrator/
         state.py
         graph.py
+        builder.py
+        context.py
+        dependencies.py
+        streaming.py
         planner.py
         reasoner.py
         tool_selector.py
         tool_executor.py
         persistence.py
+        nodes/
+          context.py
+          memory.py
+          intent.py
+          query.py
+          policy.py
+          retrieval.py
+          prompt.py
+          guard.py
+      prompts/
+        registry.py
       profiles/
         tutor.py
         learning_path.py
         assessment_material.py
       clients/
         be_core.py
+        be_core_common.py
+        be_core_domains/
       grpc/
         server.py
         interceptors.py
@@ -202,34 +242,27 @@ apps/ai-service/
         parsers.py
         chunking.py
         embeddings.py
-        vector_store.py
+        vector_stores/
         retrieval.py
         citations.py
       memory/
         session_memory.py
-        interactive_memory.py
-        policy_memory.py
-        retrieval_memory.py
       tools/
         registry.py
-        be_core_tools.py
-        retrieval_tools.py
-        storage_tools.py
-        job_tools.py
       workers/
         worker.py
         material_ingest_worker.py
+        ingestion/
         grading_worker.py
         roadmap_worker.py
+      ops/
+        maintenance.py
       observability/
-        audit.py
         telemetry.py
-        token_usage.py
 ```
 
-Current code implements the V1 baseline subset of this layout. MCP wrappers,
-Gateway SSE translation, and deeper prompt registry files remain later
-hardening work.
+Current code implements this V1 baseline. MCP wrappers and Gateway SSE
+translation remain separate services/hardening work.
 
 ## Contract Boundary
 
@@ -253,8 +286,8 @@ Rules:
 ## Remaining Hardening Backlog
 
 1. Add Gateway SSE translation for `AiOrchestratorService.StreamChatResponse`.
-2. Add prompt registry files and prompt versioning around the current LangChain
-   templates.
+2. Expand prompt registry coverage with file-backed versions if prompts need
+   runtime editing.
 3. Add MCP wrappers only after local typed tools stabilize.
 4. Add broader evaluation and provider-backed smoke coverage when local
    credentials and infra are available.

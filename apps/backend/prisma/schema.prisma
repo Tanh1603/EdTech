@@ -243,9 +243,13 @@ model MaterialChunk {
   id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   materialId  String   @map("material_id") @db.Uuid
   content     String
+  preview     String?
   orderNo     Int      @map("order_no")
   tokenCount  Int?     @map("token_count")
   embeddingId String?  @map("embedding_id")
+  storageKey  String?  @map("storage_key")
+  pageNo      Int?     @map("page_no")
+  source      Json?
   checksum    String?  @map("check_sum")
   createdAt   DateTime @default(now()) @map("created_at")
 

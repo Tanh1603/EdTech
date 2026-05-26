@@ -36,6 +36,18 @@ class RuntimeState(TypedDict, total=False):
     reasoning: dict[str, Any]
     tool_calls: list[ToolCall]
     tool_results: dict[str, Any]
+    current_message: str
+    clean_history: str
+    learning_context: dict[str, Any]
+    intent: str
+    standalone_question: str
+    retrieval_mode: str
+    retrieved_context: str
+    rag_scores: list[float]
+    response_warnings: list[str]
+    memory_context: dict[str, Any]
+    business_policy: str
+    prompt_text: str
     retrieval_results: list[Any]
     citations: list[dict[str, Any]]
     content: str

@@ -9,17 +9,24 @@ core health, gRPC, and shared multi-agent runtime paths are stable.
 
 - Add structured JSON logs with request, correlation, job, agent profile, graph
   node, tool, model, vector, latency, and token metadata.
+- Add TutorAgent log steps for `context.load`, `memory.load`,
+  `intent.detected`, `query.rewritten`, `retrieval.summary`,
+  `retrieval.semantic`, `prompt.built`, `model.stream`,
+  `response.sanitized`, and `persistence.saved`.
+- Add material ingest log steps for `qdrant.delete_material`,
+  `qdrant.upsert.batch`, and `chunk_manifest.write.batch`.
 - Add OpenTelemetry spans for gRPC, LangGraph nodes, worker jobs, tool calls,
   model calls, and vector search.
 - Add Qdrant and AI Service profile to `docker-compose.yml` after runtime
   endpoints are stable.
-- Ensure `/health` and `/ready` remain useful in compose.
+- Do not log full prompts or chunk content by default.
 
 ## Acceptance
 
 - Local compose infra starts with required services.
-- AI Service `/health` and `/ready` work in compose.
 - Logs include `requestId`, `correlationId`, `agentProfile`, and `graphNode`.
+- Logs expose intent, retrieval mode, material status, chunk count, and top
+  retrieval score without private prompt/body content.
 - Traces can connect gRPC requests, LangGraph nodes, worker jobs, model calls,
   and vector search.
 

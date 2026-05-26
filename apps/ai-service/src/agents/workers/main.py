@@ -1,7 +1,7 @@
 from typing import Any
 
 from agents.clients.be_core import BeCoreGrpcClient
-from agents.runtime.factory import create_agent_runtime
+from agents.orchestrator.factory import create_agent_runtime
 from agents.workers.grading_worker import GradingWorker
 from agents.workers.material_ingest_worker import MaterialIngestWorker
 from agents.workers.rabbitmq import RabbitMqWorkerRunner

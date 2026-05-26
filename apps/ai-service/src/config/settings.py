@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     qdrant_prefer_grpc: bool = Field(default=True, alias="QDRANT_PREFER_GRPC")
     qdrant_api_key: str | None = Field(default=None, alias="QDRANT_API_KEY")
     rag_top_k_default: int = Field(default=5, alias="RAG_TOP_K_DEFAULT")
+    rag_min_score: float = Field(default=0.2, alias="RAG_MIN_SCORE")
+    rag_summary_chunk_limit: int = Field(default=24, alias="RAG_SUMMARY_CHUNK_LIMIT")
     rabbitmq_url: str = Field(alias="RABBITMQ_URL")
     rabbitmq_exchange: str = Field(default="edtech.jobs", alias="RABBITMQ_EXCHANGE")
     rabbitmq_prefetch: int = Field(default=10, alias="RABBITMQ_PREFETCH")

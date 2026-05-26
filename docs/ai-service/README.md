@@ -8,10 +8,10 @@ memory, tool execution, and AI workers.
 
 - `apps/ai-service` now contains the Python 3.14 package structure, Nx targets,
   gRPC/codegen helpers, metadata and
-  error utilities, a consolidated `agents/` runtime package for real
-  Groq/Ollama providers, typed tools, Qdrant RAG, Redis session memory,
-  RabbitMQ workers, a LangGraph/LangChain shared runtime, and generated Python
-  protobuf modules emitted from shared lib contracts.
+  error utilities, a consolidated `agents/` package for real Groq/Ollama
+  providers, typed tools, Qdrant RAG, Redis session memory, RabbitMQ workers, a
+  LangGraph-only orchestrator, prompt registry, and generated Python protobuf
+  modules emitted from shared lib contracts.
 - MCP server and Gateway SSE bridge remain outside V1. AI Service exposes gRPC
   server streaming for chat tokens; Gateway translates that stream to
   browser-facing SSE.

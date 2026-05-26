@@ -20,8 +20,9 @@ Planner, reasoner, and tool selector are runtime nodes, not product agents:
 - Tool selector chooses typed tools and records audit metadata.
 
 LangGraph is the target runtime for branching, retries, durable state shape, and
-multi-profile routing. LangChain is used around the graph for prompt templates,
-tool wrappers, retriever composition, and model/message glue.
+multi-profile routing. TutorAgent V1 keeps prompt and retrieval policy in local
+orchestrator nodes so the execution loop is auditable; LangGraph is the only
+agent orchestration runtime.
 
 ## Agent Profiles
 
@@ -51,10 +52,19 @@ Chunking defaults:
 
 Retrieval defaults:
 
-- Start with top-k semantic search.
-- Add reranking only after fixtures show precision problems.
+- Summary requests use ordered material chunks, not semantic search.
+- QA requests use top-k semantic search with a minimum score threshold.
+- Follow-up requests are rewritten into standalone questions before retrieval.
+- Add reranking only after local evaluation data shows precision problems.
 - Every generated answer that uses material context should include citation
   references to known chunk IDs.
+
+Storage defaults:
+
+- BE Core `material_chunks` stores manifest/preview only.
+- Qdrant payload stores full chunk text for semantic QA.
+- Ordered summaries use Qdrant scroll by `materialId` in V1; object-storage
+  JSONL can replace this later for very large materials.
 
 Qdrant payload example:
 
@@ -104,7 +114,7 @@ possible:
 - Groq-backed LLM checks run only when `GROQ_API_KEY` is available.
 - Ollama-backed embedding checks run only when local Ollama has the configured
   embedding model pulled.
-- RAG citation checks point to known fixture chunks.
+- RAG citation checks point to known material chunks.
 - Grading rubric checks use stable model output.
 - Token/latency metrics are recorded as structured records, not provider bills.
 

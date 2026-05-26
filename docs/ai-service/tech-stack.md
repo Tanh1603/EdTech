@@ -18,7 +18,7 @@ ecosystem without becoming a separate source of LMS truth.
 | Capability | Choice | V1 Rule |
 | --- | --- | --- |
 | Orchestration | LangGraph `StateGraph` | Use one shared graph runtime with routing to three domain agent profiles. |
-| Agent/profile glue | LangChain | Prompt templates, tool wrappers, retriever composition, messages, and model adapter glue. |
+| Agent/profile glue | Local orchestrator nodes | TutorAgent uses explicit LangGraph nodes for prompt, memory, intent, and retrieval policy. LangChain is not a runtime dependency. |
 | Tool calling | Local typed tool registry | MCP is optional after V1; keep tools auditable and typed first. |
 | LLM provider | Groq SDK behind provider abstraction | Use fast Groq-hosted chat models now while keeping model/provider swappable. |
 | Embeddings | Ollama SDK behind provider abstraction | Use free local embeddings for development and RAG ingestion without API cost. |
@@ -44,7 +44,7 @@ agents.
 | Vector DB | Qdrant gRPC | Production-like semantic search and vector upsert/delete. |
 | Short-lived memory | Redis | Agent scratchpad, session context, execution state, token budget counters. |
 | Durable chat history | BE Core PostgreSQL | User-visible conversation state must be stored through BE Core. |
-| RAG metadata | BE Core `MaterialChunk` + Qdrant payload | BE Core owns material/chunk records; Qdrant owns vectors and payload index. |
+| RAG metadata | BE Core `MaterialChunk` manifest + Qdrant payload | BE Core owns material/chunk lifecycle metadata; Qdrant owns vectors and full chunk payload for retrieval. |
 
 ## Async Work
 
@@ -61,8 +61,13 @@ agents.
 | PDF parsing | `pypdf` |
 | DOCX parsing | `python-docx` |
 | PPTX parsing | `python-pptx` |
-| Complex parsing | Add Unstructured only when fixture coverage proves it is needed. |
+| Complex parsing | Add Unstructured only when local parsing coverage proves it is needed. |
 | Object storage | Cloudinary now; S3/R2-compatible abstraction later. |
+
+`material_chunks` stores manifest/preview data only. Full material text should
+not be duplicated into PostgreSQL for every chunk; it belongs in Qdrant payload
+for semantic QA and, if needed later, a JSONL object-storage manifest for
+ordered summaries.
 
 ## Observability And Security
 

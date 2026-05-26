@@ -1,6 +1,5 @@
 import json
-from dataclasses import dataclass, field
-from time import time
+from dataclasses import dataclass
 from typing import Any, Protocol
 
 from redis import Redis
@@ -36,47 +35,6 @@ class MemoryKeyBuilder:
 
     def job_state(self, job_id: str) -> str:
         return f"{self.prefix}:job:{job_id}:state"
-
-
-@dataclass
-class MemoryValue:
-    value: Any
-    expires_at: float | None
-
-
-@dataclass
-class InMemorySessionMemory:
-    values: dict[str, MemoryValue] = field(default_factory=dict)
-
-    def set(self, key: str, value: Any, ttl_seconds: int | None = None) -> None:
-        expires_at = time() + ttl_seconds if ttl_seconds else None
-        self.values[key] = MemoryValue(value=value, expires_at=expires_at)
-
-    def get(self, key: str) -> Any | None:
-        item = self.values.get(key)
-        if not item:
-            return None
-        if item.expires_at and item.expires_at < time():
-            self.values.pop(key, None)
-            return None
-        return item.value
-
-    def delete(self, key: str) -> None:
-        self.values.pop(key, None)
-
-    def increment(
-        self,
-        key: str,
-        amount: int = 1,
-        ttl_seconds: int | None = None,
-    ) -> int:
-        item = self.values.get(key)
-        current_expires_at = item.expires_at if item else None
-        current = int(self.get(key) or 0) + amount
-        expires_at = time() + ttl_seconds if ttl_seconds else current_expires_at
-        self.values[key] = MemoryValue(value=current, expires_at=expires_at)
-        return current
-
 
 class RedisSessionMemory:
     def __init__(self, redis_url: str) -> None:

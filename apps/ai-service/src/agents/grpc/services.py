@@ -6,10 +6,10 @@ from typing import Any
 
 from agents.clients.be_core import BeCoreCallContext, BeCoreGrpcClient, from_struct
 from agents.grpc.metadata import RequestMetadata, parse_metadata
+from agents.orchestrator.factory import create_agent_runtime
+from agents.orchestrator.graph import AgentRuntime
 from agents.rag.factory import create_retriever
 from agents.rag.retrieval import Retriever
-from agents.runtime.factory import create_agent_runtime
-from agents.runtime.graph import AgentRuntime
 from config.settings import Settings, get_settings
 
 

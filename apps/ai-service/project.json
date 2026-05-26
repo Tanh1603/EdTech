@@ -21,6 +21,13 @@
         "command": "uv run python -c \"import sys; sys.path.insert(0, 'src'); from agents.workers.main import main; main()\""
       }
     },
+    "maintenance": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/ai-service",
+        "command": "uv run python -c \"import sys; sys.path.insert(0, 'src'); from agents.ops.maintenance import main; main()\""
+      }
+    },
     "lint": {
       "executor": "nx:run-commands",
       "options": {

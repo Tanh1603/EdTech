@@ -9,5 +9,5 @@ def citation_for(chunk: TextChunk) -> dict[str, Any]:
         "chunkId": chunk.chunk_id,
         "title": chunk.title,
         "orderNo": chunk.order_no,
-        "source": {"type": "text-fixture"},
+        "source": {"type": "material-text"},
     }

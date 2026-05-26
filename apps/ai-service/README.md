@@ -6,10 +6,10 @@ Internal AI orchestration, RAG, and worker service for EdTech.
 
 This app has the Python 3.14 foundation: package structure, Nx targets,
 gRPC/codegen helpers, metadata and error
-utilities, and a consolidated `agents/` runtime package for real Groq/Ollama
-providers, typed tools, Qdrant-backed RAG primitives, Redis session memory, worker
-foundations, and a LangGraph/LangChain shared runtime for TutorAgent,
-LearningPathAgent, and AssessmentMaterialAgent.
+utilities, and a consolidated `agents/` package for real Groq/Ollama providers,
+typed tools, Qdrant-backed RAG primitives, Redis session memory, RabbitMQ
+workers, and a LangGraph-only orchestrator for TutorAgent, LearningPathAgent,
+and AssessmentMaterialAgent.
 
 It uses `libs/contracts/proto` as the only protobuf source of truth. Generated
 Python modules are emitted from that lib into `src/contracts/generated`

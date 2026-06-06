@@ -50,6 +50,13 @@
         "command": "uv run python -m compileall src"
       }
     },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/ai-service",
+        "command": "uv run python -m unittest discover -s tests"
+      }
+    },
     "proto:generate": {
       "executor": "nx:run-commands",
       "outputs": ["{projectRoot}/src/contracts/generated"],

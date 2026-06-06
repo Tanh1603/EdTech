@@ -358,7 +358,11 @@ export class AssessmentsSharedService {
       include: {
         student: { select: userSummarySelect },
         result: true,
-        exam: true,
+        exam: {
+          include: {
+            questions: true,
+          },
+        },
       },
     });
   }
@@ -462,13 +466,13 @@ export class AssessmentsSharedService {
         submissionId,
         score: payload.score,
         feedback: payload.feedback as Prisma.InputJsonValue,
-        gradedByAi: false,
+        gradedByAi: payload.gradedByAi ?? false,
         gradedAt: new Date(),
       },
       update: {
         score: payload.score,
         feedback: payload.feedback as Prisma.InputJsonValue,
-        gradedByAi: false,
+        gradedByAi: payload.gradedByAi ?? false,
         gradedAt: new Date(),
       },
       include: {

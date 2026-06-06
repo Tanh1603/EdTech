@@ -9,7 +9,7 @@ from typing import Any
 
 import pika
 
-from agents.workers.worker import JobMessage
+from agents.workers.worker import GrpcCommunicationError, JobMessage
 from config.settings import Settings, get_settings
 
 JobHandler = Callable[[JobMessage], dict[str, Any]]
@@ -108,28 +108,50 @@ class RabbitMqWorkerRunner:
                     },
                 )
                 handler(message)
-            except Exception:
-                logger.exception(
-                    "RabbitMQ message failed",
+            except GrpcCommunicationError as error:
+                logger.warning(
+                    "RabbitMQ job processing failed due to Backend gRPC communication error. Requeueing.",
                     extra={
                         "component": "rabbitmq.worker",
-                        "step": "consume.nack",
+                        "step": "consume.requeue",
+                        "jobId": message.job_id if message else None,
+                        "jobType": message.type if message else None,
+                        "error": str(error),
+                    },
+                )
+                try:
+                    channel.basic_nack(delivery_tag=_method.delivery_tag, requeue=True)
+                except Exception:
+                    logger.exception(
+                        "RabbitMQ requeue nack failed",
+                        extra={
+                            "component": "rabbitmq.worker",
+                            "step": "consume.requeue_failed",
+                            "jobId": message.job_id if message else None,
+                        },
+                    )
+                    raise
+                return
+            except Exception:
+                logger.exception(
+                    "RabbitMQ message failed, but status was recorded. Acknowledging message.",
+                    extra={
+                        "component": "rabbitmq.worker",
+                        "step": "consume.ack_on_failure",
                         "jobId": message.job_id if message else None,
                         "jobType": message.type if message else None,
                         "materialId": message.resource_id if message else None,
                     },
                 )
                 try:
-                    channel.basic_nack(delivery_tag=_method.delivery_tag, requeue=False)
+                    channel.basic_ack(delivery_tag=_method.delivery_tag)
                 except Exception:
                     logger.exception(
-                        "RabbitMQ nack failed",
+                        "RabbitMQ ack on failure failed",
                         extra={
                             "component": "rabbitmq.worker",
-                            "step": "consume.nack_failed",
+                            "step": "consume.ack_on_failure_failed",
                             "jobId": message.job_id if message else None,
-                            "jobType": message.type if message else None,
-                            "materialId": message.resource_id if message else None,
                         },
                     )
                     raise

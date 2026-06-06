@@ -26,15 +26,31 @@ class AssessmentMaterialAgentProfile:
             },
         )
         response = self.llm_provider.generate(prompt)
-        grading = parse_json_object(response.text) or {
-            "feedback": response.text,
-            "source": "ai-service",
+        grading = parse_json_object(response.text) or {}
+        
+        # Prepare payload matching ManualGradeDto structure
+        score = float(grading.get("score") if grading.get("score") is not None else 0.0)
+        feedback = grading.get("feedback")
+        if not isinstance(feedback, dict):
+            feedback = {
+                "comment": str(feedback or response.text),
+                "perQuestionFeedback": {}
+            }
+        
+        grading_payload = {
+            "score": score,
+            "feedback": feedback,
+            "gradedByAi": True,
         }
+
         result = {}
         if context is not None and submission_id:
             result = self.registry.call(
                 "assessments.manual_grade",
-                {"submissionId": submission_id, "body": grading},
+                {
+                    "submissionId": submission_id,
+                    "body": grading_payload,
+                },
                 context,
             )
 

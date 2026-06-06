@@ -47,6 +47,11 @@ class JobMessage:
 JobHandler = Callable[[JobMessage], dict[str, Any]]
 
 
+class GrpcCommunicationError(Exception):
+    """Ném ra khi không thể kết nối tới gRPC của Backend Core để cập nhật trạng thái Job."""
+    pass
+
+
 class Worker:
     def __init__(self, be_core: BeCoreGrpcClient) -> None:
         self.be_core = be_core
@@ -67,7 +72,12 @@ class Worker:
                 "correlationId": message.correlation_id,
             },
         )
-        self.be_core.mark_job_running(message.job_id)
+        try:
+            self.be_core.mark_job_running(message.job_id)
+        except Exception as error:
+            logger.error(f"Failed to report job running to Backend Core: {error}")
+            raise GrpcCommunicationError(str(error)) from error
+
         try:
             result = handler(message)
         except Exception as error:
@@ -85,9 +95,19 @@ class Worker:
                     "durationMs": duration_ms,
                 },
             )
-            self.be_core.mark_job_failed(message.job_id, {"message": str(error)})
+            try:
+                self.be_core.mark_job_failed(message.job_id, {"message": str(error)})
+            except Exception as grpc_err:
+                logger.error(f"Failed to report job failure to Backend Core: {grpc_err}")
+                raise GrpcCommunicationError(str(error)) from grpc_err
             raise
-        self.be_core.mark_job_succeeded(message.job_id, result)
+
+        try:
+            self.be_core.mark_job_succeeded(message.job_id, result)
+        except Exception as grpc_err:
+            logger.error(f"Failed to report job success to Backend Core: {grpc_err}")
+            raise GrpcCommunicationError(str(grpc_err)) from grpc_err
+
         duration_ms = round((perf_counter() - started) * 1000)
         logger.info(
             "Job processing succeeded",

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsNumber, IsObject, Min } from 'class-validator';
+import { IsArray, IsBoolean, IsNumber, IsObject, IsOptional, Min } from 'class-validator';
 
 export class AnswersDto {
   @ApiProperty({ example: [{ questionId: 'uuid', answer: '2x' }] })
@@ -16,4 +16,9 @@ export class ManualGradeDto {
   @ApiProperty({ example: { comment: 'Well done' } })
   @IsObject()
   feedback!: Record<string, any>;
+
+  @ApiProperty({ example: true, required: false })
+  @IsOptional()
+  @IsBoolean()
+  gradedByAi?: boolean;
 }

@@ -46,6 +46,10 @@ def _load_generated_modules() -> dict[str, Any]:
         "submissions_pb2_grpc": import_module("assessments.submissions_pb2_grpc"),
         "results_pb2": import_module("assessments.results_pb2"),
         "results_pb2_grpc": import_module("assessments.results_pb2_grpc"),
+        "exams_pb2": import_module("assessments.exams_pb2"),
+        "exams_pb2_grpc": import_module("assessments.exams_pb2_grpc"),
+        "questions_pb2": import_module("assessments.questions_pb2"),
+        "questions_pb2_grpc": import_module("assessments.questions_pb2_grpc"),
         "roadmaps_pb2": import_module("learning.roadmaps_pb2"),
         "roadmaps_pb2_grpc": import_module("learning.roadmaps_pb2_grpc"),
         "mastery_pb2": import_module("learning.mastery_pb2"),
@@ -76,6 +80,8 @@ class BeCoreGrpcClient(
         self._storage_pb2 = modules["storage_pb2"]
         self._submissions_pb2 = modules["submissions_pb2"]
         self._results_pb2 = modules["results_pb2"]
+        self._exams_pb2 = modules["exams_pb2"]
+        self._questions_pb2 = modules["questions_pb2"]
         self._roadmaps_pb2 = modules["roadmaps_pb2"]
         self._mastery_pb2 = modules["mastery_pb2"]
         self._common_json_pb2 = modules["common_json_pb2"]
@@ -99,6 +105,12 @@ class BeCoreGrpcClient(
         self.assessment_results = modules[
             "results_pb2_grpc"
         ].AssessmentResultsServiceStub(self._channel)
+        self.assessment_exams = modules["exams_pb2_grpc"].AssessmentExamsServiceStub(
+            self._channel
+        )
+        self.assessment_questions = modules[
+            "questions_pb2_grpc"
+        ].AssessmentQuestionsServiceStub(self._channel)
         self.roadmaps = modules["roadmaps_pb2_grpc"].LearningRoadmapsServiceStub(
             self._channel
         )

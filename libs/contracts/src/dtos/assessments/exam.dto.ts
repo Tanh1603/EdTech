@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsOptional, IsString, IsUUID, Min, MinLength } from 'class-validator';
+import { IsInt, IsOptional, IsString, IsUUID, Max, Min, MinLength } from 'class-validator';
 
 export class CreateExamDto {
   @ApiProperty({ format: 'uuid' })
@@ -39,4 +39,32 @@ export class UpdateExamDto {
   @IsInt()
   @Min(1)
   duration?: number;
+}
+
+export class GenerateExamDto extends CreateExamDto {
+  @ApiProperty({ example: 'Định luật bảo toàn động lượng' })
+  @IsString()
+  @MinLength(2)
+  topic!: string;
+
+  @ApiPropertyOptional({ example: 'medium', enum: ['easy', 'medium', 'hard'] })
+  @IsOptional()
+  @IsString()
+  difficulty?: string;
+
+  @ApiPropertyOptional({ example: 10, minimum: 1, maximum: 20 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(20)
+  numberOfQuestions?: number;
+
+  @ApiPropertyOptional({ example: ['mcq', 'true_false'] })
+  @IsOptional()
+  @IsString({ each: true })
+  questionTypes?: string[];
+
+  @ApiProperty({ format: 'uuid' })
+  @IsUUID()
+  materialId!: string;
 }

@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsInt, IsNumber, IsObject, IsOptional, IsString, Min, MinLength } from 'class-validator';
+import { IsArray, IsInt, IsNumber, IsObject, IsOptional, IsString, IsUUID, Max, Min, MinLength } from 'class-validator';
 
 export class CreateQuestionDto {
   @ApiProperty({ example: 'multiple_choice' })
@@ -68,4 +68,32 @@ export class ReorderQuestionsDto {
   })
   @IsArray()
   items!: { questionId: string; orderNo: number }[];
+}
+
+export class GenerateQuestionsDto {
+  @ApiProperty({ example: 'Định luật bảo toàn động lượng' })
+  @IsString()
+  @MinLength(2)
+  topic!: string;
+
+  @ApiPropertyOptional({ example: 'medium', enum: ['easy', 'medium', 'hard'] })
+  @IsOptional()
+  @IsString()
+  difficulty?: string;
+
+  @ApiPropertyOptional({ example: 5, minimum: 1, maximum: 20 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(20)
+  numberOfQuestions?: number;
+
+  @ApiPropertyOptional({ example: ['mcq', 'true_false'] })
+  @IsOptional()
+  @IsString({ each: true })
+  questionTypes?: string[];
+
+  @ApiProperty({ format: 'uuid' })
+  @IsUUID()
+  materialId!: string;
 }

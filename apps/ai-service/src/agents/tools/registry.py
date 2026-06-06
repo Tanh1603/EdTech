@@ -136,6 +136,22 @@ def create_default_registry(be_core_client: BeCoreGrpcClient) -> ToolRegistry:
         ),
     )
     registry.register(
+        "questions.create",
+        lambda payload, context: be_core_client.create_question(
+            required_str(payload, "examId"),
+            required_dict(payload, "body"),
+            context.to_be_core_context(),
+        ),
+    )
+    registry.register(
+        "exams.update",
+        lambda payload, context: be_core_client.update_exam(
+            required_str(payload, "examId"),
+            required_dict(payload, "body"),
+            context.to_be_core_context(),
+        ),
+    )
+    registry.register(
         "learning.mastery",
         lambda payload, context: be_core_client.get_mastery_by_class(
             optional_str(payload, "classId") or "",

@@ -107,6 +107,30 @@ class PromptRegistry:
                     "Options: $options\n"
                 ),
             ),
+            "exam_generation.prompt": PromptTemplate(
+                "v1",
+                Template(
+                    "SYSTEM:\n"
+                    "You are ExamGenerationAgent. Return a JSON array of questions "
+                    "for an exam on the topic '$topic'.\n"
+                    "Difficulty level: $difficulty\n"
+                    "Number of questions to generate: $numberOfQuestions\n"
+                    "Allowed question types: $questionTypes\n\n"
+                    "Reference material content (RAG Context):\n"
+                    "$materialContext\n\n"
+                    "For each question, output a JSON object containing:\n"
+                    "- type: must be one of ['mcq', 'true_false', 'short_answer', 'essay']\n"
+                    "- prompt: the question prompt text in Vietnamese\n"
+                    "- options: an array of strings for MCQ, or null/empty for other types\n"
+                    "- answerKey: the correct answer. Index (integer 0-based) for MCQ, "
+                    "boolean (true/false) for true_false, or string/null for others\n"
+                    "- explanation: explanation in Vietnamese of why the answer is correct\n"
+                    "- points: float value (default: 1.0)\n"
+                    "- orderNo: 1-based order index of the question\n\n"
+                    "Format the output strictly as a JSON list of question objects. "
+                    "Do not include markdown code block backticks, just the raw JSON."
+                ),
+            ),
         }
 
     def render(self, key: str, values: dict[str, Any] | None = None) -> str:

@@ -28,7 +28,7 @@ export class AssessmentsSharedService {
   ) {}
 
   async createExam(
-    payload: CreateExamDto,
+    payload: CreateExamDto & { generateByAi?: boolean; topic?: string; difficulty?: string; numberOfQuestions?: number; questionTypes?: string[]; materialId?: string },
     userId: string,
     roles: UserRole[] = [],
   ) {
@@ -38,8 +38,17 @@ export class AssessmentsSharedService {
       roles,
     );
 
-    return this.prisma.exam.create({
-      data: { ...payload, createdBy: userId },
+    const generateByAi = payload.generateByAi ?? false;
+
+    const exam = await this.prisma.exam.create({
+      data: {
+        classId: payload.classId,
+        title: payload.title,
+        description: payload.description,
+        duration: payload.duration,
+        createdBy: userId,
+        status: ExamStatus.draft,
+      },
       select: {
         id: true,
         title: true,
@@ -48,6 +57,35 @@ export class AssessmentsSharedService {
         creator: { select: userSummarySelect },
       },
     });
+
+    if (generateByAi) {
+      const job = await this.jobsService.enqueue({
+        type: JobTypes.aiExamGenerate,
+        payload: {
+          examId: exam.id,
+          classId: payload.classId,
+          topic: payload.topic,
+          difficulty: payload.difficulty ?? 'medium',
+          numberOfQuestions: payload.numberOfQuestions ?? 10,
+          questionTypes: payload.questionTypes ?? ['mcq', 'true_false', 'short_answer', 'essay'],
+          materialId: payload.materialId,
+        },
+        createdBy: userId,
+        resourceType: 'exam',
+        resourceId: exam.id,
+      });
+
+      return {
+        ...exam,
+        job: {
+          jobId: job.jobId,
+          status: job.status,
+          type: job.type,
+        },
+      };
+    }
+
+    return exam;
   }
 
   async getExams(
@@ -175,11 +213,39 @@ export class AssessmentsSharedService {
 
   async createQuestion(
     examId: string,
-    payload: CreateQuestionDto,
+    payload: CreateQuestionDto & { generateByAi?: boolean; topic?: string; difficulty?: string; numberOfQuestions?: number; questionTypes?: string[]; materialId?: string },
     userId: string,
     roles: UserRole[] = [],
   ) {
     await this.accessPolicy.assertExamManageAccess(examId, userId, roles);
+
+    const generateByAi = payload.generateByAi ?? false;
+
+    if (generateByAi) {
+      const job = await this.jobsService.enqueue({
+        type: JobTypes.aiExamGenerate,
+        payload: {
+          examId,
+          topic: payload.topic,
+          difficulty: payload.difficulty ?? 'medium',
+          numberOfQuestions: payload.numberOfQuestions ?? 5,
+          questionTypes: payload.questionTypes ?? ['mcq', 'true_false', 'short_answer', 'essay'],
+          materialId: payload.materialId,
+        },
+        createdBy: userId,
+        resourceType: 'exam',
+        resourceId: examId,
+      });
+
+      return {
+        examId,
+        job: {
+          jobId: job.jobId,
+          status: job.status,
+          type: job.type,
+        },
+      };
+    }
 
     return this.prisma.question.create({
       data: {

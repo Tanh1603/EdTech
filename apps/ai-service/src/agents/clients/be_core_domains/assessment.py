@@ -30,3 +30,27 @@ class AssessmentClientMixin:
             body=to_struct(body),
         )
         return self._call_object(self.assessment_results.ManualGrade, request, context, True)
+
+    def create_question(
+        self,
+        exam_id: str,
+        body: dict[str, Any],
+        context: BeCoreCallContext,
+    ) -> dict[str, Any]:
+        request = self._questions_pb2.QuestionCreateRequest(
+            exam_id=exam_id,
+            body=to_struct(body),
+        )
+        return self._call_object(self.assessment_questions.CreateQuestion, request, context, True)
+
+    def update_exam(
+        self,
+        exam_id: str,
+        body: dict[str, Any],
+        context: BeCoreCallContext,
+    ) -> dict[str, Any]:
+        request = self._exams_pb2.ExamUpdateRequest(
+            exam_id=exam_id,
+            body=to_struct(body),
+        )
+        return self._call_object(self.assessment_exams.UpdateExam, request, context, True)

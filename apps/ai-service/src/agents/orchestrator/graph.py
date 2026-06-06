@@ -11,6 +11,7 @@ from agents.orchestrator.dependencies import RuntimeDependencies
 from agents.orchestrator.state import RuntimeState
 from agents.orchestrator.streaming import stream_tutor_response
 from agents.profiles.assessment_material import AssessmentMaterialAgentProfile
+from agents.profiles.exam_generator import ExamGenerationAgentProfile
 from agents.profiles.learning_path import LearningPathAgentProfile
 from agents.profiles.tutor import TutorAgentProfile
 
@@ -28,6 +29,10 @@ class AgentRuntime:
             dependencies.registry,
         )
         self.assessment_material = AssessmentMaterialAgentProfile(
+            dependencies.llm_provider,
+            dependencies.registry,
+        )
+        self.exam_generator = ExamGenerationAgentProfile(
             dependencies.llm_provider,
             dependencies.registry,
         )
@@ -110,6 +115,24 @@ class AgentRuntime:
             }
         )
 
+    def generate_exam(
+        self,
+        exam_id: str,
+        context: BeCoreCallContext,
+        options: dict[str, Any] | None = None,
+    ) -> RuntimeState:
+        return self.invoke(
+            {
+                "action": "generate_exam",
+                "profile": "exam_generator",
+                "resource_id": exam_id,
+                "job_id": context.job_id or "",
+                "options": options or {},
+                "request_context": context,
+                "tool_context": tool_context(context),
+            }
+        )
+
     def _profile_node(self, state: RuntimeState) -> RuntimeState:
         profile = state.get("profile", "tutor")
         with span(
@@ -120,4 +143,6 @@ class AgentRuntime:
                 return self.learning_path.run(state)
             if profile == "assessment_material":
                 return self.assessment_material.run(state)
+            if profile == "exam_generator":
+                return self.exam_generator.run(state)
             return self.tutor.run(state)

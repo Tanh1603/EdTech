@@ -6,6 +6,8 @@ import {
   AssessmentRealtimeEvents,
   CreateExamDto,
   CreateQuestionDto,
+  GenerateExamDto,
+  GenerateQuestionsDto,
   ExamsQueryDto,
   ManualGradeDto,
   ReorderQuestionsDto,
@@ -34,6 +36,22 @@ export class AssessmentExamsGatewayController {
   @ApiBody({ type: CreateExamDto })
   async createExam(@Body() body: CreateExamDto, @Req() req: RequestWithContext) {
     const result = await this.object(this.grpc.assessmentExams.createExam({ body: toProtoStruct(body) }, this.metadata.build(req)));
+    this.realtime.publishExamEvent(
+      RealtimeRooms.class(body.classId),
+      AssessmentRealtimeEvents.examCreated,
+      result,
+      this.getPublishContext(req),
+    );
+    return result;
+  }
+
+  @Post('generate')
+  @ApiOperation({ summary: 'Generate AI exam with questions' })
+  @ApiBody({ type: GenerateExamDto })
+  async generateExam(@Body() body: GenerateExamDto, @Req() req: RequestWithContext) {
+    const result = await this.object(this.grpc.assessmentExams.createExam({
+      body: toProtoStruct({ ...body, generateByAi: true }),
+    }, this.metadata.build(req)));
     this.realtime.publishExamEvent(
       RealtimeRooms.class(body.classId),
       AssessmentRealtimeEvents.examCreated,
@@ -152,6 +170,24 @@ export class AssessmentsGatewayController {
   @ApiBody({ type: CreateQuestionDto })
   async createQuestion(@Param('examId') examId: string, @Body() body: CreateQuestionDto, @Req() req: RequestWithContext) {
     const result = await this.object(this.grpc.assessmentQuestions.createQuestion({ examId, body: toProtoStruct(body) }, this.metadata.build(req)));
+    this.realtime.publishQuestionEvent(
+      RealtimeRooms.exam(examId),
+      AssessmentRealtimeEvents.questionCreated,
+      result,
+      this.getPublishContext(req),
+    );
+    return result;
+  }
+
+  @Post('exams/:examId/questions/generate')
+  @ApiOperation({ summary: 'Generate AI questions for an existing exam' })
+  @ApiParam({ name: 'examId', format: 'uuid' })
+  @ApiBody({ type: GenerateQuestionsDto })
+  async generateQuestions(@Param('examId') examId: string, @Body() body: GenerateQuestionsDto, @Req() req: RequestWithContext) {
+    const result = await this.object(this.grpc.assessmentQuestions.createQuestion({
+      examId,
+      body: toProtoStruct({ ...body, generateByAi: true }),
+    }, this.metadata.build(req)));
     this.realtime.publishQuestionEvent(
       RealtimeRooms.exam(examId),
       AssessmentRealtimeEvents.questionCreated,

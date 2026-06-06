@@ -94,6 +94,8 @@ export const GrpcMethods = {
     clearMaterialChunks: 'ClearMaterialChunks',
     appendMaterialChunks: 'AppendMaterialChunks',
     updateMaterialStatus: 'UpdateMaterialStatus',
+    updateMaterialSummary: 'UpdateMaterialSummary',
+    generateMaterialSummary: 'GenerateMaterialSummary',
   },
   learningRoadmaps: {
     createRoadmap: 'CreateRoadmap',

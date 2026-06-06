@@ -21,6 +21,7 @@ JOB_QUEUES = {
     "ai.roadmap.generate": "edtech.ai.roadmap.generate",
     "ai.exam.generate": "edtech.ai.exam.generate",
     "ai.chat.title.generate": "edtech.ai.chat.title.generate",
+    "ai.material.summarize": "edtech.ai.material.summarize",
 }
 
 

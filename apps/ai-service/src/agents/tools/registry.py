@@ -89,6 +89,14 @@ def create_default_registry(be_core_client: BeCoreGrpcClient) -> ToolRegistry:
         ),
     )
     registry.register(
+        "materials.update_summary",
+        lambda payload, context: be_core_client.update_material_summary(
+            required_str(payload, "materialId"),
+            required_str(payload, "summary"),
+            context.to_be_core_context(),
+        ),
+    )
+    registry.register(
         "chat.message",
         lambda payload, context: be_core_client.get_message_detail(
             required_str(payload, "messageId"),

@@ -75,6 +75,18 @@ class MaterialsClientMixin:
         )
         return self._call_object(self.materials.UpdateMaterialStatus, request, None, False)
 
+    def update_material_summary(
+        self,
+        material_id: str,
+        summary: str,
+        context: BeCoreCallContext,
+    ) -> dict[str, Any]:
+        request = self._materials_pb2.UpdateMaterialSummaryRequest(
+            material_id=material_id,
+            summary=summary,
+        )
+        return self._call_object(self.materials.UpdateMaterialSummary, request, context, True)
+
     def _chunk_writes(self, chunks: list[dict[str, Any]]) -> list[Any]:
         writes = []
         for chunk in chunks:

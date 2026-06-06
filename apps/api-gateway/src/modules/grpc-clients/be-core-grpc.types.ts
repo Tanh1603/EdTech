@@ -108,6 +108,8 @@ export interface LearningMaterialsGrpc {
   getChunkDetail: GrpcCall;
   replaceMaterialChunks: GrpcCall;
   updateMaterialStatus: GrpcCall;
+  updateMaterialSummary: GrpcCall;
+  generateMaterialSummary: GrpcCall;
 }
 
 export interface LearningRoadmapsGrpc {

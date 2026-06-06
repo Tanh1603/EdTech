@@ -18,6 +18,8 @@ service LearningMaterialsService {
   rpc ClearMaterialChunks(MaterialIdRequest) returns (common.ObjectResponse);
   rpc AppendMaterialChunks(AppendMaterialChunksRequest) returns (common.ObjectResponse);
   rpc UpdateMaterialStatus(UpdateMaterialStatusRequest) returns (common.ObjectResponse);
+  rpc UpdateMaterialSummary(UpdateMaterialSummaryRequest) returns (common.ObjectResponse);
+  rpc GenerateMaterialSummary(MaterialIdRequest) returns (common.ObjectResponse);
 }
 
 message MaterialIdRequest {
@@ -84,4 +86,9 @@ message UpdateMaterialStatusRequest {
   string material_id = 1;
   string status = 2;
   google.protobuf.Struct error = 3;
+}
+
+message UpdateMaterialSummaryRequest {
+  string material_id = 1;
+  string summary = 2;
 }

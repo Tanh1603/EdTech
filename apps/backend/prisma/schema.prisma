@@ -227,6 +227,7 @@ model Material {
   mimeType   String?        @map("mime_type")
   size       Int?
   status     MaterialStatus @default(uploaded)
+  summary    String?
   createdBy  String         @map("created_by")
   createdAt  DateTime       @default(now()) @map("created_at")
 

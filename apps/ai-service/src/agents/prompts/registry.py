@@ -145,6 +145,27 @@ class PromptRegistry:
                     "- Choose a title that summarizes the core topic of the message."
                 ),
             ),
+            "material_summary.prompt": PromptTemplate(
+                "v1",
+                Template(
+                    "SYSTEM:\n"
+                    "You are MaterialSummaryAgent. Summarize and create a "
+                    "structured study guide in Vietnamese for the following "
+                    "material content (RAG Chunks):\n\n"
+                    "\"$materialContext\"\n\n"
+                    "Guidelines:\n"
+                    "- Return markdown formatting.\n"
+                    "- Output structure must include:\n"
+                    "  1. Tóm tắt chính (Main summary - "
+                    "concise overview of the material)\n"
+                    "  2. Các khái niệm cốt lõi (Key concepts/definitions "
+                    "with clear explanations)\n"
+                    "  3. Câu hỏi ôn tập tự luyện (Self-review/study guide "
+                    "questions with brief answers/hints)\n"
+                    "- Ensure the tone is academic, helpful, and "
+                    "written entirely in Vietnamese."
+                ),
+            ),
         }
 
     def render(self, key: str, values: dict[str, Any] | None = None) -> str:

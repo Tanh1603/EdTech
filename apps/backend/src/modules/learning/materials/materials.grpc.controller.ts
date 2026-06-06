@@ -76,6 +76,17 @@ export class MaterialsGrpcController {
 
   @GrpcContractMethod(
     GrpcServices.learningMaterials,
+    GrpcMethods.learningMaterials.generateMaterialSummary,
+  )
+  @Permissions(RolePermissions.learningRead, RolePermissions.lessonsManage)
+  generateMaterialSummary(payload: any, metadata: Metadata) {
+    return this.materialsService
+      .enqueueMaterialSummaryJob(payload.materialId, getGrpcUserId(metadata))
+      .then(toObjectResponse);
+  }
+
+  @GrpcContractMethod(
+    GrpcServices.learningMaterials,
     GrpcMethods.learningMaterials.updateMaterial,
   )
   @Permissions(RolePermissions.lessonsManage)
@@ -228,6 +239,20 @@ export class MaterialsInternalGrpcController {
         payload.status,
         fromProtoStruct(payload.error),
       )
+      .then(toObjectResponse);
+  }
+
+  @GrpcContractMethod(
+    GrpcServices.learningMaterials,
+    GrpcMethods.learningMaterials.updateMaterialSummary,
+  )
+  updateMaterialSummary(payload: any) {
+    this.logger.log({
+      type: 'UPDATE_MATERIAL_SUMMARY',
+      materialId: payload.materialId,
+    });
+    return this.materialsService
+      .updateMaterialSummary(payload.materialId, payload.summary)
       .then(toObjectResponse);
   }
 }

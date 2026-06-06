@@ -87,6 +87,28 @@ export class LearningMaterialsGatewayController {
     return this.object(this.grpc.learningMaterials.getChunkDetail({ materialId, chunkId }, this.metadata.build(req)));
   }
 
+  @Post(':materialId/summary')
+  @ApiOperation({ summary: 'Generate lecture summary & study guide by AI' })
+  @ApiParam({ name: 'materialId', format: 'uuid' })
+  async generateMaterialSummary(@Param('materialId') materialId: string, @Req() req: RequestWithContext) {
+    return this.object(
+      this.grpc.learningMaterials.generateMaterialSummary({ materialId }, this.metadata.build(req)),
+    );
+  }
+
+  @Get(':materialId/summary')
+  @ApiOperation({ summary: 'Get generated lecture summary' })
+  @ApiParam({ name: 'materialId', format: 'uuid' })
+  async getMaterialSummary(@Param('materialId') materialId: string, @Req() req: RequestWithContext) {
+    const detail = await this.object(
+      this.grpc.learningMaterials.getMaterialDetail({ materialId }, this.metadata.build(req)),
+    );
+    return {
+      materialId,
+      summary: detail.summary,
+    };
+  }
+
   private async object(call: any) {
     return unwrapObjectResponse(await lastValueFrom(call));
   }

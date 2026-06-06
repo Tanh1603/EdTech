@@ -6,6 +6,7 @@ from agents.workers.chat_title_worker import ChatTitleWorker
 from agents.workers.exam_generation_worker import ExamGenerationWorker
 from agents.workers.grading_worker import GradingWorker
 from agents.workers.material_ingest_worker import MaterialIngestWorker
+from agents.workers.material_summary_worker import MaterialSummaryWorker
 from agents.workers.rabbitmq import RabbitMqWorkerRunner
 from agents.workers.roadmap_worker import RoadmapWorker
 from agents.workers.worker import Worker
@@ -42,6 +43,10 @@ def main() -> None:
             "ai.chat.title.generate": lambda message: worker.process(
                 message,
                 ChatTitleWorker(runtime_factory()).handle,
+            ),
+            "ai.material.summarize": lambda message: worker.process(
+                message,
+                MaterialSummaryWorker(runtime_factory()).handle,
             ),
         }
     )

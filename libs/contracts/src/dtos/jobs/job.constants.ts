@@ -6,6 +6,7 @@ export const JobTypes = {
   aiRecommendationRefresh: 'ai.recommendation.refresh',
   aiChatTitleGenerate: 'ai.chat.title.generate',
   aiExamGenerate: 'ai.exam.generate',
+  aiMaterialSummarize: 'ai.material.summarize',
 } as const;
 
 export type JobType = (typeof JobTypes)[keyof typeof JobTypes];
@@ -30,6 +31,7 @@ export const JobQueues = {
   aiRecommendationRefresh: 'edtech.ai.recommendation.refresh',
   aiChatTitleGenerate: 'edtech.ai.chat.title.generate',
   aiExamGenerate: 'edtech.ai.exam.generate',
+  aiMaterialSummarize: 'edtech.ai.material.summarize',
 } as const;
 
 export const JobTypeToQueue: Record<JobType, string> = {
@@ -40,5 +42,6 @@ export const JobTypeToQueue: Record<JobType, string> = {
   [JobTypes.aiRecommendationRefresh]: JobQueues.aiRecommendationRefresh,
   [JobTypes.aiChatTitleGenerate]: JobQueues.aiChatTitleGenerate,
   [JobTypes.aiExamGenerate]: JobQueues.aiExamGenerate,
+  [JobTypes.aiMaterialSummarize]: JobQueues.aiMaterialSummarize,
 };
 

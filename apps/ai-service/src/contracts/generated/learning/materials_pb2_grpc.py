@@ -91,6 +91,16 @@ class LearningMaterialsServiceStub(object):
                 request_serializer=learning_dot_materials__pb2.UpdateMaterialStatusRequest.SerializeToString,
                 response_deserializer=common_dot_json__pb2.ObjectResponse.FromString,
                 _registered_method=True)
+        self.UpdateMaterialSummary = channel.unary_unary(
+                '/learning.LearningMaterialsService/UpdateMaterialSummary',
+                request_serializer=learning_dot_materials__pb2.UpdateMaterialSummaryRequest.SerializeToString,
+                response_deserializer=common_dot_json__pb2.ObjectResponse.FromString,
+                _registered_method=True)
+        self.GenerateMaterialSummary = channel.unary_unary(
+                '/learning.LearningMaterialsService/GenerateMaterialSummary',
+                request_serializer=learning_dot_materials__pb2.MaterialIdRequest.SerializeToString,
+                response_deserializer=common_dot_json__pb2.ObjectResponse.FromString,
+                _registered_method=True)
 
 
 class LearningMaterialsServiceServicer(object):
@@ -162,6 +172,18 @@ class LearningMaterialsServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def UpdateMaterialSummary(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GenerateMaterialSummary(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_LearningMaterialsServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -218,6 +240,16 @@ def add_LearningMaterialsServiceServicer_to_server(servicer, server):
             'UpdateMaterialStatus': grpc.unary_unary_rpc_method_handler(
                     servicer.UpdateMaterialStatus,
                     request_deserializer=learning_dot_materials__pb2.UpdateMaterialStatusRequest.FromString,
+                    response_serializer=common_dot_json__pb2.ObjectResponse.SerializeToString,
+            ),
+            'UpdateMaterialSummary': grpc.unary_unary_rpc_method_handler(
+                    servicer.UpdateMaterialSummary,
+                    request_deserializer=learning_dot_materials__pb2.UpdateMaterialSummaryRequest.FromString,
+                    response_serializer=common_dot_json__pb2.ObjectResponse.SerializeToString,
+            ),
+            'GenerateMaterialSummary': grpc.unary_unary_rpc_method_handler(
+                    servicer.GenerateMaterialSummary,
+                    request_deserializer=learning_dot_materials__pb2.MaterialIdRequest.FromString,
                     response_serializer=common_dot_json__pb2.ObjectResponse.SerializeToString,
             ),
     }
@@ -517,6 +549,60 @@ class LearningMaterialsService(object):
             target,
             '/learning.LearningMaterialsService/UpdateMaterialStatus',
             learning_dot_materials__pb2.UpdateMaterialStatusRequest.SerializeToString,
+            common_dot_json__pb2.ObjectResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def UpdateMaterialSummary(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/learning.LearningMaterialsService/UpdateMaterialSummary',
+            learning_dot_materials__pb2.UpdateMaterialSummaryRequest.SerializeToString,
+            common_dot_json__pb2.ObjectResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GenerateMaterialSummary(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/learning.LearningMaterialsService/GenerateMaterialSummary',
+            learning_dot_materials__pb2.MaterialIdRequest.SerializeToString,
             common_dot_json__pb2.ObjectResponse.FromString,
             options,
             channel_credentials,

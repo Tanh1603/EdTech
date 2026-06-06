@@ -443,6 +443,52 @@ export class MaterialsService {
     return job;
   }
 
+  async enqueueMaterialSummaryJob(materialId: string, userId: string) {
+    const activeJob = await this.prisma.job.findFirst({
+      where: {
+        type: JobTypes.aiMaterialSummarize,
+        resourceId: materialId,
+        status: {
+          in: [JobStatuses.queued, JobStatuses.running, JobStatuses.retrying],
+        },
+      },
+      select: { id: true, status: true },
+    });
+
+    if (activeJob) {
+      this.logger.log(
+        `Skipping duplicate material summary job materialId=${materialId} jobId=${activeJob.id} status=${activeJob.status}`,
+      );
+      return activeJob;
+    }
+
+    const job = await this.jobsService.enqueue({
+      type: JobTypes.aiMaterialSummarize,
+      payload: {
+        materialId,
+        userId,
+      },
+      createdBy: userId,
+      resourceType: 'material',
+      resourceId: materialId,
+    });
+
+    this.logger.log(
+      `Queued material summary job materialId=${materialId} jobId=${job.jobId}`,
+    );
+    return job;
+  }
+
+  async updateMaterialSummary(materialId: string, summary: string) {
+    const material = await this.prisma.material.update({
+      where: { id: materialId },
+      data: { summary },
+      include: { creator: { select: userSummarySelect } },
+    });
+
+    return this.toMaterialResponse(material);
+  }
+
   private toMaterialResponse(material: {
     id: string;
     lessonId: string;
@@ -452,6 +498,7 @@ export class MaterialsService {
     mimeType: string | null;
     size: number | null;
     status: string;
+    summary?: string | null;
     createdBy: string;
     createdAt: Date;
     creator?: Parameters<typeof toUserSummary>[0];
@@ -465,6 +512,7 @@ export class MaterialsService {
       mimeType: material.mimeType ?? '',
       size: material.size ?? 0,
       status: material.status,
+      summary: material.summary ?? null,
       createdBy: material.createdBy,
       creator: toUserSummary(material.creator),
       createdAt: toIsoString(material.createdAt),

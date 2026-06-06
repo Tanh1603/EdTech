@@ -41,6 +41,11 @@ class LearningRoadmapsServiceStub(object):
                 request_serializer=learning_dot_roadmaps__pb2.RoadmapBodyRequest.SerializeToString,
                 response_deserializer=common_dot_json__pb2.ObjectResponse.FromString,
                 _registered_method=True)
+        self.GenerateRoadmap = channel.unary_unary(
+                '/learning.LearningRoadmapsService/GenerateRoadmap',
+                request_serializer=learning_dot_roadmaps__pb2.RoadmapBodyRequest.SerializeToString,
+                response_deserializer=common_dot_json__pb2.ObjectResponse.FromString,
+                _registered_method=True)
         self.GetRoadmaps = channel.unary_unary(
                 '/learning.LearningRoadmapsService/GetRoadmaps',
                 request_serializer=learning_dot_roadmaps__pb2.RoadmapQuery.SerializeToString,
@@ -102,6 +107,12 @@ class LearningRoadmapsServiceServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def CreateRoadmap(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GenerateRoadmap(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -178,6 +189,11 @@ def add_LearningRoadmapsServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'CreateRoadmap': grpc.unary_unary_rpc_method_handler(
                     servicer.CreateRoadmap,
+                    request_deserializer=learning_dot_roadmaps__pb2.RoadmapBodyRequest.FromString,
+                    response_serializer=common_dot_json__pb2.ObjectResponse.SerializeToString,
+            ),
+            'GenerateRoadmap': grpc.unary_unary_rpc_method_handler(
+                    servicer.GenerateRoadmap,
                     request_deserializer=learning_dot_roadmaps__pb2.RoadmapBodyRequest.FromString,
                     response_serializer=common_dot_json__pb2.ObjectResponse.SerializeToString,
             ),
@@ -262,6 +278,33 @@ class LearningRoadmapsService(object):
             request,
             target,
             '/learning.LearningRoadmapsService/CreateRoadmap',
+            learning_dot_roadmaps__pb2.RoadmapBodyRequest.SerializeToString,
+            common_dot_json__pb2.ObjectResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GenerateRoadmap(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/learning.LearningRoadmapsService/GenerateRoadmap',
             learning_dot_roadmaps__pb2.RoadmapBodyRequest.SerializeToString,
             common_dot_json__pb2.ObjectResponse.FromString,
             options,

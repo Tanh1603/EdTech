@@ -97,6 +97,7 @@ export const GrpcMethods = {
   },
   learningRoadmaps: {
     createRoadmap: 'CreateRoadmap',
+    generateRoadmap: 'GenerateRoadmap',
     getRoadmaps: 'GetRoadmaps',
     getNextRoadmapItem: 'GetNextRoadmapItem',
     getRoadmapDetail: 'GetRoadmapDetail',

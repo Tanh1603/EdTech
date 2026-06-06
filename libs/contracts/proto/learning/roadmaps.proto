@@ -8,6 +8,7 @@ import "google/protobuf/struct.proto";
 
 service LearningRoadmapsService {
   rpc CreateRoadmap(RoadmapBodyRequest) returns (common.ObjectResponse);
+  rpc GenerateRoadmap(RoadmapBodyRequest) returns (common.ObjectResponse);
   rpc GetRoadmaps(RoadmapQuery) returns (common.PageResponse);
   rpc GetNextRoadmapItem(common.EmptyRequest) returns (common.ObjectResponse);
   rpc GetRoadmapDetail(RoadmapIdRequest) returns (common.ObjectResponse);

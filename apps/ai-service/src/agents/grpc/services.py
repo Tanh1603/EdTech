@@ -169,6 +169,31 @@ class AiRagService:
         }
 
 
+class AiJobsService:
+    def __init__(
+        self,
+        settings: Settings | None = None,
+        be_core: BeCoreGrpcClient | None = None,
+    ) -> None:
+        self.settings = settings or get_settings()
+        self._be_core = be_core
+
+    @property
+    def be_core(self) -> BeCoreGrpcClient:
+        if self._be_core is None:
+            self._be_core = BeCoreGrpcClient(self.settings)
+        return self._be_core
+
+    def get_job_status(self, job_id: str, request_context: BeCoreCallContext) -> dict[str, Any]:
+        return self.be_core.get_job_status(job_id=job_id, context=request_context)
+
+    def cancel_job(self, job_id: str, request_context: BeCoreCallContext) -> dict[str, Any]:
+        return self.be_core.mark_job_failed(
+            job_id=job_id,
+            error={"message": "Cancelled via AI Jobs Service"},
+        )
+
+
 def context_from_grpc(
     grpc_context: Any,
     user_id: str | None = None,

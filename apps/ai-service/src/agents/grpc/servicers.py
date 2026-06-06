@@ -4,6 +4,7 @@ from typing import Any
 
 from agents.grpc.errors import AiServiceError, grpc_status_for
 from agents.grpc.services import (
+    AiJobsService,
     AiOrchestratorService,
     AiRagService,
     context_from_grpc,
@@ -14,13 +15,14 @@ from contracts.generated import ensure_generated_proto_path
 
 def register_ai_services(server: Any) -> None:
     ensure_generated_proto_path()
-    from contracts.generated.ai import orchestrator_pb2_grpc, rag_pb2_grpc
+    from contracts.generated.ai import jobs_pb2_grpc, orchestrator_pb2_grpc, rag_pb2_grpc
 
     orchestrator_pb2_grpc.add_AiOrchestratorServiceServicer_to_server(
         OrchestratorServicer(),
         server,
     )
     rag_pb2_grpc.add_AiRagServiceServicer_to_server(RagServicer(), server)
+    jobs_pb2_grpc.add_AiJobsServiceServicer_to_server(JobsServicer(), server)
 
 
 class OrchestratorServicer:
@@ -160,6 +162,77 @@ class RagServicer:
             )
         except AiServiceError as error:
             context.abort(grpc_status_for(error.code), error.message)
+
+
+class JobsServicer:
+    def __init__(self) -> None:
+        self.service = AiJobsService()
+
+    def GetJobStatus(self, request: Any, context: Any) -> Any:
+        from google.protobuf.struct_pb2 import Struct
+
+        from contracts.generated.ai import jobs_pb2
+
+        try:
+            job = self.service.get_job_status(
+                job_id=request.job_id,
+                request_context=context_from_grpc(context),
+            )
+            result_struct = Struct()
+            result_struct.update(job.get("result") or {})
+
+            error_struct = Struct()
+            error_struct.update(job.get("error") or {})
+
+            return jobs_pb2.AiJobStatus(
+                job_id=str(job.get("id") or job.get("jobId") or ""),
+                type=str(job.get("type") or ""),
+                status=str(job.get("status") or ""),
+                resource_id=str(job.get("resourceId") or ""),
+                resource_type=str(job.get("resourceType") or ""),
+                attempts=int(job.get("attempts") or 0),
+                result=result_struct,
+                error=error_struct,
+                created_at=str(job.get("createdAt") or ""),
+                updated_at=str(job.get("updatedAt") or ""),
+            )
+        except AiServiceError as error:
+            context.abort(grpc_status_for(error.code), error.message)
+        except Exception as error:
+            context.abort(grpc_status_for("internal"), str(error))
+
+    def CancelJob(self, request: Any, context: Any) -> Any:
+        from google.protobuf.struct_pb2 import Struct
+
+        from contracts.generated.ai import jobs_pb2
+
+        try:
+            job = self.service.cancel_job(
+                job_id=request.job_id,
+                request_context=context_from_grpc(context),
+            )
+            result_struct = Struct()
+            result_struct.update(job.get("result") or {})
+
+            error_struct = Struct()
+            error_struct.update(job.get("error") or {})
+
+            return jobs_pb2.AiJobStatus(
+                job_id=str(job.get("id") or job.get("jobId") or ""),
+                type=str(job.get("type") or ""),
+                status=str(job.get("status") or ""),
+                resource_id=str(job.get("resourceId") or ""),
+                resource_type=str(job.get("resourceType") or ""),
+                attempts=int(job.get("attempts") or 0),
+                result=result_struct,
+                error=error_struct,
+                created_at=str(job.get("createdAt") or ""),
+                updated_at=str(job.get("updatedAt") or ""),
+            )
+        except AiServiceError as error:
+            context.abort(grpc_status_for(error.code), error.message)
+        except Exception as error:
+            context.abort(grpc_status_for("internal"), str(error))
 
 
 def _job_response(envelope_pb2: Any, job: dict[str, Any]) -> Any:

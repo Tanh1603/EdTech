@@ -23,7 +23,7 @@ import { NotificationsGrpcController } from '../../modules/notifications/notific
 
 describe('gRPC permission mapping', () => {
   function methodPermissions(
-    controller: { prototype: Record<string, unknown> },
+    controller: any,
     methodName: string,
   ) {
     return Reflect.getMetadata(

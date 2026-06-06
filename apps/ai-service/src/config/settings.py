@@ -43,12 +43,13 @@ class Settings(BaseSettings):
     embedding_model: str = Field(alias="EMBEDDING_MODEL")
     otel_service_name: str = Field(default="edtech-ai-service", alias="OTEL_SERVICE_NAME")
     otel_enabled: bool = Field(default=False, alias="OTEL_ENABLED")
+    http_port: int = Field(default=8000, alias="HTTP_PORT")
 
     @property
     def is_local(self) -> bool:
         return self.environment == "local"
 
-    def validate_runtime(self, runtime: Literal["grpc", "worker"]) -> None:
+    def validate_runtime(self, runtime: Literal["grpc", "worker", "http"]) -> None:
         required = {
             "AI_GRPC_URL": self.ai_grpc_url,
             "BE_CORE_GRPC_URL": self.be_core_grpc_url,

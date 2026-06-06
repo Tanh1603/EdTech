@@ -105,6 +105,13 @@ export class LearningRoadmapsGatewayController {
     return this.object(this.grpc.learningRoadmaps.createRoadmap({ body: toProtoStruct(body) }, this.metadata.build(req)));
   }
 
+  @Post('generate')
+  @ApiOperation({ summary: 'Generate AI roadmap' })
+  @ApiBody({ type: CreateRoadmapDto })
+  generateRoadmap(@Body() body: CreateRoadmapDto, @Req() req: RequestWithContext) {
+    return this.object(this.grpc.learningRoadmaps.generateRoadmap({ body: toProtoStruct(body) }, this.metadata.build(req)));
+  }
+
   @Get()
   @ApiOperation({ summary: 'Get current user roadmaps' })
   @ApiQuery({ name: 'status', required: false })

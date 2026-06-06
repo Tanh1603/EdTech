@@ -37,6 +37,19 @@ export class RoadmapsGrpcController {
 
   @GrpcContractMethod(
     GrpcServices.learningRoadmaps,
+    GrpcMethods.learningRoadmaps.generateRoadmap,
+  )
+  generateRoadmap(payload: any, metadata: Metadata) {
+    return this.roadmapsService
+      .generateRoadmap(
+        fromProtoStruct(payload.body) as any,
+        getGrpcUserId(metadata),
+      )
+      .then(toObjectResponse);
+  }
+
+  @GrpcContractMethod(
+    GrpcServices.learningRoadmaps,
     GrpcMethods.learningRoadmaps.getRoadmaps,
   )
   getRoadmaps(payload: any, metadata: Metadata) {

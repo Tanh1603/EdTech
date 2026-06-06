@@ -112,6 +112,7 @@ export interface LearningMaterialsGrpc {
 
 export interface LearningRoadmapsGrpc {
   createRoadmap: GrpcCall;
+  generateRoadmap: GrpcCall;
   getRoadmaps: GrpcCall;
   getNextRoadmapItem: GrpcCall;
   getRoadmapDetail: GrpcCall;

@@ -13,6 +13,7 @@ describe('NotificationsGatewayController', () => {
         },
       } as any,
       { build: jest.fn().mockReturnValue({}) } as any,
+      {} as any,
     );
 
     const result = await controller.listMyNotifications(
@@ -35,6 +36,7 @@ describe('NotificationsGatewayController', () => {
         },
       } as any,
       { build: jest.fn().mockReturnValue({}) } as any,
+      {} as any,
     );
 
     await expect(

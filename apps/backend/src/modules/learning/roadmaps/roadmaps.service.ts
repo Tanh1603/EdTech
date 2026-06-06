@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PageDto } from '@edtech/contracts';
+import { PageDto, JobTypes } from '@edtech/contracts';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import { userSummarySelect } from '../../../common/rbac/rbac.mapper';
 import { Prisma, RoadmapStatus } from '../../../generated/prisma/client';
@@ -8,10 +8,14 @@ import { CreateRoadmapDto } from '@edtech/contracts';
 import { RoadmapQueryDto } from '@edtech/contracts';
 import { UpdateRoadmapItemDto } from '@edtech/contracts';
 import { UpdateRoadmapDto } from '@edtech/contracts';
+import { JobsService } from '../../jobs/jobs.service';
 
 @Injectable()
 export class RoadmapsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jobsService: JobsService,
+  ) {}
 
   async createRoadmap(payload: CreateRoadmapDto, userId: string) {
     return this.prisma.learningRoadmap.create({
@@ -23,6 +27,32 @@ export class RoadmapsService {
       },
       include: { user: { select: userSummarySelect } },
     });
+  }
+
+  async generateRoadmap(payload: CreateRoadmapDto, userId: string) {
+    const roadmap = await this.prisma.learningRoadmap.create({
+      data: {
+        userId,
+        title: payload.title,
+        targetGoal: payload.targetGoal,
+        generatedByAi: true,
+      },
+      include: { user: { select: userSummarySelect } },
+    });
+
+    await this.jobsService.enqueue({
+      type: JobTypes.aiRoadmapGenerate,
+      payload: {
+        roadmapId: roadmap.id,
+        userId,
+        targetGoal: payload.targetGoal,
+      },
+      createdBy: userId,
+      resourceType: 'roadmap',
+      resourceId: roadmap.id,
+    });
+
+    return roadmap;
   }
 
   async getRoadmaps(

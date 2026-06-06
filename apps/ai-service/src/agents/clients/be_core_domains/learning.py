@@ -14,6 +14,18 @@ class LearningClientMixin:
         request = self._roadmaps_pb2.RoadmapBodyRequest(body=to_struct(body))
         return self._call_object(self.roadmaps.CreateRoadmap, request, context, True)
 
+    def update_roadmap(
+        self,
+        roadmap_id: str,
+        body: dict[str, Any],
+        context: BeCoreCallContext,
+    ) -> dict[str, Any]:
+        request = self._roadmaps_pb2.RoadmapUpdateRequest(
+            roadmap_id=roadmap_id,
+            body=to_struct(body),
+        )
+        return self._call_object(self.roadmaps.UpdateRoadmap, request, context, True)
+
     def create_roadmap_item(
         self,
         roadmap_id: str,

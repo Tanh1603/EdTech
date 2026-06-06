@@ -182,6 +182,14 @@ def create_default_registry(be_core_client: BeCoreGrpcClient) -> ToolRegistry:
         ),
     )
     registry.register(
+        "roadmaps.update",
+        lambda payload, context: be_core_client.update_roadmap(
+            required_str(payload, "roadmapId"),
+            required_dict(payload, "body"),
+            context.to_be_core_context(),
+        ),
+    )
+    registry.register(
         "roadmaps.items.create",
         lambda payload, context: be_core_client.create_roadmap_item(
             required_str(payload, "roadmapId"),

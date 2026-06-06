@@ -31,17 +31,35 @@ class LearningPathAgentProfile:
         )
         response = self.llm_provider.generate(prompt)
         draft = parse_json_object(response.text)
-        roadmap_body = self._roadmap_body(state, draft, response.text)
+        roadmap_id = state.get("options", {}).get("roadmapId") or state.get("resource_id", "")
         roadmap: dict[str, Any] = {}
         created_items: list[dict[str, Any]] = []
 
         if context is not None:
-            roadmap = self.registry.call(
-                "roadmaps.create",
-                {"body": roadmap_body},
-                context,
-            )
-            roadmap_id = str(roadmap.get("id") or roadmap.get("roadmapId") or "")
+            if roadmap_id:
+                target_goal = (
+                    state.get("options", {}).get("targetGoal")
+                    or str(draft.get("targetGoal") or "")
+                )
+                update_body = {
+                    "title": str(draft.get("title") or "AI Learning Roadmap"),
+                    "targetGoal": target_goal,
+                    "status": "active",
+                }
+                roadmap = self.registry.call(
+                    "roadmaps.update",
+                    {"roadmapId": roadmap_id, "body": update_body},
+                    context,
+                )
+            else:
+                roadmap_body = self._roadmap_body(state, draft, response.text)
+                roadmap = self.registry.call(
+                    "roadmaps.create",
+                    {"body": roadmap_body},
+                    context,
+                )
+                roadmap_id = str(roadmap.get("id") or roadmap.get("roadmapId") or "")
+
             for item in _items_from_draft(draft):
                 if roadmap_id:
                     created_items.append(
@@ -88,13 +106,12 @@ def _items_from_draft(draft: dict[str, Any]) -> list[dict[str, Any]]:
     for index, item in enumerate(items, start=1):
         if not isinstance(item, dict):
             continue
-        normalized.append(
-            {
-                "title": str(item.get("title") or f"Step {index}"),
-                "description": str(item.get("description") or ""),
-                "orderNo": int(item.get("orderNo") or index),
-                "estimatedMinutes": int(item.get("estimatedMinutes") or 30),
-                "source": "ai-service",
-            }
-        )
+        normalized_item = {
+            "title": str(item.get("title") or f"Step {index}"),
+            "description": str(item.get("description") or ""),
+            "orderNo": int(item.get("orderNo") or index),
+        }
+        if "topic" in item:
+            normalized_item["topic"] = str(item.get("topic") or "")
+        normalized.append(normalized_item)
     return normalized

@@ -110,7 +110,8 @@ class RabbitMqWorkerRunner:
                 handler(message)
             except GrpcCommunicationError as error:
                 logger.warning(
-                    "RabbitMQ job processing failed due to Backend gRPC communication error. Requeueing.",
+                    "RabbitMQ job processing failed due to Backend gRPC "
+                    "communication error. Requeueing.",
                     extra={
                         "component": "rabbitmq.worker",
                         "step": "consume.requeue",

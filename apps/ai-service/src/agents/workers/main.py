@@ -2,6 +2,7 @@ from typing import Any
 
 from agents.clients.be_core import BeCoreGrpcClient
 from agents.orchestrator.factory import create_agent_runtime
+from agents.workers.chat_title_worker import ChatTitleWorker
 from agents.workers.exam_generation_worker import ExamGenerationWorker
 from agents.workers.grading_worker import GradingWorker
 from agents.workers.material_ingest_worker import MaterialIngestWorker
@@ -37,6 +38,10 @@ def main() -> None:
             "ai.exam.generate": lambda message: worker.process(
                 message,
                 ExamGenerationWorker(runtime_factory()).handle,
+            ),
+            "ai.chat.title.generate": lambda message: worker.process(
+                message,
+                ChatTitleWorker(runtime_factory()).handle,
             ),
         }
     )

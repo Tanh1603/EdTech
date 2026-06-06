@@ -19,6 +19,8 @@ JOB_QUEUES = {
     "ai.material.ingest": "edtech.ai.material.ingest",
     "ai.assessment.grade": "edtech.ai.assessment.grade",
     "ai.roadmap.generate": "edtech.ai.roadmap.generate",
+    "ai.exam.generate": "edtech.ai.exam.generate",
+    "ai.chat.title.generate": "edtech.ai.chat.title.generate",
 }
 
 

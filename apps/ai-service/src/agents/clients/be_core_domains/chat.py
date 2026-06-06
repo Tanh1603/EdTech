@@ -54,3 +54,15 @@ class ChatClientMixin:
             context,
             True,
         )
+
+    def update_session(
+        self,
+        session_id: str,
+        body: dict[str, Any],
+        context: BeCoreCallContext,
+    ) -> dict[str, Any]:
+        request = self._sessions_pb2.SessionUpdateRequest(
+            session_id=session_id,
+            body=to_struct(body),
+        )
+        return self._call_object(self.chat_sessions.UpdateSession, request, context, True)

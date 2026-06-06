@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PageDto } from '@edtech/contracts';
+import { PageDto, JobTypes } from '@edtech/contracts';
 import { UserRole } from '@edtech/contracts';
 import { AccessPolicyService } from '../../../common/access/access-policy.service';
 import { PrismaService } from '../../../common/prisma/prisma.service';
@@ -12,12 +12,14 @@ import {
   SendMessageDto,
   UpdateChatSessionDto,
 } from '@edtech/contracts';
+import { JobsService } from '../../jobs/jobs.service';
 
 @Injectable()
 export class ChatSharedService {
   constructor(
     private readonly accessPolicy: AccessPolicyService,
     private readonly prisma: PrismaService,
+    private readonly jobsService: JobsService,
   ) {}
 
   async createSession(
@@ -140,7 +142,7 @@ export class ChatSharedService {
     userId: string,
   ) {
     await this.getSessionDetail(sessionId, userId);
-    return this.prisma.chatMessage.create({
+    const message = await this.prisma.chatMessage.create({
       data: {
         sessionId,
         role: payload.role,
@@ -148,6 +150,34 @@ export class ChatSharedService {
         intent: payload.intent,
       },
     });
+
+    if (payload.role === 'user') {
+      const messageCount = await this.prisma.chatMessage.count({
+        where: { sessionId },
+      });
+      if (messageCount === 1) {
+        const session = await this.prisma.chatSession.findUnique({
+          where: { id: sessionId },
+          select: { title: true },
+        });
+        if (!session?.title) {
+          await this.jobsService.enqueue({
+            type: JobTypes.aiChatTitleGenerate,
+            payload: {
+              sessionId,
+              messageId: message.id,
+              content: payload.content,
+              userId,
+            },
+            createdBy: userId,
+            resourceType: 'chat_session',
+            resourceId: sessionId,
+          });
+        }
+      }
+    }
+
+    return message;
   }
 
   getMessageDetail(messageId: string, userId: string) {

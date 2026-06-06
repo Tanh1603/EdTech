@@ -121,6 +121,14 @@ def create_default_registry(be_core_client: BeCoreGrpcClient) -> ToolRegistry:
         ),
     )
     registry.register(
+        "chat.update_session",
+        lambda payload, context: be_core_client.update_session(
+            required_str(payload, "sessionId"),
+            required_dict(payload, "body"),
+            context.to_be_core_context(),
+        ),
+    )
+    registry.register(
         "assessments.submission",
         lambda payload, context: be_core_client.get_submission_detail(
             required_str(payload, "submissionId"),

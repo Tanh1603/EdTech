@@ -131,6 +131,20 @@ class PromptRegistry:
                     "Do not include markdown code block backticks, just the raw JSON."
                 ),
             ),
+            "chat_title.prompt": PromptTemplate(
+                "v1",
+                Template(
+                    "SYSTEM:\n"
+                    "You are ChatTitleAgent. Create a short, descriptive title "
+                    "(maximum 5 words, in Vietnamese) "
+                    "for a chat session starting with this message:\n\n"
+                    "\"$content\"\n\n"
+                    "Guidelines:\n"
+                    "- Return ONLY the plain text title, no quote marks, "
+                    "no bullet points, no extra words.\n"
+                    "- Choose a title that summarizes the core topic of the message."
+                ),
+            ),
         }
 
     def render(self, key: str, values: dict[str, Any] | None = None) -> str:

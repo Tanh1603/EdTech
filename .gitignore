@@ -45,3 +45,5 @@ Thumbs.db
 
 .nx/polygraph
 vite.config.*.timestamp*
+
+.env

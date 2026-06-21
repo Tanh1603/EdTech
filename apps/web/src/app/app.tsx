@@ -18,6 +18,11 @@ import { DashboardPlaceholder } from '../pages/DashboardPlaceholder';
 import { ExamPlaceholder } from '../pages/ExamPlaceholder';
 import { ProfilePage } from '../pages/auth/ProfilePage';
 import { UnauthorizedPage } from '../pages/UnauthorizedPage';
+import { CourseDirectory } from '../pages/academic/CourseDirectory';
+import { CourseDetailPage } from '../pages/academic/CourseDetailPage';
+import { ClassroomDirectory } from '../pages/academic/ClassroomDirectory';
+import { ClassroomDetailPage } from '../pages/academic/ClassroomDetailPage';
+import { LessonDetailPage } from '../pages/academic/LessonDetailPage';
 
 // Components
 import { RoleGuard } from '../components/shared/RoleGuard';
@@ -74,11 +79,16 @@ export const App: React.FC = () => {
                   </ProtectedRoute>
                 }
               >
-                {/* Redirect root to academic portal */}
-                <Route index element={<Navigate to="/academic" replace />} />
+                {/* Redirect root to courses portal */}
+                <Route index element={<Navigate to="/courses" replace />} />
                 
                 {/* General Authenticated Routes */}
-                <Route path="academic" element={<DashboardPlaceholder />} />
+                <Route path="courses" element={<CourseDirectory />} />
+                <Route path="courses/:courseId" element={<CourseDetailPage />} />
+                <Route path="classes" element={<ClassroomDirectory />} />
+                <Route path="classes/:classroomId" element={<ClassroomDetailPage />} />
+                <Route path="lessons/:lessonId" element={<LessonDetailPage />} />
+                <Route path="academic" element={<Navigate to="/courses" replace />} />
                 <Route path="profile" element={<ProfilePage />} />
                 <Route path="unauthorized" element={<UnauthorizedPage />} />
                 

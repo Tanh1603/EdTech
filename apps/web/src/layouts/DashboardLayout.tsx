@@ -5,6 +5,7 @@ import { useUIStore } from '../state/useUIStore';
 import { useAuthStore } from '../state/useAuthStore';
 import {
   BookOpen,
+  GraduationCap,
   Route,
   Award,
   MessageSquare,
@@ -49,7 +50,8 @@ export const DashboardLayout: React.FC = () => {
 
   // Sidebar items based on role
   const studentItems: MenuItem[] = [
-    { name: 'Lớp học của tôi', path: '/academic', icon: BookOpen },
+    { name: 'Kho khóa học', path: '/courses', icon: BookOpen },
+    { name: 'Lớp học của tôi', path: '/classes', icon: GraduationCap },
     { name: 'Lộ trình học', path: '/learning/roadmap', icon: Route },
     { name: 'Năng lực học tập', path: '/learning/mastery', icon: Award },
     { name: 'AI Tutor Chat', path: '/chat', icon: MessageSquare },
@@ -57,7 +59,8 @@ export const DashboardLayout: React.FC = () => {
   ];
 
   const teacherItems: MenuItem[] = [
-    { name: 'Quản lý Khóa học', path: '/academic', icon: BookOpen },
+    { name: 'Quản lý Khóa học', path: '/courses', icon: BookOpen },
+    { name: 'Quản lý Lớp học', path: '/classes', icon: GraduationCap },
     { name: 'Tài liệu & Upload', path: '/learning/materials', icon: UploadCloud },
     { name: 'Theo dõi Học sinh', path: '/learning/performance', icon: TrendingUp },
     { name: 'Quản lý Đề thi', path: '/assessments/manage', icon: FolderLock },

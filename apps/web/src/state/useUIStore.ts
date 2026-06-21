@@ -7,8 +7,6 @@ interface UIState {
   theme: 'light' | 'dark';
   setTheme: (theme: 'light' | 'dark') => void;
   toggleTheme: () => void;
-  activeRole: 'student' | 'teacher';
-  setActiveRole: (role: 'student' | 'teacher') => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -37,6 +35,4 @@ export const useUIStore = create<UIState>((set) => ({
     }
     return { theme: nextTheme };
   }),
-  activeRole: 'student',
-  setActiveRole: (role) => set({ activeRole: role }),
 }));

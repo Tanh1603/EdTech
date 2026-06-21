@@ -16,6 +16,11 @@ import { SignInPage } from '../pages/auth/SignInPage';
 import { SignUpPage } from '../pages/auth/SignUpPage';
 import { DashboardPlaceholder } from '../pages/DashboardPlaceholder';
 import { ExamPlaceholder } from '../pages/ExamPlaceholder';
+import { ProfilePage } from '../pages/auth/ProfilePage';
+import { UnauthorizedPage } from '../pages/UnauthorizedPage';
+
+// Components
+import { RoleGuard } from '../components/shared/RoleGuard';
 
 // Clerk Publishable Key (from environment or dummy placeholder for development)
 const CLERK_PUBLISHABLE_KEY = 
@@ -71,14 +76,26 @@ export const App: React.FC = () => {
               >
                 {/* Redirect root to academic portal */}
                 <Route index element={<Navigate to="/academic" replace />} />
+                
+                {/* General Authenticated Routes */}
                 <Route path="academic" element={<DashboardPlaceholder />} />
-                <Route path="learning/roadmap" element={<DashboardPlaceholder />} />
-                <Route path="learning/mastery" element={<DashboardPlaceholder />} />
-                <Route path="learning/materials" element={<DashboardPlaceholder />} />
-                <Route path="learning/performance" element={<DashboardPlaceholder />} />
-                <Route path="chat" element={<DashboardPlaceholder />} />
-                <Route path="assessments" element={<DashboardPlaceholder />} />
-                <Route path="assessments/manage" element={<DashboardPlaceholder />} />
+                <Route path="profile" element={<ProfilePage />} />
+                <Route path="unauthorized" element={<UnauthorizedPage />} />
+                
+                {/* Student Only Routes */}
+                <Route element={<RoleGuard allowedRoles={['student', 'admin']} />}>
+                  <Route path="learning/roadmap" element={<DashboardPlaceholder />} />
+                  <Route path="learning/mastery" element={<DashboardPlaceholder />} />
+                  <Route path="chat" element={<DashboardPlaceholder />} />
+                  <Route path="assessments" element={<DashboardPlaceholder />} />
+                </Route>
+
+                {/* Teacher Only Routes */}
+                <Route element={<RoleGuard allowedRoles={['teacher', 'admin']} />}>
+                  <Route path="learning/materials" element={<DashboardPlaceholder />} />
+                  <Route path="learning/performance" element={<DashboardPlaceholder />} />
+                  <Route path="assessments/manage" element={<DashboardPlaceholder />} />
+                </Route>
               </Route>
 
               {/* Protected Exam Focus Route */}
@@ -86,7 +103,9 @@ export const App: React.FC = () => {
                 path="/assessments/exam/:id"
                 element={
                   <ProtectedRoute>
-                    <ExamLayout />
+                    <RoleGuard allowedRoles={['student', 'admin']}>
+                      <ExamLayout />
+                    </RoleGuard>
                   </ProtectedRoute>
                 }
               >

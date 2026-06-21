@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { apiClient } from '../lib/api-client';
 import { toast } from 'sonner';
-import { useUIStore } from '../state/useUIStore';
+import { useAuthStore } from '../state/useAuthStore';
 import { 
   Play, 
   RefreshCw, 
@@ -17,7 +17,7 @@ import {
 export const DashboardPlaceholder: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { activeRole } = useUIStore();
+  const { activeRole } = useAuthStore();
 
   const handleTestApiCall = async (status: number) => {
     toast.promise(

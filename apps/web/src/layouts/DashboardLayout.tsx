@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUIStore } from '../state/useUIStore';
+import { useAuthStore } from '../state/useAuthStore';
 import {
   BookOpen,
   Route,
@@ -30,7 +31,8 @@ interface MenuItem {
 }
 
 export const DashboardLayout: React.FC = () => {
-  const { sidebarOpen, toggleSidebar, theme, toggleTheme, activeRole, setActiveRole } = useUIStore();
+  const { sidebarOpen, toggleSidebar, theme, toggleTheme } = useUIStore();
+  const { activeRole, setActiveRole } = useAuthStore();
   const location = useLocation();
   const { user } = useUser();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -137,14 +139,14 @@ export const DashboardLayout: React.FC = () => {
           {sidebarOpen ? (
             <div className="flex items-center gap-3 w-full">
               <UserButton afterSignOutUrl="/sign-in" />
-              <div className="flex flex-col min-w-0">
+              <Link to="/profile" className="flex flex-col min-w-0 hover:text-primary transition-colors cursor-pointer">
                 <span className="text-xs font-semibold truncate">
                   {user?.fullName || 'User'}
                 </span>
                 <span className="text-[10px] text-muted-foreground capitalize">
                   {activeRole}
                 </span>
-              </div>
+              </Link>
             </div>
           ) : (
             <div className="flex justify-center w-full">
@@ -216,10 +218,10 @@ export const DashboardLayout: React.FC = () => {
               {/* Mobile User Profile info */}
               <div className="pt-4 border-t border-border flex items-center gap-3 mt-auto">
                 <UserButton afterSignOutUrl="/sign-in" />
-                <div className="flex flex-col">
+                <Link to="/profile" onClick={handleLinkClick} className="flex flex-col hover:text-primary transition-colors cursor-pointer">
                   <span className="text-xs font-semibold">{user?.fullName || 'User'}</span>
                   <span className="text-[10px] text-muted-foreground capitalize">{activeRole}</span>
-                </div>
+                </Link>
               </div>
             </motion.aside>
           </>

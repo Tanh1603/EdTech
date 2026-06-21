@@ -27,6 +27,7 @@ import { MaterialsPage } from '../pages/learning/MaterialsPage';
 import { RoadmapsDashboard } from '../pages/learning/RoadmapsDashboard';
 import { RoadmapViewPage } from '../pages/learning/RoadmapViewPage';
 import { TopicMasteryPage } from '../pages/learning/TopicMasteryPage';
+import { ChatDashboard } from '../pages/chat/ChatDashboard';
 
 // Components
 import { RoleGuard } from '../components/shared/RoleGuard';
@@ -94,6 +95,8 @@ export const App: React.FC = () => {
                 <Route path="lessons/:lessonId" element={<LessonDetailPage />} />
                 <Route path="learning/materials" element={<MaterialsPage />} />
                 <Route path="learning/mastery" element={<TopicMasteryPage />} />
+                <Route path="chat" element={<ChatDashboard />} />
+                <Route path="chat/:sessionId" element={<ChatDashboard />} />
                 <Route path="academic" element={<Navigate to="/courses" replace />} />
                 <Route path="profile" element={<ProfilePage />} />
                 <Route path="unauthorized" element={<UnauthorizedPage />} />
@@ -102,7 +105,6 @@ export const App: React.FC = () => {
                 <Route element={<RoleGuard allowedRoles={['student', 'admin']} />}>
                   <Route path="learning/roadmap" element={<RoadmapsDashboard />} />
                   <Route path="learning/roadmap/:roadmapId" element={<RoadmapViewPage />} />
-                  <Route path="chat" element={<DashboardPlaceholder />} />
                   <Route path="assessments" element={<DashboardPlaceholder />} />
                 </Route>
 

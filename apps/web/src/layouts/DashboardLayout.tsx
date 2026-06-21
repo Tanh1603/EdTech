@@ -63,6 +63,7 @@ export const DashboardLayout: React.FC = () => {
     { name: 'Quản lý Lớp học', path: '/classes', icon: GraduationCap },
     { name: 'Tài liệu & Upload', path: '/learning/materials', icon: UploadCloud },
     { name: 'Theo dõi Học sinh', path: '/learning/mastery', icon: TrendingUp },
+    { name: 'AI Tutor Chat', path: '/chat', icon: MessageSquare },
     { name: 'Quản lý Đề thi', path: '/assessments/manage', icon: FolderLock },
   ];
 

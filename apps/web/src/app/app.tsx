@@ -23,6 +23,10 @@ import { CourseDetailPage } from '../pages/academic/CourseDetailPage';
 import { ClassroomDirectory } from '../pages/academic/ClassroomDirectory';
 import { ClassroomDetailPage } from '../pages/academic/ClassroomDetailPage';
 import { LessonDetailPage } from '../pages/academic/LessonDetailPage';
+import { MaterialsPage } from '../pages/learning/MaterialsPage';
+import { RoadmapsDashboard } from '../pages/learning/RoadmapsDashboard';
+import { RoadmapViewPage } from '../pages/learning/RoadmapViewPage';
+import { TopicMasteryPage } from '../pages/learning/TopicMasteryPage';
 
 // Components
 import { RoleGuard } from '../components/shared/RoleGuard';
@@ -88,21 +92,22 @@ export const App: React.FC = () => {
                 <Route path="classes" element={<ClassroomDirectory />} />
                 <Route path="classes/:classroomId" element={<ClassroomDetailPage />} />
                 <Route path="lessons/:lessonId" element={<LessonDetailPage />} />
+                <Route path="learning/materials" element={<MaterialsPage />} />
+                <Route path="learning/mastery" element={<TopicMasteryPage />} />
                 <Route path="academic" element={<Navigate to="/courses" replace />} />
                 <Route path="profile" element={<ProfilePage />} />
                 <Route path="unauthorized" element={<UnauthorizedPage />} />
                 
                 {/* Student Only Routes */}
                 <Route element={<RoleGuard allowedRoles={['student', 'admin']} />}>
-                  <Route path="learning/roadmap" element={<DashboardPlaceholder />} />
-                  <Route path="learning/mastery" element={<DashboardPlaceholder />} />
+                  <Route path="learning/roadmap" element={<RoadmapsDashboard />} />
+                  <Route path="learning/roadmap/:roadmapId" element={<RoadmapViewPage />} />
                   <Route path="chat" element={<DashboardPlaceholder />} />
                   <Route path="assessments" element={<DashboardPlaceholder />} />
                 </Route>
 
                 {/* Teacher Only Routes */}
                 <Route element={<RoleGuard allowedRoles={['teacher', 'admin']} />}>
-                  <Route path="learning/materials" element={<DashboardPlaceholder />} />
                   <Route path="learning/performance" element={<DashboardPlaceholder />} />
                   <Route path="assessments/manage" element={<DashboardPlaceholder />} />
                 </Route>

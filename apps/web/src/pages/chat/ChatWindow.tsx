@@ -266,7 +266,7 @@ export const ChatWindow: React.FC = () => {
         ) : (
           <div className="space-y-4">
             {messages.map((message) => {
-              const isUser = message.sender === 'user';
+              const isUser = message.sender === 'user' || message.role === 'user';
               return (
                 <div 
                   key={message.id} 

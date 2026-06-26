@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   fetchCourseDetail, 
@@ -29,7 +29,12 @@ export const CourseDetailPage: React.FC = () => {
   const { activeRole } = useAuthStore();
   const queryClient = useQueryClient();
 
-  const [activeTab, setActiveTab] = useState<'lessons' | 'classrooms'>('lessons');
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const defaultTab = (queryParams.get('tab') as 'lessons' | 'classrooms') || 'lessons';
+  const shouldCreate = queryParams.get('create') === 'true';
+
+  const [activeTab, setActiveTab] = useState<'lessons' | 'classrooms'>(defaultTab);
 
   // Modal States
   const [isLessModalOpen, setIsLessModalOpen] = useState(false);
@@ -41,6 +46,13 @@ export const CourseDetailPage: React.FC = () => {
   const [className, setClassName] = useState('');
   const [classStart, setClassStart] = useState('');
   const [classEnd, setClassEnd] = useState('');
+
+  // Automatically trigger classroom creation modal if create=true query param is set
+  useEffect(() => {
+    if (shouldCreate && activeRole === 'teacher') {
+      setIsClassModalOpen(true);
+    }
+  }, [shouldCreate, activeRole]);
 
   // 1. Fetch Course Detail
   const { data: courseResp, isLoading: isCourseLoading } = useQuery({

@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { fetchCourses, createCourse, Course } from '../../services/academic';
 import { useAuthStore } from '../../state/useAuthStore';
+import { useUser } from '@clerk/clerk-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { 
@@ -17,6 +18,7 @@ import {
 
 export const CourseDirectory: React.FC = () => {
   const { activeRole } = useAuthStore();
+  const { user } = useUser();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -60,6 +62,7 @@ export const CourseDirectory: React.FC = () => {
       name: newCourseName,
       description: newCourseDesc,
       thumbnailUrl: newCourseThumb || undefined,
+      teacherId: user?.id || '',
     });
   };
 
@@ -128,12 +131,11 @@ export const CourseDirectory: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {courses.map((course: Course) => (
-            <Link 
+            <div 
               key={course.id}
-              to={`/courses/${course.id}`}
               className="bg-card border border-border hover:border-primary/40 rounded-2xl overflow-hidden flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-300 group"
             >
-              <div>
+              <Link to={`/courses/${course.id}`}>
                 {/* Course Thumbnail */}
                 <div className="h-44 bg-slate-900 border-b border-border relative overflow-hidden flex items-center justify-center">
                   {course.thumbnailUrl ? (
@@ -156,23 +158,37 @@ export const CourseDirectory: React.FC = () => {
 
                 {/* Course Content */}
                 <div className="p-5 space-y-2">
-                  <h3 className="font-bold text-lg leading-snug group-hover:text-primary transition-colors font-outfit">
+                  <h3 className="font-bold text-lg leading-snug group-hover:text-primary transition-colors font-outfit text-foreground">
                     {course.name}
                   </h3>
                   <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
                     {course.description || 'Chưa có mô tả chi tiết cho môn học này.'}
                   </p>
                 </div>
-              </div>
+              </Link>
 
               {/* Course Footer button */}
               <div className="p-5 pt-0">
-                <div className="flex items-center justify-between text-xs font-semibold text-primary group-hover:translate-x-1 transition-transform border-t border-border/60 pt-4 mt-2">
-                  <span>Chi tiết giáo trình</span>
-                  <ArrowRight size={14} />
+                <div className="flex items-center justify-between gap-3 border-t border-border/60 pt-4 mt-2">
+                  <Link 
+                    to={`/courses/${course.id}`}
+                    className="flex-1 flex items-center justify-between text-xs font-semibold text-primary hover:underline"
+                  >
+                    <span>Chi tiết giáo trình</span>
+                    <ArrowRight size={14} />
+                  </Link>
+
+                  {activeRole === 'teacher' && (
+                    <Link
+                      to={`/courses/${course.id}?tab=classrooms&create=true`}
+                      className="px-3 py-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-primary-foreground border border-primary/20 rounded-xl text-[11px] font-semibold transition-all shrink-0"
+                    >
+                      Tạo lớp học
+                    </Link>
+                  )}
                 </div>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       )}

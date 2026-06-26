@@ -16,16 +16,37 @@ export const useChatStream = (sessionId: string) => {
     abortControllerRef.current = abortController;
 
     try {
-      const token = await getToken();
+      const token = await getToken({ template: 'rbac' });
       const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
       
-      const response = await fetch(`${baseUrl}/chat/sessions/${sessionId}/messages/stream`, {
+      // Step 1: Create user message to get messageId
+      const createMsgResponse = await fetch(`${baseUrl}/chat/sessions/${sessionId}/messages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({ role: 'user', content }),
+        signal: abortController.signal
+      });
+
+      if (!createMsgResponse.ok) {
+        throw new Error(`Failed to save user message: ${createMsgResponse.status}`);
+      }
+
+      const createMsgData = await createMsgResponse.json();
+      const messageId = createMsgData?.data?.id || createMsgData?.id;
+
+      if (!messageId) {
+        throw new Error('Could not retrieve message ID from created message response');
+      }
+
+      // Step 2: Connect to the SSE stream using GET and the messageId
+      const response = await fetch(`${baseUrl}/chat/sessions/${sessionId}/messages/${messageId}/stream`, {
+        method: 'GET',
+        headers: {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         signal: abortController.signal
       });
 

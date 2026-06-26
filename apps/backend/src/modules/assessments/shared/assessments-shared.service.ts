@@ -128,7 +128,13 @@ export class AssessmentsSharedService {
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { createdAt: 'desc' },
-        include: { creator: { select: userSummarySelect } },
+        include: {
+          creator: { select: userSummarySelect },
+          submissions: {
+            where: { studentId: userId },
+            include: { result: true },
+          },
+        },
       }),
       this.prisma.exam.count({ where }),
     ]);
@@ -484,8 +490,9 @@ export class AssessmentsSharedService {
         },
       },
     });
-    const submission = await this.prisma.submission.findUnique({
+    const submission = await this.prisma.submission.update({
       where: { id: submissionId },
+      data: { status: SubmissionStatus.graded },
       select: { studentId: true, exam: { select: { title: true } } },
     });
     if (submission?.studentId) {

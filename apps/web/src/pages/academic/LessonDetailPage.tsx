@@ -59,7 +59,11 @@ export const LessonDetailPage: React.FC = () => {
         throw new Error('Upload thất bại');
       }
 
-      const { storageUrl, publicId, mimeType, size } = uploadResp.data;
+      const data = uploadResp.data as any;
+      const storageUrl = data.storageUrl || data.secure_url || data.url;
+      const publicId = data.publicId || data.public_id;
+      const mimeType = data.mimeType || file.type;
+      const size = data.size || data.bytes || file.size;
 
       return createMaterial({
         lessonId: lessonId || '',

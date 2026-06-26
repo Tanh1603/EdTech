@@ -15,6 +15,7 @@ export interface ChatMessage {
   sender: 'user' | 'assistant';
   content: string;
   createdAt: string;
+  role?: 'user' | 'assistant';
 }
 
 // -------------------------------------------------------------

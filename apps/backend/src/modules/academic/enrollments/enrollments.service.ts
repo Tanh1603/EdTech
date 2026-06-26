@@ -91,7 +91,7 @@ export class EnrollmentsService {
     roles: UserRole[] = [],
   ) {
     if (userId) {
-      await this.accessPolicy.assertClassTeacherOrAdmin(
+      await this.accessPolicy.assertClassroomAccess(
         classroomId,
         userId,
         roles,

@@ -28,6 +28,11 @@ import { RoadmapsDashboard } from '../pages/learning/RoadmapsDashboard';
 import { RoadmapViewPage } from '../pages/learning/RoadmapViewPage';
 import { TopicMasteryPage } from '../pages/learning/TopicMasteryPage';
 import { ChatDashboard } from '../pages/chat/ChatDashboard';
+import { ExamManagePage } from '../pages/assessments/ExamManagePage';
+import { ExamDetailPage } from '../pages/assessments/ExamDetailPage';
+import { StudentAssessmentsPage } from '../pages/assessments/StudentAssessmentsPage';
+import { StudentExamPage } from '../pages/assessments/StudentExamPage';
+import { StudentResultPage } from '../pages/assessments/StudentResultPage';
 
 // Components
 import { RoleGuard } from '../components/shared/RoleGuard';
@@ -42,7 +47,7 @@ const AuthTokenInjector: React.FC<{ children: React.ReactNode }> = ({ children }
   const { getToken } = useAuth();
 
   useEffect(() => {
-    injectAuthTokenLoader(() => getToken());
+    injectAuthTokenLoader(() => getToken({ template: 'rbac' }));
   }, [getToken]);
 
   return children as React.ReactElement;
@@ -105,13 +110,15 @@ export const App: React.FC = () => {
                 <Route element={<RoleGuard allowedRoles={['student', 'admin']} />}>
                   <Route path="learning/roadmap" element={<RoadmapsDashboard />} />
                   <Route path="learning/roadmap/:roadmapId" element={<RoadmapViewPage />} />
-                  <Route path="assessments" element={<DashboardPlaceholder />} />
+                  <Route path="assessments" element={<StudentAssessmentsPage />} />
+                  <Route path="assessments/result/:submissionId" element={<StudentResultPage />} />
                 </Route>
 
                 {/* Teacher Only Routes */}
                 <Route element={<RoleGuard allowedRoles={['teacher', 'admin']} />}>
                   <Route path="learning/performance" element={<DashboardPlaceholder />} />
-                  <Route path="assessments/manage" element={<DashboardPlaceholder />} />
+                  <Route path="assessments/manage" element={<ExamManagePage />} />
+                  <Route path="assessments/manage/:examId" element={<ExamDetailPage />} />
                 </Route>
               </Route>
 
@@ -126,7 +133,7 @@ export const App: React.FC = () => {
                   </ProtectedRoute>
                 }
               >
-                <Route index element={<ExamPlaceholder />} />
+                <Route index element={<StudentExamPage />} />
               </Route>
 
               {/* Fallback to root redirect */}

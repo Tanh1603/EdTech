@@ -41,7 +41,13 @@ export class StorageGatewayController {
     }
 
     try {
-      return await this.storage.uploadFile(file);
+      const result = await this.storage.uploadFile(file);
+      return {
+        storageUrl: result.secure_url,
+        publicId: result.public_id,
+        mimeType: file.mimetype,
+        size: result.bytes,
+      };
 
     } catch (error) {
       throw new BadGatewayException(

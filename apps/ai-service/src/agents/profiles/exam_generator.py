@@ -105,14 +105,25 @@ def parse_json_array(text: str) -> list[Any]:
         stripped = stripped.removeprefix("json").strip()
     try:
         value = json.loads(stripped)
-        return value if isinstance(value, list) else []
+        if isinstance(value, list):
+            return value
+        if isinstance(value, dict):
+            for val in value.values():
+                if isinstance(val, list):
+                    return val
+            return []
     except json.JSONDecodeError:
         start = stripped.find("[")
         end = stripped.rfind("]")
         if start >= 0 and end > start:
             try:
                 value = json.loads(stripped[start : end + 1])
-                return value if isinstance(value, list) else []
+                if isinstance(value, list):
+                    return value
+                if isinstance(value, dict):
+                    for val in value.values():
+                        if isinstance(val, list):
+                            return val
             except json.JSONDecodeError:
                 return []
     return []

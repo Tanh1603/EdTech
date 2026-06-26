@@ -31,9 +31,13 @@ export interface Lesson {
 }
 
 export interface ClassroomLesson {
-  classroomId: string;
+  classroomId?: string;
   lessonId: string;
   isPublished: boolean;
+  title?: string;
+  description?: string;
+  orderNo?: number;
+  publishedAt?: string;
   lesson?: Lesson; // Linked details
 }
 
@@ -115,7 +119,7 @@ export const joinClassroom = async (inviteCode: string): Promise<Envelope<Enroll
   return apiClient.post('/enrollments/join', { inviteCode });
 };
 
-export const fetchClassroomStudents = async (classroomId: string): Promise<Enrollment[]> => {
+export const fetchClassroomStudents = async (classroomId: string): Promise<Envelope<Enrollment[]>> => {
   // Returns raw array after unwrapListResponse in gateway
   return apiClient.get(`/classrooms/${classroomId}/students`);
 };
@@ -150,7 +154,7 @@ export const publishLessonToClassroom = async (classroomId: string, data: { less
   return apiClient.post(`/classes/${classroomId}/lessons`, data);
 };
 
-export const fetchClassroomLessons = async (classroomId: string, params?: { publishedOnly?: boolean }): Promise<ClassroomLesson[]> => {
+export const fetchClassroomLessons = async (classroomId: string, params?: { publishedOnly?: boolean }): Promise<Envelope<ClassroomLesson[]>> => {
   // Returns array directly after unwrapListResponse in gateway
   return apiClient.get(`/classes/${classroomId}/lessons`, { params });
 };

@@ -54,19 +54,21 @@ export const ClassroomDetailPage: React.FC = () => {
   });
 
   // 3. Fetch Classroom Lessons (actual published states)
-  const { data: classLessons, isLoading: isClassLessonsLoading } = useQuery({
+  const { data: classLessonsResp, isLoading: isClassLessonsLoading } = useQuery({
     queryKey: ['classroomLessons', classroomId],
     queryFn: () => fetchClassroomLessons(classroomId || '', { publishedOnly: activeRole === 'student' }),
     enabled: !!classroomId,
   });
 
   // 4. Fetch Enrolled Students list
-  const { data: students = [], isLoading: isStudentsLoading } = useQuery({
+  const { data: studentsResp, isLoading: isStudentsLoading } = useQuery({
     queryKey: ['classroomStudents', classroomId],
     queryFn: () => fetchClassroomStudents(classroomId || ''),
     enabled: !!classroomId,
   });
 
+  const classLessons = classLessonsResp?.data || [];
+  const students = studentsResp?.data || [];
   const courseLessons = courseLessonsResp?.data || [];
 
   // Toggle Publish Mutation
@@ -313,8 +315,9 @@ export const ClassroomDetailPage: React.FC = () => {
           ) : (
             <div className="space-y-3">
               {classLessons?.map((cl) => {
-                const lesson = cl.lesson;
-                if (!lesson) return null;
+                const title = cl.lesson?.title || cl.title || 'Bài học không tên';
+                const description = cl.lesson?.description || cl.description || 'Không có mô tả.';
+                const orderNo = cl.lesson?.orderNo || cl.orderNo || 0;
 
                 return (
                   <Link
@@ -324,13 +327,13 @@ export const ClassroomDetailPage: React.FC = () => {
                   >
                     <div className="flex items-center gap-4">
                       <span className="h-8 w-8 rounded-lg bg-muted text-muted-foreground font-bold text-xs flex items-center justify-center">
-                        {lesson.orderNo}
+                        {orderNo}
                       </span>
                       <div className="flex flex-col">
                         <span className="font-semibold text-sm group-hover:text-primary transition-colors">
-                          {lesson.title}
+                          {title}
                         </span>
-                        <span className="text-xs text-muted-foreground line-clamp-1">{lesson.description || 'Không có mô tả.'}</span>
+                        <span className="text-xs text-muted-foreground line-clamp-1">{description}</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-1 text-xs text-primary font-bold opacity-0 group-hover:opacity-100 transition-opacity">

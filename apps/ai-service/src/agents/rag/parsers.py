@@ -30,11 +30,27 @@ class DocumentParser:
     ) -> ParsedDocument:
         mime = (mime_type or "").lower()
         name = (filename or "").lower()
-        if "pdf" in mime or name.endswith(".pdf"):
+        
+        # Detect file type by magic byte signatures
+        is_pdf = content.startswith(b"%PDF-") or (b"%PDF-" in content[:1024])
+        is_zip = content.startswith(b"PK\x03\x04")
+        
+        is_docx = (
+            (is_zip and ("word" in mime or "docx" in name))
+            or "wordprocessingml" in mime
+            or name.endswith(".docx")
+        )
+        is_pptx = (
+            (is_zip and ("presentation" in mime or "pptx" in name))
+            or "presentationml" in mime
+            or name.endswith(".pptx")
+        )
+        
+        if is_pdf or "pdf" in mime or name.endswith(".pdf"):
             text = self._pdf_text(content)
-        elif "wordprocessingml" in mime or name.endswith(".docx"):
+        elif is_docx:
             text = self._docx_text(content)
-        elif "presentationml" in mime or name.endswith(".pptx"):
+        elif is_pptx:
             text = self._pptx_text(content)
         else:
             text = content.decode("utf-8", errors="ignore")

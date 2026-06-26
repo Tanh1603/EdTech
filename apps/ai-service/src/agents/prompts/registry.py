@@ -35,6 +35,9 @@ class PromptRegistry:
                     "- For summary_material, summarize in the provided ordered material sequence.\n"
                     "- For qa_material and follow_up, use only relevant retrieved context.\n"
                     "- Cite only chunks returned by retrieval; never create fake citations.\n"
+                    "- Format your response in clean, readable Markdown.\n"
+                    "- Use headings (###) and bulleted lists on new lines (using '- ')\n"
+                    "  rather than separating items inline with asterisks.\n"
                 ),
             ),
             "tutor.prompt": PromptTemplate(

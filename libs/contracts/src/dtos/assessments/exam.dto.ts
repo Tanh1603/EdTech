@@ -64,7 +64,8 @@ export class GenerateExamDto extends CreateExamDto {
   @IsString({ each: true })
   questionTypes?: string[];
 
-  @ApiProperty({ format: 'uuid' })
+  @ApiPropertyOptional({ format: 'uuid' })
+  @IsOptional()
   @IsUUID()
-  materialId!: string;
+  materialId?: string;
 }

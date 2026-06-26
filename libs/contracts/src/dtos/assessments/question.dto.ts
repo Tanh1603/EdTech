@@ -93,7 +93,8 @@ export class GenerateQuestionsDto {
   @IsString({ each: true })
   questionTypes?: string[];
 
-  @ApiProperty({ format: 'uuid' })
+  @ApiPropertyOptional({ format: 'uuid' })
+  @IsOptional()
   @IsUUID()
-  materialId!: string;
+  materialId?: string;
 }

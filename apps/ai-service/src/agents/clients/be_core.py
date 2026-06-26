@@ -14,6 +14,7 @@ from agents.clients.be_core_common import (
     unwrap_page_response,
 )
 from agents.clients.be_core_domains import (
+    AcademicClientMixin,
     AssessmentClientMixin,
     ChatClientMixin,
     JobsClientMixin,
@@ -55,10 +56,15 @@ def _load_generated_modules() -> dict[str, Any]:
         "mastery_pb2": import_module("learning.mastery_pb2"),
         "mastery_pb2_grpc": import_module("learning.mastery_pb2_grpc"),
         "common_json_pb2": import_module("common.json_pb2"),
+        "classrooms_pb2": import_module("academic.classrooms_pb2"),
+        "classrooms_pb2_grpc": import_module("academic.classrooms_pb2_grpc"),
+        "lessons_pb2": import_module("academic.lessons_pb2"),
+        "lessons_pb2_grpc": import_module("academic.lessons_pb2_grpc"),
     }
 
 
 class BeCoreGrpcClient(
+    AcademicClientMixin,
     MaterialsClientMixin,
     ChatClientMixin,
     AssessmentClientMixin,
@@ -85,6 +91,8 @@ class BeCoreGrpcClient(
         self._roadmaps_pb2 = modules["roadmaps_pb2"]
         self._mastery_pb2 = modules["mastery_pb2"]
         self._common_json_pb2 = modules["common_json_pb2"]
+        self._classrooms_pb2 = modules["classrooms_pb2"]
+        self._lessons_pb2 = modules["lessons_pb2"]
         self.materials = modules["materials_pb2_grpc"].LearningMaterialsServiceStub(
             self._channel
         )
@@ -115,6 +123,12 @@ class BeCoreGrpcClient(
             self._channel
         )
         self.mastery = modules["mastery_pb2_grpc"].LearningMasteryServiceStub(
+            self._channel
+        )
+        self.classrooms = modules["classrooms_pb2_grpc"].AcademicClassroomsServiceStub(
+            self._channel
+        )
+        self.lessons = modules["lessons_pb2_grpc"].AcademicLessonsServiceStub(
             self._channel
         )
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 
-from agents.orchestrator.nodes.common import material_id, normalize_text
+from agents.orchestrator.nodes.common import material_id, material_ids, normalize_text
 from agents.orchestrator.state import RuntimeState
 from agents.profiles.common import sanitize_text
 
@@ -30,7 +30,7 @@ def intent_router_node(state: RuntimeState) -> RuntimeState:
         return state
     question = sanitize_text(str(state.get("current_message") or ""))
     normalized = normalize_text(question)
-    active_material_id = material_id(state)
+    active_material_ids = material_ids(state)
     options = state.get("options", {})
     material_missing = isinstance(options, dict) and options.get("materialStatus") == "missing"
     if any(term in normalized for term in SUMMARY_TERMS):
@@ -39,7 +39,7 @@ def intent_router_node(state: RuntimeState) -> RuntimeState:
         intent = "follow_up"
     elif material_missing and bool(state.get("use_rag", True)):
         intent = "qa_material"
-    elif active_material_id and bool(state.get("use_rag", True)):
+    elif active_material_ids and bool(state.get("use_rag", True)):
         intent = "qa_material"
     else:
         intent = "general_tutor"
@@ -51,7 +51,7 @@ def intent_router_node(state: RuntimeState) -> RuntimeState:
             "sessionId": state.get("session_id", ""),
             "messageId": state.get("message_id", ""),
             "intent": intent,
-            "materialId": active_material_id or "",
+            "materialId": active_material_ids[0] if active_material_ids else "",
         },
     )
     return {**state, "intent": intent}

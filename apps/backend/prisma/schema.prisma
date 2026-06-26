@@ -160,6 +160,7 @@ model Classroom {
   exams            Exam[]
   chatSessions     ChatSession[]
   classroomLessons ClassroomLesson[]
+  learningRoadmaps LearningRoadmap[]
 
   @@map("classrooms")
 }
@@ -372,16 +373,19 @@ model Result {
 model LearningRoadmap {
   id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId        String        @map("user_id")
+  classId       String?       @map("class_id") @db.Uuid
   title         String
   targetGoal    String?       @map("target_goal")
   status        RoadmapStatus @default(active)
   generatedByAi Boolean       @default(true) @map("generated_by_ai")
   createdAt     DateTime      @default(now()) @map("created_at")
 
-  user  User          @relation("LearningRoadmapUser", fields: [userId], references: [id], onDelete: Restrict)
-  items RoadmapItem[]
+  user      User       @relation("LearningRoadmapUser", fields: [userId], references: [id], onDelete: Restrict)
+  classroom Classroom? @relation(fields: [classId], references: [id])
+  items     RoadmapItem[]
 
   @@index([userId])
+  @@index([classId])
   @@map("learning_roadmaps")
 }
 

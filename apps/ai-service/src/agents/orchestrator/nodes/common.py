@@ -16,6 +16,20 @@ def material_id(state: RuntimeState) -> str | None:
     return str(value) if value else None
 
 
+def material_ids(state: RuntimeState) -> list[str]:
+    context = state.get("learning_context", {})
+    if isinstance(context, dict) and context.get("materialIds"):
+        val = context["materialIds"]
+        if isinstance(val, list):
+            return [str(v) for v in val if v]
+    options = state.get("options", {})
+    val = options.get("materialIds") if isinstance(options, dict) else None
+    if isinstance(val, list):
+        return [str(v) for v in val if v]
+    single = material_id(state)
+    return [single] if single else []
+
+
 def format_learning_context(state: RuntimeState) -> str:
     context = state.get("learning_context", {})
     if not isinstance(context, dict) or not context:
@@ -38,7 +52,9 @@ def learning_context_from_state(state: RuntimeState) -> dict[str, Any]:
     options = state.get("options", {})
     material = state.get("tool_results", {}).get("materials.get")
     option_material_id = options.get("materialId") if isinstance(options, dict) else None
+    option_material_ids = options.get("materialIds") if isinstance(options, dict) else None
     option_material_title = options.get("materialTitle") if isinstance(options, dict) else None
+    option_material_titles = options.get("materialTitles") if isinstance(options, dict) else None
     option_lesson_id = options.get("lessonId") if isinstance(options, dict) else None
     option_auto_resolved = (
         options.get("materialAutoResolved") if isinstance(options, dict) else None
@@ -52,6 +68,8 @@ def learning_context_from_state(state: RuntimeState) -> dict[str, Any]:
             "mimeType": str(material.get("mimeType") or ""),
             "chunksCount": material.get("chunksCount") or 0,
             "materialAutoResolved": option_auto_resolved,
+            "materialIds": option_material_ids or ([str(material.get("id"))] if material.get("id") else []),
+            "materialTitles": option_material_titles or ([str(material.get("title"))] if material.get("title") else []),
         }
     return {
         "materialId": str(option_material_id or ""),
@@ -61,4 +79,6 @@ def learning_context_from_state(state: RuntimeState) -> dict[str, Any]:
         "materialStatus": (
             str(options.get("materialStatus") or "") if isinstance(options, dict) else ""
         ),
+        "materialIds": option_material_ids or ([str(option_material_id)] if option_material_id else []),
+        "materialTitles": option_material_titles or ([str(option_material_title)] if option_material_title else []),
     }

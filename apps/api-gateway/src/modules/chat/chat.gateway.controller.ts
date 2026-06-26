@@ -238,24 +238,26 @@ export class ChatMessagesGatewayController {
         }
 
         return from(
-          this.resolveRagMaterial({
+          this.resolveRagMaterials({
             materialId,
             lessonId,
             classId,
             metadata,
           }),
         ).pipe(
-          switchMap((resolvedMaterial) => {
+          switchMap((resolvedMaterials) => {
+            const materialIds = resolvedMaterials.map((m) => this.getStringField(m, 'id') || '').filter(Boolean);
+            const materialTitles = resolvedMaterials.map((m) => this.getStringField(m, 'title') || '').filter(Boolean);
+
             const started$ = of(
               this.toMessageEvent('chat.started', {
                 sessionId,
                 messageId,
-                materialId: this.getStringField(resolvedMaterial, 'id') || materialId || '',
-                materialAutoResolved: Boolean(resolvedMaterial && !materialId),
+                materialIds,
+                materialAutoResolved: Boolean(resolvedMaterials.length > 0 && !materialId),
               }, req),
             );
 
-            const resolvedMaterialId = this.getStringField(resolvedMaterial, 'id');
             const token$ = this.aiGrpc.aiOrchestrator
               .streamChatResponse(
                 {
@@ -266,11 +268,11 @@ export class ChatMessagesGatewayController {
                   useRag: true,
                   topK: Number(topK) || 5,
                   options: toProtoStruct({
-                    ...(resolvedMaterialId ? { materialId: resolvedMaterialId } : {}),
+                    materialIds,
                     ...(lessonId ? { lessonId } : {}),
-                    ...(resolvedMaterial
+                    ...(resolvedMaterials.length > 0
                       ? {
-                          materialTitle: this.getStringField(resolvedMaterial, 'title') || '',
+                          materialTitles,
                           materialAutoResolved: !materialId,
                         }
                       : { materialStatus: 'missing' }),
@@ -354,27 +356,29 @@ export class ChatMessagesGatewayController {
     return typeof field === 'string' ? field : undefined;
   }
 
-  private async resolveRagMaterial(input: {
+  private async resolveRagMaterials(input: {
     materialId?: string;
     lessonId?: string;
     classId?: string;
     metadata: Metadata;
-  }): Promise<Record<string, unknown> | null> {
+  }): Promise<Record<string, unknown>[]> {
     if (input.materialId) {
-      return this.object(
+      const material = (await this.object(
         this.grpc.learningMaterials.getMaterialDetail(
           { materialId: input.materialId },
           input.metadata,
         ),
-      ) as Promise<Record<string, unknown>>;
+      )) as Record<string, unknown>;
+      return material ? [material] : [];
     }
 
     if (input.lessonId) {
-      return this.getLatestReadyMaterialForLesson(input.lessonId, input.metadata);
+      const material = await this.getLatestReadyMaterialForLesson(input.lessonId, input.metadata);
+      return material ? [material] : [];
     }
 
     if (!input.classId) {
-      return null;
+      return [];
     }
 
     const lessonResponse = unwrapListResponse(
@@ -386,28 +390,20 @@ export class ChatMessagesGatewayController {
       ),
     );
     const lessons = (lessonResponse.items ?? [])
-      .filter((item): item is Record<string, unknown> => typeof item === 'object' && item !== null)
-      .sort((left, right) => {
-        const publishedDelta =
-          Date.parse(this.getStringField(right, 'publishedAt') || '') -
-          Date.parse(this.getStringField(left, 'publishedAt') || '');
-        if (Number.isFinite(publishedDelta) && publishedDelta !== 0) {
-          return publishedDelta;
-        }
-        return this.getNumberField(right, 'orderNo') - this.getNumberField(left, 'orderNo');
-      });
+      .filter((item): item is Record<string, unknown> => typeof item === 'object' && item !== null);
 
+    const resolvedMaterials: Record<string, unknown>[] = [];
     for (const lesson of lessons) {
       const resolved = await this.getLatestReadyMaterialForLesson(
         this.getStringField(lesson, 'lessonId') || '',
         input.metadata,
       );
       if (resolved) {
-        return resolved;
+        resolvedMaterials.push(resolved);
       }
     }
 
-    return null;
+    return resolvedMaterials;
   }
 
   private async getLatestReadyMaterialForLesson(

@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchCourses, fetchLessonsByCourse, Course, Lesson } from '../../services/academic';
-import { fetchMaterials, createMaterial, uploadFile, Material } from '../../services/learning';
+import { fetchMaterials, createMaterial, uploadFile, Material, generateMaterialSummary } from '../../services/learning';
 import { useAuthStore } from '../../state/useAuthStore';
 import { toast } from 'sonner';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   UploadCloud, 
   FileText, 
@@ -13,8 +14,78 @@ import {
   BookOpen, 
   Layers,
   FolderOpen,
-  Download
+  Download,
+  Sparkles,
+  X
 } from 'lucide-react';
+
+const renderInlineMarkdown = (text: string) => {
+  let parts: (string | React.ReactNode)[] = [text];
+
+  // Bold **text**
+  parts = parts.flatMap((part) => {
+    if (typeof part !== 'string') return part;
+    const regex = /\*\*([\s\S]*?)\*\*/g;
+    const split = part.split(regex);
+    return split.map((chunk, i) => (i % 2 === 1 ? <strong key={i} className="font-extrabold text-foreground">{chunk}</strong> : chunk));
+  });
+
+  // Inline code `code`
+  parts = parts.flatMap((part) => {
+    if (typeof part !== 'string') return part;
+    const regex = /`([^`]+)`/g;
+    const split = part.split(regex);
+    return split.map((chunk, i) => (i % 2 === 1 ? <code key={i} className="px-1.5 py-0.5 bg-muted text-violet-500 rounded text-xs font-mono">{chunk}</code> : chunk));
+  });
+
+  return parts;
+};
+
+const renderMarkdown = (text: string) => {
+  if (!text) return null;
+  const lines = text.split('\n');
+  return (
+    <div className="space-y-2 text-sm leading-relaxed text-foreground/90">
+      {lines.map((line, idx) => {
+        const trimmed = line.trim();
+        if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+          return (
+            <ul key={idx} className="list-disc pl-5 my-1 space-y-1">
+              <li className="text-xs md:text-sm">{renderInlineMarkdown(trimmed.substring(2))}</li>
+            </ul>
+          );
+        }
+        if (trimmed.startsWith('### ')) {
+          return (
+            <h4 key={idx} className="text-sm font-extrabold font-outfit mt-4 mb-1.5 text-foreground flex items-center gap-1.5">
+              {renderInlineMarkdown(trimmed.substring(4))}
+            </h4>
+          );
+        }
+        if (trimmed.startsWith('## ')) {
+          return (
+            <h3 key={idx} className="text-base font-extrabold font-outfit mt-5 mb-2 text-foreground flex items-center gap-1.5 border-b border-border/50 pb-1">
+              {renderInlineMarkdown(trimmed.substring(3))}
+            </h3>
+          );
+        }
+        if (trimmed.startsWith('# ')) {
+          return (
+            <h2 key={idx} className="text-lg font-extrabold font-outfit mt-6 mb-3 text-foreground border-b border-border pb-1.5">
+              {renderInlineMarkdown(trimmed.substring(2))}
+            </h2>
+          );
+        }
+        return (
+          <p key={idx} className={trimmed ? 'min-h-[1rem]' : 'h-2'}>
+            {renderInlineMarkdown(line)}
+          </p>
+        );
+      })}
+    </div>
+  );
+};
+
 
 export const MaterialsPage: React.FC = () => {
   const { activeRole } = useAuthStore();
@@ -24,6 +95,8 @@ export const MaterialsPage: React.FC = () => {
   const [selectedLessonId, setSelectedLessonId] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const [activeSummaryMaterialId, setActiveSummaryMaterialId] = useState<string | null>(null);
+  const [waitingForSummaryIds, setWaitingForSummaryIds] = useState<string[]>([]);
 
   // 1. Fetch Courses
   const { data: coursesResp, isLoading: isCoursesLoading } = useQuery({
@@ -48,10 +121,45 @@ export const MaterialsPage: React.FC = () => {
     refetchInterval: (query) => {
       const items = query.state.data?.data || [];
       const hasIndexing = items.some(item => item.status === 'uploaded' || item.status === 'indexing');
-      return hasIndexing ? 3000 : false; // Poll every 3 seconds if any file is indexing
+      const isWaitingForAnySummary = items.some(item => item.status === 'ready' && !item.summary && waitingForSummaryIds.includes(item.id));
+      return (hasIndexing || isWaitingForAnySummary) ? 3000 : false; // Poll every 3 seconds if indexing or waiting for summary
     }
   });
   const materials = materialsResp?.data || [];
+
+  // Cleanup completed summary IDs from waiting list
+  React.useEffect(() => {
+    if (materials.length > 0 && waitingForSummaryIds.length > 0) {
+      const stillWaiting = waitingForSummaryIds.filter(id => {
+        const mat = materials.find(m => m.id === id);
+        return mat && !mat.summary;
+      });
+      if (stillWaiting.length !== waitingForSummaryIds.length) {
+        setWaitingForSummaryIds(stillWaiting);
+      }
+    }
+  }, [materials, waitingForSummaryIds]);
+
+  // Generate Summary Mutation
+  const generateSummaryMutation = useMutation({
+    mutationFn: async (materialId: string) => {
+      const resp = await generateMaterialSummary(materialId);
+      if (!resp.success) {
+        throw new Error('Không thể tạo yêu cầu tóm tắt tài liệu');
+      }
+      return materialId;
+    },
+    onSuccess: (materialId) => {
+      toast.success('Đã gửi yêu cầu tóm tắt tới AI. Tiến trình tóm tắt bắt đầu...');
+      setWaitingForSummaryIds(prev => [...prev, materialId]);
+      queryClient.invalidateQueries({ queryKey: ['materials', selectedLessonId] });
+    },
+    onError: (err: unknown) => {
+      const error = err as { message?: string };
+      toast.error(`Lỗi tạo tóm tắt: ${error.message || 'Không thể bắt đầu tóm tắt'}`);
+    }
+  });
+
 
   // Upload Mutations
   const uploadMutation = useMutation({
@@ -289,15 +397,27 @@ export const MaterialsPage: React.FC = () => {
                     <div className="flex items-center justify-between mt-5 pt-3 border-t border-border/50">
                       {getStatusBadge(file.status)}
                       
-                      <a
-                        href={file.storageUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="p-1.5 bg-muted hover:bg-primary hover:text-primary-foreground border border-border rounded-lg text-muted-foreground transition-all"
-                        title="Tải về"
-                      >
-                        <Download size={14} />
-                      </a>
+                      <div className="flex items-center gap-1.5">
+                        {file.status === 'ready' && (
+                          <button
+                            onClick={() => setActiveSummaryMaterialId(file.id)}
+                            className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold bg-violet-500/10 text-violet-600 border border-violet-500/20 rounded-lg hover:bg-violet-500 hover:text-white transition-all duration-200"
+                            title="Xem tóm tắt AI"
+                          >
+                            <Sparkles size={12} />
+                            <span>Tóm tắt AI</span>
+                          </button>
+                        )}
+                        <a
+                          href={file.storageUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-1.5 bg-muted hover:bg-primary hover:text-primary-foreground border border-border rounded-lg text-muted-foreground transition-all"
+                          title="Tải về"
+                        >
+                          <Download size={14} />
+                        </a>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -370,6 +490,123 @@ export const MaterialsPage: React.FC = () => {
 
         </div>
       )}
+
+      {/* AI Summary Modal */}
+      <AnimatePresence>
+        {activeSummaryMaterialId && (
+          (() => {
+            const selectedMaterial = materials.find(m => m.id === activeSummaryMaterialId);
+            if (!selectedMaterial) return null;
+            const isGeneratingSummary = waitingForSummaryIds.includes(activeSummaryMaterialId);
+
+            return (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                {/* Backdrop */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.6 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setActiveSummaryMaterialId(null)}
+                  className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+                />
+
+                {/* Modal Content */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 15 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 15 }}
+                  transition={{ type: 'spring', duration: 0.4 }}
+                  className="relative w-full max-w-2xl bg-card border border-border rounded-3xl p-6 shadow-2xl z-10 flex flex-col max-h-[85vh]"
+                >
+                  {/* Header */}
+                  <div className="flex justify-between items-center mb-4 pb-3 border-b border-border/60">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="p-2 bg-violet-500/10 text-violet-500 rounded-lg shrink-0">
+                        <Sparkles size={18} />
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="text-base font-bold font-outfit text-foreground leading-tight">
+                          Tóm tắt tài liệu bằng AI
+                        </h3>
+                        <p className="text-xs text-muted-foreground truncate mt-0.5 max-w-[400px]">
+                          {selectedMaterial.title}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setActiveSummaryMaterialId(null)}
+                      className="p-1.5 hover:bg-muted rounded-xl text-muted-foreground transition-all shrink-0"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+
+                  {/* Body */}
+                  <div className="overflow-y-auto pr-1 flex-1 py-2 max-h-[60vh]">
+                    {selectedMaterial.summary ? (
+                      <div className="bg-muted/30 p-5 rounded-2xl border border-border/50">
+                        {renderMarkdown(selectedMaterial.summary)}
+                      </div>
+                    ) : isGeneratingSummary ? (
+                      <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
+                        <div className="relative">
+                          <Loader2 className="animate-spin text-primary" size={44} />
+                          <Sparkles className="absolute -top-1 -right-1 text-amber-500 animate-pulse" size={16} />
+                        </div>
+                        <div>
+                          <h4 className="font-extrabold text-sm font-outfit">AI đang tóm tắt tài liệu...</h4>
+                          <p className="text-xs text-muted-foreground max-w-xs leading-relaxed mt-1">
+                            Hệ thống đang bóc tách và tóm tắt những nội dung quan trọng nhất. Vui lòng đợi trong giây lát.
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
+                        <div className="p-4 bg-muted rounded-full text-muted-foreground">
+                          <FileText size={32} />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-sm">Tài liệu chưa có bản tóm tắt</h4>
+                          <p className="text-xs text-muted-foreground max-w-xs leading-relaxed mt-1">
+                            Tài liệu này đã sẵn sàng nhưng chưa có bản tóm tắt AI. Hãy nhấn nút bên dưới để bắt đầu tạo.
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => generateSummaryMutation.mutate(selectedMaterial.id)}
+                          disabled={generateSummaryMutation.isPending}
+                          className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/95 text-white font-semibold text-xs rounded-xl shadow-md disabled:opacity-50 transition-colors"
+                        >
+                          {generateSummaryMutation.isPending ? (
+                            <>
+                              <Loader2 size={14} className="animate-spin" />
+                              <span>Đang gửi yêu cầu...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles size={14} />
+                              <span>Tạo tóm tắt AI</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Footer */}
+                  <div className="mt-4 pt-3 border-t border-border/60 flex justify-end">
+                    <button
+                      onClick={() => setActiveSummaryMaterialId(null)}
+                      className="px-4 py-2 bg-muted hover:bg-muted/80 text-muted-foreground font-semibold text-xs rounded-xl transition-colors"
+                    >
+                      Đóng
+                    </button>
+                  </div>
+                </motion.div>
+              </div>
+            );
+          })()
+        )}
+      </AnimatePresence>
     </div>
   );
 };

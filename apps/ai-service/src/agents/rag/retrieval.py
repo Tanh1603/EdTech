@@ -24,7 +24,7 @@ class Retriever:
         self,
         query: str,
         top_k: int = 5,
-        material_id: str | None = None,
+        material_id: str | list[str] | None = None,
     ) -> list[RetrievalResult]:
         query_vector = self.provider.embed(query)
         return [

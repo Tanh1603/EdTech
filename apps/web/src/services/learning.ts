@@ -10,6 +10,7 @@ export interface Material {
   mimeType: string;
   size: number;
   status: 'uploaded' | 'indexing' | 'ready' | 'failed';
+  summary?: string | null;
   createdAt: string;
 }
 
@@ -100,12 +101,17 @@ export const fetchMaterialChunks = async (materialId: string): Promise<Envelope<
   return apiClient.get(`/learning/materials/${materialId}/chunks`);
 };
 
+export const generateMaterialSummary = async (materialId: string): Promise<Envelope<{ jobId: string; status: string; type: string }>> => {
+  return apiClient.post(`/learning/materials/${materialId}/summary`);
+};
+
+
 // -------------------------------------------------------------
 // ADAPTIVE ROADMAP SERVICES
 // -------------------------------------------------------------
 
-export const createRoadmap = async (data: { title: string; targetGoal: string }): Promise<Envelope<Roadmap>> => {
-  return apiClient.post('/learning/roadmaps', data);
+export const createRoadmap = async (data: { title: string; targetGoal: string; classId?: string }): Promise<Envelope<Roadmap>> => {
+  return apiClient.post('/learning/roadmaps/generate', data);
 };
 
 export const fetchRoadmaps = async (): Promise<Envelope<Roadmap[]>> => {
@@ -114,6 +120,10 @@ export const fetchRoadmaps = async (): Promise<Envelope<Roadmap[]>> => {
 
 export const fetchRoadmapDetail = async (roadmapId: string): Promise<Envelope<Roadmap>> => {
   return apiClient.get(`/learning/roadmaps/${roadmapId}`);
+};
+
+export const deleteRoadmap = async (roadmapId: string): Promise<Envelope<{ id: string; deleted: boolean }>> => {
+  return apiClient.delete(`/learning/roadmaps/${roadmapId}`);
 };
 
 export const fetchRoadmapProgress = async (roadmapId: string): Promise<Envelope<RoadmapProgress>> => {

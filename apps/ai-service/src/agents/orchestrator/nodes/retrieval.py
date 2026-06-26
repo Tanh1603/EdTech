@@ -4,7 +4,7 @@ import logging
 from dataclasses import dataclass
 from typing import Any
 
-from agents.orchestrator.nodes.common import material_id
+from agents.orchestrator.nodes.common import material_id, material_ids
 from agents.orchestrator.state import RuntimeState
 from agents.orchestrator.summary import summary_batches
 from agents.rag.retrieval import RetrievalResult, Retriever
@@ -22,15 +22,15 @@ class RetrievalRouterNode:
         if state.get("profile") != "tutor":
             return state
         intent = str(state.get("intent") or "general_tutor")
-        active_material_id = material_id(state)
+        active_material_ids = material_ids(state)
         material_status = str(state.get("learning_context", {}).get("materialStatus") or "")
-        if active_material_id and material_status and material_status != "ready":
+        if len(active_material_ids) == 1 and material_status and material_status != "ready":
             logger.info(
                 "Tutor retrieval skipped because material is not ready",
                 extra={
                     "component": "tutor.orchestrator",
                     "step": "retrieval.material_not_ready",
-                    "materialId": active_material_id,
+                    "materialId": active_material_ids[0],
                     "materialStatus": material_status,
                 },
             )
@@ -43,7 +43,7 @@ class RetrievalRouterNode:
                 "rag_scores": [],
             }
 
-        if not self.retriever or not active_material_id or not state.get("use_rag", True):
+        if not self.retriever or not active_material_ids or not state.get("use_rag", True):
             return {
                 **state,
                 "retrieval_mode": "none",
@@ -54,7 +54,11 @@ class RetrievalRouterNode:
             }
 
         if intent == "summary_material":
-            chunks = self.retriever.material_chunks(active_material_id, self.summary_chunk_limit)
+            limit_per_material = max(4, self.summary_chunk_limit // len(active_material_ids))
+            chunks = []
+            for mat_id in active_material_ids:
+                chunks.extend(self.retriever.material_chunks(mat_id, limit_per_material))
+
             results = [
                 RetrievalResult(
                     chunk_id=chunk.chunk_id,
@@ -70,7 +74,7 @@ class RetrievalRouterNode:
                 extra={
                     "component": "tutor.orchestrator",
                     "step": "retrieval.summary",
-                    "materialId": active_material_id,
+                    "materialId": active_material_ids[0] if active_material_ids else "",
                     "chunkCount": len(results),
                     "batchCount": len(batches),
                 },
@@ -88,7 +92,7 @@ class RetrievalRouterNode:
             for result in self.retriever.search(
                 query,
                 top_k=int(state.get("top_k") or 5),
-                material_id=active_material_id,
+                material_id=active_material_ids,
             )
             if result.score >= self.min_score
         ]
@@ -97,7 +101,7 @@ class RetrievalRouterNode:
             extra={
                 "component": "tutor.orchestrator",
                 "step": "retrieval.semantic",
-                "materialId": active_material_id,
+                "materialId": active_material_ids[0] if active_material_ids else "",
                 "resultCount": len(results),
                 "topScore": results[0].score if results else 0,
             },

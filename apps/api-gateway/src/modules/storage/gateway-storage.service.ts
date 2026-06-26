@@ -24,12 +24,18 @@ export class GatewayStorageService {
       if (!cleanBaseName.replace(/_/g, '')) {
         cleanBaseName = 'file';
       }
-      const uniquePublicId = `${folder}/${cleanBaseName}_${Date.now()}${ext}`;
+      
+      const resourceType = this.getUploadResourceType(file.mimetype);
+      const isRaw = resourceType === 'raw';
+      const uniquePublicId = isRaw
+        ? `${folder}/${cleanBaseName}_${Date.now()}${ext}`
+        : `${folder}/${cleanBaseName}_${Date.now()}`;
 
       const uploadStream = this.cloudinary.uploader.upload_stream(
         {
           public_id: uniquePublicId,
-          resource_type: this.getUploadResourceType(file.mimetype),
+          resource_type: resourceType,
+          type: 'authenticated',
         },
         (error, result) => {
           if (error || !result) {
@@ -44,12 +50,14 @@ export class GatewayStorageService {
     });
   }
 
-  private getUploadResourceType(mimeType?: string): 'auto' | 'raw' {
+  private getUploadResourceType(mimeType?: string): 'auto' | 'raw' | 'image' {
     if (!mimeType) {
       return 'auto';
     }
+    if (mimeType === 'application/pdf') {
+      return 'image';
+    }
     if (
-      mimeType === 'application/pdf' ||
       mimeType.startsWith('text/') ||
       mimeType.includes('wordprocessingml') ||
       mimeType.includes('presentationml')
@@ -58,4 +66,5 @@ export class GatewayStorageService {
     }
     return 'auto';
   }
+
 }

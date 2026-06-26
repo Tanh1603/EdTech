@@ -6,6 +6,22 @@ from agents.clients.be_core_common import BeCoreCallContext, to_struct
 
 
 class MaterialsClientMixin:
+    def get_materials(
+        self,
+        lesson_id: str,
+        context: BeCoreCallContext,
+        status: str | None = None,
+        page: int = 1,
+        limit: int = 50,
+    ) -> dict[str, Any]:
+        request = self._materials_pb2.MaterialQuery(
+            lesson_id=lesson_id,
+            status=status or "",
+            page=page,
+            limit=limit,
+        )
+        return self._call_page(self.materials.GetMaterials, request, context, True)
+
     def get_material(self, material_id: str, context: BeCoreCallContext) -> dict[str, Any]:
         request = self._materials_pb2.MaterialIdRequest(material_id=material_id)
         return self._call_object(self.materials.GetMaterialDetail, request, context, True)

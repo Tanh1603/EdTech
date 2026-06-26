@@ -18,19 +18,122 @@ class LearningPathAgentProfile:
     def run(self, state: RuntimeState) -> RuntimeState:
         context = state.get("tool_context")
         tool_results = state.get("tool_results", {})
+        class_id = state.get("class_id", "")
+        course_materials_str = "No classroom context provided."
+        
+        if class_id and context is not None:
+            try:
+                lessons = self.registry.call(
+                    "academic.classroom_lessons",
+                    {"classId": class_id, "publishedOnly": True},
+                    context,
+                )
+            except Exception:
+                lessons = []
+            
+            materials_list = []
+            for lesson in lessons:
+                lesson_id = lesson.get("lessonId")
+                if not lesson_id:
+                    continue
+                try:
+                    mats_page = self.registry.call(
+                        "learning.materials",
+                        {"lessonId": lesson_id, "status": "ready", "page": 1, "limit": 100},
+                        context,
+                    )
+                    mats = mats_page.get("items") or []
+                except Exception:
+                    mats = []
+                
+                lesson_info = {
+                    "lessonId": lesson_id,
+                    "title": lesson.get("title") or "",
+                    "description": lesson.get("description") or "",
+                    "materials": []
+                }
+                for m in mats:
+                    lesson_info["materials"].append({
+                        "title": m.get("title") or "",
+                        "summary": m.get("summary") or ""
+                    })
+                materials_list.append(lesson_info)
+            
+            if materials_list:
+                lines = []
+                for idx, lesson in enumerate(materials_list, start=1):
+                    lines.append(f"{idx}. Lesson: {lesson['title']} (ID: {lesson['lessonId']})")
+                    if lesson['description']:
+                        lines.append(f"   Description: {lesson['description']}")
+                    if lesson['materials']:
+                        lines.append("   Materials:")
+                        for m in lesson['materials']:
+                            lines.append(f"     - Title: {m['title']}")
+                            if m['summary']:
+                                lines.append(f"       Summary: {m['summary']}")
+                    else:
+                        lines.append("   No materials available.")
+                course_materials_str = "\n".join(lines)
+            else:
+                course_materials_str = "No classroom lessons or materials available."
+
         prompt = self.prompts.render(
             "learning_path.prompt",
             {
                 "user_id": state.get("user_id", ""),
-                "class_id": state.get("class_id", ""),
+                "class_id": class_id,
                 "course_id": state.get("course_id", ""),
                 "mastery": tool_results.get("learning.mastery", {}),
                 "analytics": tool_results.get("chat.classroom_analytics", {}),
                 "options": state.get("options", {}),
+                "course_materials": course_materials_str,
             },
         )
         response = self.llm_provider.generate(prompt)
         draft = parse_json_object(response.text)
+        
+        # Critique-Revision Loop (Reflection Loop)
+        max_attempts = 3
+        attempt = 1
+        input_tokens_total = response.input_tokens
+        output_tokens_total = response.output_tokens
+        model_name = response.model
+        
+        while attempt <= max_attempts:
+            critique_prompt = self.prompts.render(
+                "learning_path_critique.prompt",
+                {
+                    "course_materials": course_materials_str,
+                    "draftRoadmap": response.text,
+                }
+            )
+            critique_response = self.llm_provider.generate(critique_prompt)
+            input_tokens_total += critique_response.input_tokens
+            output_tokens_total += critique_response.output_tokens
+            
+            critique_result = parse_json_object(critique_response.text)
+            is_valid = bool(critique_result.get("isValid"))
+            
+            if is_valid:
+                break
+                
+            # If not valid, revise
+            revision_prompt = self.prompts.render(
+                "learning_path_revision.prompt",
+                {
+                    "course_materials": course_materials_str,
+                    "failedRoadmap": response.text,
+                    "critique": critique_response.text,
+                }
+            )
+            revision_response = self.llm_provider.generate(revision_prompt)
+            input_tokens_total += revision_response.input_tokens
+            output_tokens_total += revision_response.output_tokens
+            
+            response = revision_response
+            draft = parse_json_object(response.text)
+            attempt += 1
+
         roadmap_id = state.get("options", {}).get("roadmapId") or state.get("resource_id", "")
         roadmap: dict[str, Any] = {}
         created_items: list[dict[str, Any]] = []
@@ -79,10 +182,10 @@ class LearningPathAgentProfile:
                 "roadmapItems": created_items,
             },
             "usage": {
-                "inputTokens": response.input_tokens,
-                "outputTokens": response.output_tokens,
-                "totalTokens": response.input_tokens + response.output_tokens,
-                "model": response.model,
+                "inputTokens": input_tokens_total,
+                "outputTokens": output_tokens_total,
+                "totalTokens": input_tokens_total + output_tokens_total,
+                "model": model_name,
             },
         }
 

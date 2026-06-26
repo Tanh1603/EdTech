@@ -82,17 +82,32 @@ export const useChatStream = (sessionId: string) => {
           if (trimmed.startsWith('event:')) {
             currentEvent = trimmed.replace(/^event:\s*/, '').trim();
           } else if (trimmed.startsWith('data:')) {
-            const data = trimmed.replace(/^data:\s*/, '');
+            const dataStr = trimmed.replace(/^data:\s*/, '');
             
-            if (currentEvent === 'token') {
-              // Append word token to streaming state
-              setStreamingContent((prev) => prev + data);
-            } else if (currentEvent === 'done') {
-              // Finished streaming completely
-              setIsStreaming(false);
-              onSuccess?.();
-              abortController.abort(); // Cancel the request connection cleanly
-              return;
+            try {
+              const parsed = JSON.parse(dataStr);
+              // Handle both raw events and wrapper event properties from NestJS Sse
+              const eventType = parsed.event || currentEvent;
+              
+              if (eventType === 'chat.token' || eventType === 'token') {
+                const tokenText = parsed.data?.text !== undefined ? parsed.data.text : (parsed.data || '');
+                setStreamingContent((prev) => prev + tokenText);
+              } else if (eventType === 'chat.completed' || eventType === 'done') {
+                setIsStreaming(false);
+                onSuccess?.();
+                abortController.abort(); // Cancel the request connection cleanly
+                return;
+              }
+            } catch (e) {
+              // Fallback if data is not a JSON string
+              if (currentEvent === 'chat.token' || currentEvent === 'token') {
+                setStreamingContent((prev) => prev + dataStr);
+              } else if (currentEvent === 'chat.completed' || currentEvent === 'done') {
+                setIsStreaming(false);
+                onSuccess?.();
+                abortController.abort(); // Cancel the request connection cleanly
+                return;
+              }
             }
           }
         }

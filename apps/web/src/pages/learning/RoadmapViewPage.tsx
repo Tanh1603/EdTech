@@ -1,5 +1,5 @@
 import React from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   fetchRoadmapDetail, 
@@ -7,7 +7,8 @@ import {
   completeRoadmapItem, 
   uncompleteRoadmapItem, 
   fetchNextRecommendedLesson,
-  RoadmapItem 
+  RoadmapItem,
+  deleteRoadmap
 } from '../../services/learning';
 import { toast } from 'sonner';
 import { 
@@ -18,12 +19,14 @@ import {
   Star, 
   Map, 
   CheckSquare, 
-  AlertCircle
+  AlertCircle,
+  Trash2
 } from 'lucide-react';
 
 export const RoadmapViewPage: React.FC = () => {
   const { roadmapId } = useParams<{ roadmapId: string }>();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   // 1. Fetch Roadmap Detail (includes items)
   const { data: roadmapResp, isLoading: isRoadmapLoading, error } = useQuery({
@@ -68,6 +71,26 @@ export const RoadmapViewPage: React.FC = () => {
       toast.error(`Lỗi cập nhật: ${error.message || 'Có lỗi xảy ra'}`);
     }
   });
+
+  // Delete Roadmap Mutation
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteRoadmap(roadmapId || ''),
+    onSuccess: () => {
+      toast.success('Xóa lộ trình học tập thành công.');
+      queryClient.invalidateQueries({ queryKey: ['roadmaps'] });
+      navigate('/learning/roadmap');
+    },
+    onError: (err: unknown) => {
+      const error = err as { message?: string };
+      toast.error(`Lỗi xóa lộ trình: ${error.message || 'Không thể xóa lộ trình'}`);
+    }
+  });
+
+  const handleDeleteClick = () => {
+    if (window.confirm('Bạn có chắc chắn muốn xóa lộ trình học tập này không? Tất cả lịch sử học tập liên quan cũng sẽ bị xóa.')) {
+      deleteMutation.mutate();
+    }
+  };
 
   if (isRoadmapLoading) {
     return (
@@ -116,9 +139,23 @@ export const RoadmapViewPage: React.FC = () => {
         
         {/* Info Column */}
         <div className="lg:col-span-2 space-y-3">
-          <div className="flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-wide">
-            <Map size={14} />
-            <span>Lộ trình thích ứng</span>
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-wide">
+              <Map size={14} />
+              <span>Lộ trình thích ứng</span>
+            </div>
+            <button
+              onClick={handleDeleteClick}
+              disabled={deleteMutation.isPending}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-destructive hover:bg-destructive/10 border border-destructive/20 rounded-xl transition-all"
+            >
+              {deleteMutation.isPending ? (
+                <Loader2 size={12} className="animate-spin" />
+              ) : (
+                <Trash2 size={12} />
+              )}
+              <span>Xóa lộ trình</span>
+            </button>
           </div>
           <h2 className="text-xl md:text-2xl font-extrabold font-outfit tracking-tight">
             {roadmap.title}

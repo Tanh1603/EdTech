@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { fetchCourses, createCourse, Course } from '../../services/academic';
+import { fetchCourses, createCourse, deleteCourse, Course } from '../../services/academic';
 import { useAuthStore } from '../../state/useAuthStore';
 import { useUser } from '@clerk/clerk-react';
 import { toast } from 'sonner';
@@ -13,7 +13,8 @@ import {
   GraduationCap, 
   ArrowRight,
   Loader2,
-  FolderOpen
+  FolderOpen,
+  Trash2
 } from 'lucide-react';
 
 export const CourseDirectory: React.FC = () => {
@@ -64,6 +65,25 @@ export const CourseDirectory: React.FC = () => {
       thumbnailUrl: newCourseThumb || undefined,
       teacherId: user?.id || '',
     });
+  };
+
+  // Delete Course Mutation
+  const deleteMutation = useMutation({
+    mutationFn: deleteCourse,
+    onSuccess: () => {
+      toast.success('Xóa khóa học thành công!');
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
+    },
+    onError: (err: unknown) => {
+      const error = err as { message?: string };
+      toast.error(`Lỗi xóa khóa học: ${error.message || 'Có lỗi xảy ra'}`);
+    }
+  });
+
+  const handleDeleteCourse = (courseId: string, courseName: string) => {
+    if (window.confirm(`Bạn có chắc chắn muốn xóa khóa học "${courseName}"? Tất cả bài học và lớp học liên quan sẽ bị ảnh hưởng.`)) {
+      deleteMutation.mutate(courseId);
+    }
   };
 
   return (
@@ -178,14 +198,26 @@ export const CourseDirectory: React.FC = () => {
                     <ArrowRight size={14} />
                   </Link>
 
-                  {activeRole === 'teacher' && (
-                    <Link
-                      to={`/courses/${course.id}?tab=classrooms&create=true`}
-                      className="px-3 py-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-primary-foreground border border-primary/20 rounded-xl text-[11px] font-semibold transition-all shrink-0"
-                    >
-                      Tạo lớp học
-                    </Link>
-                  )}
+                  <div className="flex items-center gap-2 shrink-0">
+                    {activeRole === 'teacher' && (
+                      <Link
+                        to={`/courses/${course.id}?tab=classrooms&create=true`}
+                        className="px-3 py-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-primary-foreground border border-primary/20 rounded-xl text-[11px] font-semibold transition-all"
+                      >
+                        Tạo lớp học
+                      </Link>
+                    )}
+                    {activeRole === 'teacher' && course.teacherId === user?.id && (
+                      <button
+                        onClick={() => handleDeleteCourse(course.id, course.name)}
+                        disabled={deleteMutation.isPending}
+                        className="p-1.5 bg-destructive/10 hover:bg-destructive text-destructive hover:text-destructive-foreground border border-destructive/20 rounded-xl transition-all disabled:opacity-50"
+                        title="Xóa khóa học"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

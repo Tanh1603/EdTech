@@ -69,16 +69,21 @@ export class StorageService {
     const parsed = this.parseCloudinaryUrl(metadata.storageUrl);
     const extension = this.getExtension(metadata.mimeType, metadata.storageUrl, metadata.publicId);
     const resourceType = this.getDeliveryResourceType(metadata.mimeType, parsed.resourceType);
-    const publicId = this.publicIdForResourceType(metadata.publicId, resourceType, extension);
+    
+    const publicId = resourceType === 'raw'
+      ? metadata.publicId
+      : metadata.publicId.replace(new RegExp(`\\.${extension}$`, 'i'), '');
+
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-    const downloadUrl = this.cloudinary.url(publicId, {
-      secure: true,
-      sign_url: true,
-      resource_type: resourceType,
-      type: parsed.deliveryType,
-      expires_at: Math.floor(expiresAt.getTime() / 1000),
-      ...(this.publicIdHasExtension(publicId) || !extension ? {} : { format: extension }),
-    });
+    const downloadUrl = this.cloudinary.utils.private_download_url(
+      publicId,
+      resourceType === 'raw' ? '' : extension,
+      {
+        resource_type: resourceType,
+        type: parsed.deliveryType,
+        expires_at: Math.floor(expiresAt.getTime() / 1000),
+      },
+    );
 
     return {
       downloadUrl,
@@ -87,6 +92,7 @@ export class StorageService {
       expiresAt: expiresAt.toISOString(),
     };
   }
+
 
   private async resolveFileMetadata(input: FileAccessInput): Promise<FileMetadata> {
     if (input.materialId) {
@@ -121,9 +127,11 @@ export class StorageService {
 
   private parseCloudinaryUrl(storageUrl?: string | null) {
     const match = storageUrl?.match(/\/(image|video|raw)\/(upload|authenticated|private)\//);
+    const versionMatch = storageUrl?.match(/\/v(\d+)\//);
     return {
       resourceType: match?.[1] ?? 'raw',
       deliveryType: match?.[2] ?? 'upload',
+      version: versionMatch?.[1] ?? undefined,
     };
   }
 
@@ -143,6 +151,9 @@ export class StorageService {
   }
 
   private getDeliveryResourceType(mimeType: string | null | undefined, fallback: string): string {
+    if (fallback === 'image' || fallback === 'video') {
+      return fallback;
+    }
     if (
       mimeType === 'application/pdf' ||
       mimeType?.startsWith('text/') ||
@@ -153,6 +164,7 @@ export class StorageService {
     }
     return fallback;
   }
+
 
   private getExtension(
     mimeType?: string | null,

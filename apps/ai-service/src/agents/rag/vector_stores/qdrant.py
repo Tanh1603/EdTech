@@ -12,6 +12,7 @@ from qdrant_client.models import (
     MatchValue,
     PointStruct,
     VectorParams,
+    MatchAny,
 )
 
 from agents.rag.chunking import TextChunk
@@ -73,7 +74,7 @@ class QdrantVectorStore:
         self,
         query_vector: list[float],
         top_k: int = 5,
-        material_id: str | None = None,
+        material_id: str | list[str] | None = None,
     ) -> list[tuple[TextChunk, float]]:
         if not self.client.collection_exists(self.collection_name):
             logger.info(
@@ -167,7 +168,16 @@ class QdrantVectorStore:
         )
 
 
-def _material_filter(material_id: str) -> Filter:
+def _material_filter(material_id: str | list[str]) -> Filter:
+    if isinstance(material_id, list):
+        return Filter(
+            must=[
+                FieldCondition(
+                    key="materialId",
+                    match=MatchAny(any=material_id),
+                )
+            ]
+        )
     return Filter(
         must=[
             FieldCondition(

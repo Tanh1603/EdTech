@@ -175,6 +175,24 @@ def create_default_registry(be_core_client: BeCoreGrpcClient) -> ToolRegistry:
         ),
     )
     registry.register(
+        "academic.classroom_lessons",
+        lambda payload, context: be_core_client.get_classroom_lessons(
+            required_str(payload, "classId"),
+            context.to_be_core_context(),
+            published_only=bool(payload.get("publishedOnly", True)),
+        ),
+    )
+    registry.register(
+        "learning.materials",
+        lambda payload, context: be_core_client.get_materials(
+            required_str(payload, "lessonId"),
+            context.to_be_core_context(),
+            status=optional_str(payload, "status"),
+            page=int(payload.get("page") or 1),
+            limit=int(payload.get("limit") or 50),
+        ),
+    )
+    registry.register(
         "roadmaps.create",
         lambda payload, context: be_core_client.create_roadmap(
             required_dict(payload, "body"),

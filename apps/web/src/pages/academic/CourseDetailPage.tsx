@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useLocation } from 'react-router-dom';
+import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   fetchCourseDetail, 
@@ -7,10 +7,12 @@ import {
   createLesson, 
   fetchClassrooms, 
   createClassroom,
+  deleteCourse,
   Classroom,
   Lesson
 } from '../../services/academic';
 import { useAuthStore } from '../../state/useAuthStore';
+import { useUser } from '@clerk/clerk-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { 
@@ -21,12 +23,15 @@ import {
   Calendar,
   Clock,
   Layers,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Trash2
 } from 'lucide-react';
 
 export const CourseDetailPage: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const { activeRole } = useAuthStore();
+  const { user } = useUser();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const location = useLocation();
@@ -112,7 +117,26 @@ export const CourseDetailPage: React.FC = () => {
       toast.error(`Lỗi tạo lớp học: ${error.message || 'Có lỗi xảy ra'}`);
     }
   });
+  // Delete Course Mutation
+  const deleteCourseMutation = useMutation({
+    mutationFn: deleteCourse,
+    onSuccess: () => {
+      toast.success('Xóa khóa học thành công!');
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
+      navigate('/courses');
+    },
+    onError: (err: unknown) => {
+      const error = err as { message?: string };
+      toast.error(`Lỗi xóa khóa học: ${error.message || 'Có lỗi xảy ra'}`);
+    }
+  });
 
+  const handleDeleteCourse = () => {
+    if (!course) return;
+    if (window.confirm(`Bạn có chắc chắn muốn xóa khóa học "${course.name}"? Tất cả bài học và lớp học liên quan sẽ bị ảnh hưởng.`)) {
+      deleteCourseMutation.mutate(course.id);
+    }
+  };
   const handleCreateLessSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!lessTitle.trim()) {
@@ -179,9 +203,21 @@ export const CourseDetailPage: React.FC = () => {
         </div>
         
         <div className="md:col-span-3 space-y-2">
-          <h2 className="text-2xl md:text-3xl font-extrabold font-outfit tracking-tight">
-            {course.name}
-          </h2>
+          <div className="flex justify-between items-start gap-4">
+            <h2 className="text-2xl md:text-3xl font-extrabold font-outfit tracking-tight">
+              {course.name}
+            </h2>
+            {activeRole === 'teacher' && course.teacherId === user?.id && (
+              <button
+                onClick={handleDeleteCourse}
+                disabled={deleteCourseMutation.isPending}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-destructive/10 hover:bg-destructive text-destructive hover:text-destructive-foreground border border-destructive/20 rounded-xl text-xs font-semibold transition-all shrink-0 disabled:opacity-50"
+              >
+                <Trash2 size={14} />
+                <span>Xóa khóa học</span>
+              </button>
+            )}
+          </div>
           <p className="text-sm text-muted-foreground leading-relaxed">
             {course.description || 'Chưa có mô tả chi tiết cho môn học này.'}
           </p>

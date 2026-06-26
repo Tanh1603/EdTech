@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { fetchRoadmaps, createRoadmap, fetchRoadmapProgress, Roadmap } from '../../services/learning';
+import { fetchRoadmaps, createRoadmap, fetchRoadmapProgress, Roadmap, deleteRoadmap } from '../../services/learning';
+import { fetchClassrooms, Classroom } from '../../services/academic';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -10,7 +11,8 @@ import {
   Map, 
   Loader2, 
   Calendar, 
-  ArrowRight
+  ArrowRight,
+  Trash2
 } from 'lucide-react';
 
 // Subcomponent to fetch and render progress details for each roadmap card
@@ -48,6 +50,7 @@ export const RoadmapsDashboard: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [targetGoal, setTargetGoal] = useState('');
+  const [classId, setClassId] = useState('');
 
   // 1. Fetch Student Roadmaps
   const { data: roadmapsResp, isLoading } = useQuery({
@@ -55,6 +58,13 @@ export const RoadmapsDashboard: React.FC = () => {
     queryFn: () => fetchRoadmaps(),
   });
   const roadmaps = roadmapsResp?.data || [];
+
+  // 1b. Fetch student's classrooms
+  const { data: classroomsResp } = useQuery({
+    queryKey: ['classrooms'],
+    queryFn: () => fetchClassrooms({ limit: 100 }),
+  });
+  const classrooms = classroomsResp?.data || [];
 
   // 2. Create Roadmap Mutation
   const createMutation = useMutation({
@@ -65,6 +75,7 @@ export const RoadmapsDashboard: React.FC = () => {
       setIsModalOpen(false);
       setTitle('');
       setTargetGoal('');
+      setClassId('');
     },
     onError: (err: unknown) => {
       const error = err as { message?: string };
@@ -74,14 +85,36 @@ export const RoadmapsDashboard: React.FC = () => {
 
   const handleCreateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !targetGoal.trim()) {
+    if (!title.trim() || !targetGoal.trim() || !classId) {
       toast.error('Vui lòng điền đầy đủ các thông tin bắt buộc');
       return;
     }
     createMutation.mutate({
       title: title.trim(),
-      targetGoal: targetGoal.trim()
+      targetGoal: targetGoal.trim(),
+      classId
     });
+  };
+
+  // 3. Delete Roadmap Mutation
+  const deleteMutation = useMutation({
+    mutationFn: deleteRoadmap,
+    onSuccess: () => {
+      toast.success('Xóa lộ trình học tập thành công.');
+      queryClient.invalidateQueries({ queryKey: ['roadmaps'] });
+    },
+    onError: (err: unknown) => {
+      const error = err as { message?: string };
+      toast.error(`Lỗi xóa lộ trình: ${error.message || 'Không thể xóa lộ trình'}`);
+    }
+  });
+
+  const handleDeleteClick = (e: React.MouseEvent, roadmapId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (window.confirm('Bạn có chắc chắn muốn xóa lộ trình học tập này không? Tất cả lịch sử học tập liên quan cũng sẽ bị xóa.')) {
+      deleteMutation.mutate(roadmapId);
+    }
   };
 
   const formatDate = (dateStr: string) => {
@@ -149,9 +182,23 @@ export const RoadmapsDashboard: React.FC = () => {
                   <span className="p-2.5 bg-primary/10 text-primary rounded-xl shrink-0 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
                     <Map size={18} />
                   </span>
-                  <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                    <Calendar size={12} />
-                    <span>{formatDate(roadmap.createdAt)}</span>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                      <Calendar size={12} />
+                      <span>{formatDate(roadmap.createdAt)}</span>
+                    </div>
+                    <button
+                      onClick={(e) => handleDeleteClick(e, roadmap.id)}
+                      disabled={deleteMutation.isPending}
+                      className="p-1.5 hover:bg-destructive/10 text-muted-foreground hover:text-destructive rounded-lg transition-colors shrink-0"
+                      title="Xóa lộ trình"
+                    >
+                      {deleteMutation.isPending && deleteMutation.variables === roadmap.id ? (
+                        <Loader2 className="animate-spin" size={12} />
+                      ) : (
+                        <Trash2 size={12} />
+                      )}
+                    </button>
                   </div>
                 </div>
 
@@ -224,6 +271,29 @@ export const RoadmapsDashboard: React.FC = () => {
 
               <form onSubmit={handleCreateSubmit} className="space-y-4">
                 <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground">Lớp học bắt buộc</label>
+                  {classrooms.length === 0 ? (
+                    <div className="text-xs text-destructive bg-destructive/10 p-3 rounded-xl border border-destructive/20 leading-relaxed font-semibold">
+                      Bạn chưa tham gia lớp học nào. Hãy tham gia lớp học trước khi tạo lộ trình.
+                    </div>
+                  ) : (
+                    <select
+                      required
+                      value={classId}
+                      onChange={(e) => setClassId(e.target.value)}
+                      className="w-full px-4 py-2.5 bg-muted/40 border border-input rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-primary transition-all"
+                    >
+                      <option value="" disabled>-- Chọn lớp học --</option>
+                      {classrooms.map((c: Classroom) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name} {c.course?.name ? `(${c.course.name})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-semibold text-muted-foreground">Tên lộ trình (Ví dụ: React.js Advanced)</label>
                   <input
                     type="text"
@@ -257,7 +327,8 @@ export const RoadmapsDashboard: React.FC = () => {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-primary hover:bg-primary/95 text-white font-semibold text-xs rounded-xl shadow-md transition-colors"
+                    disabled={classrooms.length === 0}
+                    className="px-4 py-2 bg-primary hover:bg-primary/95 text-white font-semibold text-xs rounded-xl shadow-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Gửi yêu cầu
                   </button>

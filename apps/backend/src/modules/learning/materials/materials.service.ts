@@ -302,6 +302,16 @@ export class MaterialsService {
       include: { creator: { select: userSummarySelect } },
     });
 
+    if (status === MaterialStatus.ready) {
+      try {
+        await this.enqueueMaterialSummaryJob(materialId, material.createdBy);
+      } catch (err) {
+        this.logger.error(
+          `Failed to auto-enqueue summary job for materialId=${materialId}: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+    }
+
     return {
       ...this.toMaterialResponse(material),
       error: error ?? null,
